@@ -73,17 +73,12 @@ const defaultUseCaseId = props.useCases.some((useCase) => useCase.id === request
     ? requestedUseCaseId
     : requestedVersion?.use_case_id
         ?? requestedTemplate?.use_case_id
-        ?? props.useCases[0]?.id
         ?? '';
-const defaultModel = availableModels.value[0]?.value ?? props.models[0]?.value ?? '';
+const defaultModel = '';
 const defaultMode = ['single', 'compare', 'batch'].includes(requestedMode) ? requestedMode : 'single';
 const defaultPromptVersionIds = requestedVersionIds.length > 0
     ? requestedVersionIds
-    : (requestedTemplate?.versions ?? [])
-        .slice()
-        .sort((left, right) => right.id - left.id)
-        .slice(0, 1)
-        .map((version) => version.id);
+    : [];
 
 const form = reactive({
     use_case_id: defaultUseCaseId,
@@ -107,7 +102,7 @@ const activeStep = useUrlState({
 });
 
 const selectedUseCase = computed(() =>
-    props.useCases.find((useCase) => useCase.id === Number(form.use_case_id)) ?? props.useCases[0] ?? null,
+    props.useCases.find((useCase) => useCase.id === Number(form.use_case_id)) ?? null,
 );
 
 const versionOptions = computed(() =>
@@ -210,24 +205,6 @@ const syncPromptSelection = () => {
 
     form.prompt_version_ids = [...new Set(selected)].slice(0, maxPromptCount.value);
 
-    if (form.mode === 'compare') {
-        const requiredCount = Math.min(2, validIds.length);
-
-        for (const id of validIds) {
-            if (form.prompt_version_ids.length >= requiredCount) {
-                break;
-            }
-
-            if (!form.prompt_version_ids.includes(id)) {
-                form.prompt_version_ids.push(id);
-            }
-        }
-    }
-
-    if (form.prompt_version_ids.length === 0 && validIds.length > 0) {
-        form.prompt_version_ids = [validIds[0]];
-    }
-
     if (form.mode !== 'batch') {
         form.test_case_ids = [];
         return;
@@ -237,12 +214,6 @@ const syncPromptSelection = () => {
     const selectedCases = form.test_case_ids.filter((id) => validTestCaseIds.includes(id));
 
     form.test_case_ids = [...new Set(selectedCases)];
-
-    if (form.test_case_ids.length === 0) {
-        form.test_case_ids = testCaseOptions.value
-            .slice(0, Math.min(5, testCaseOptions.value.length))
-            .map((testCase) => testCase.id);
-    }
 };
 
 const syncVariableInputs = () => {
@@ -391,6 +362,7 @@ const submit = async () => {
                     <div>
                         <label class="field-label">Task</label>
                         <select v-model="form.use_case_id" class="field-select">
+                            <option value="">Select task</option>
                             <option v-for="useCase in useCases" :key="useCase.id" :value="useCase.id">
                                 {{ useCase.name }}
                             </option>
@@ -409,6 +381,7 @@ const submit = async () => {
                     <div>
                         <label class="field-label">Model</label>
                         <select v-model="form.model_name" class="field-select">
+                            <option value="">Select model</option>
                             <option v-for="model in availableModels" :key="model.value" :value="model.value">
                                 {{ model.label }}
                             </option>
@@ -507,8 +480,12 @@ const submit = async () => {
                     </label>
                 </div>
 
-                <div v-else class="empty-state mt-4">
+                <div v-else-if="selectedUseCase" class="empty-state mt-4">
                     This task does not have prompt versions yet. Create one in Prompt Templates first.
+                </div>
+
+                <div v-else class="empty-state mt-4">
+                    Select a task first to load available prompt versions.
                 </div>
 
                 <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
@@ -559,8 +536,12 @@ const submit = async () => {
                     </label>
                 </div>
 
-                <div v-else-if="form.mode === 'batch'" class="empty-state mt-4">
+                <div v-else-if="form.mode === 'batch' && selectedUseCase" class="empty-state mt-4">
                     This task does not have saved test cases yet.
+                </div>
+
+                <div v-else-if="form.mode === 'batch'" class="empty-state mt-4">
+                    Select a task first to load saved test cases.
                 </div>
 
                 <div v-if="variableSchema.length" class="mt-5">
