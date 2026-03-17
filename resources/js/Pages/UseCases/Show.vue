@@ -63,6 +63,7 @@ const uiState = reactive({
     useCaseNotice: '',
     testCaseNotice: '',
     editingTestCaseId: null,
+    testCaseActionId: null,
 });
 
 const editingTestCase = computed(() =>
@@ -81,6 +82,17 @@ const applyTestCaseState = (testCase = null) => {
     testCaseForm.status = nextState.status;
 };
 
+const serializeTestCase = (testCase, overrides = {}) => ({
+    title: testCase.title,
+    input_text: testCase.input_text,
+    expected_output: testCase.expected_output || null,
+    expected_json: testCase.expected_json ?? {},
+    variables_json: testCase.variables_json ?? {},
+    metadata_json: testCase.metadata_json ?? {},
+    status: testCase.status,
+    ...overrides,
+});
+
 const resetTestCaseComposer = () => {
     uiState.editingTestCaseId = null;
     uiState.testCaseNotice = '';
@@ -92,6 +104,17 @@ const beginEditTestCase = (testCase) => {
     uiState.editingTestCaseId = testCase.id;
     uiState.testCaseNotice = '';
     applyTestCaseState(testCase);
+    testCaseForm.clearErrors();
+};
+
+const duplicateTestCase = (testCase) => {
+    uiState.editingTestCaseId = null;
+    uiState.testCaseNotice = 'Composer filled from the selected test case. Save to create a duplicate.';
+    applyTestCaseState({
+        ...testCase,
+        title: `Copy of ${testCase.title}`,
+        status: 'draft',
+    });
     testCaseForm.clearErrors();
 };
 
@@ -155,6 +178,50 @@ const saveTestCase = async () => {
         );
     } finally {
         testCaseForm.processing = false;
+    }
+};
+
+const archiveTestCase = async (testCase) => {
+    uiState.testCaseActionId = testCase.id;
+    uiState.testCaseNotice = '';
+
+    try {
+        await axios.put(route('api.test-cases.update', testCase.id), serializeTestCase(testCase, { status: 'archived' }));
+        uiState.testCaseNotice = 'Test case archived.';
+
+        if (uiState.editingTestCaseId === testCase.id) {
+            resetTestCaseComposer();
+        }
+
+        router.reload({ only: ['useCase', 'detail'] });
+    } catch (error) {
+        uiState.testCaseNotice = extractServerMessage(error, 'Test case could not be archived.');
+    } finally {
+        uiState.testCaseActionId = null;
+    }
+};
+
+const deleteTestCase = async (testCase) => {
+    if (!window.confirm(`Delete "${testCase.title}"? This cannot be undone.`)) {
+        return;
+    }
+
+    uiState.testCaseActionId = testCase.id;
+    uiState.testCaseNotice = '';
+
+    try {
+        await axios.delete(route('api.test-cases.destroy', testCase.id));
+        uiState.testCaseNotice = 'Test case deleted.';
+
+        if (uiState.editingTestCaseId === testCase.id) {
+            resetTestCaseComposer();
+        }
+
+        router.reload({ only: ['useCase', 'detail'] });
+    } catch (error) {
+        uiState.testCaseNotice = extractServerMessage(error, 'Test case could not be deleted.');
+    } finally {
+        uiState.testCaseActionId = null;
     }
 };
 
@@ -412,7 +479,41 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                         <td class="text-sm text-[var(--muted)]">{{ testCase.input_text }}</td>
                                         <td><span class="status-chip">{{ testCase.status }}</span></td>
                                         <td v-if="canManage" class="text-right">
-                                            <button type="button" class="btn-ghost" @click="beginEditTestCase(testCase)">Edit</button>
+                                            <div class="flex flex-wrap justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    class="btn-ghost"
+                                                    :disabled="uiState.testCaseActionId === testCase.id"
+                                                    @click="beginEditTestCase(testCase)"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="btn-ghost"
+                                                    :disabled="uiState.testCaseActionId === testCase.id"
+                                                    @click="duplicateTestCase(testCase)"
+                                                >
+                                                    Duplicate
+                                                </button>
+                                                <button
+                                                    v-if="testCase.status !== 'archived'"
+                                                    type="button"
+                                                    class="btn-ghost"
+                                                    :disabled="uiState.testCaseActionId === testCase.id"
+                                                    @click="archiveTestCase(testCase)"
+                                                >
+                                                    Archive
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="btn-ghost text-[var(--danger)]"
+                                                    :disabled="uiState.testCaseActionId === testCase.id"
+                                                    @click="deleteTestCase(testCase)"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr v-if="useCase.test_cases.length === 0">
