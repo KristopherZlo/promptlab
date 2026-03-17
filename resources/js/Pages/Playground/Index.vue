@@ -127,6 +127,9 @@ const activePromptVersions = computed(() =>
 );
 const primaryVersion = computed(() => activePromptVersions.value[0] ?? null);
 const variableSchema = computed(() => primaryVersion.value?.variables_schema ?? []);
+const requiredVariableFields = computed(() =>
+    variableSchema.value.filter((field) => field?.name && field.required),
+);
 const selectedTestCases = computed(() =>
     testCaseOptions.value.filter((testCase) => form.test_case_ids.includes(testCase.id)),
 );
@@ -238,26 +241,122 @@ const clearErrors = () => {
     Object.keys(errors).forEach((key) => delete errors[key]);
 };
 
+const validateSetup = () => {
+    let valid = true;
+    const temperature = Number(form.temperature);
+    const maxTokens = Number(form.max_tokens);
+
+    if (!form.use_case_id) {
+        errors.use_case_id = 'Select a task before continuing.';
+        valid = false;
+    }
+
+    if (!form.model_name) {
+        errors.model_name = 'Select a model before continuing.';
+        valid = false;
+    }
+
+    if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
+        errors.temperature = 'Temperature must be between 0 and 2.';
+        valid = false;
+    }
+
+    if (!Number.isInteger(maxTokens) || maxTokens < 64 || maxTokens > 4096) {
+        errors.max_tokens = 'Max tokens must be an integer between 64 and 4096.';
+        valid = false;
+    }
+
+    return valid;
+};
+
+const validateVersions = () => {
+    const promptCount = form.prompt_version_ids.length;
+
+    if (form.mode === 'compare' && (promptCount < 2 || promptCount > 3)) {
+        errors.prompt_version_ids = 'Compare mode requires two or three prompt versions.';
+        return false;
+    }
+
+    if (form.mode !== 'compare' && promptCount !== 1) {
+        errors.prompt_version_ids = form.mode === 'batch'
+            ? 'Batch mode requires exactly one prompt version.'
+            : 'Single mode requires exactly one prompt version.';
+        return false;
+    }
+
+    return true;
+};
+
+const validateInput = () => {
+    let valid = true;
+
+    if (form.mode === 'batch') {
+        if (form.test_case_ids.length === 0) {
+            errors.test_case_ids = 'Batch mode requires at least one saved test case.';
+            valid = false;
+        }
+    } else if (`${form.input_text ?? ''}`.trim() === '') {
+        errors.input_text = 'Input text is required for single and compare runs.';
+        valid = false;
+    }
+
+    const missingRequiredVariables = requiredVariableFields.value
+        .filter((field) => `${form.variables?.[field.name] ?? ''}`.trim() === '')
+        .map((field) => field.label || field.name);
+
+    if (missingRequiredVariables.length > 0) {
+        errors.variables = `Provide all required variables: ${missingRequiredVariables.join(', ')}.`;
+        valid = false;
+    }
+
+    return valid;
+};
+
+const validateThroughStep = (stepId) => {
+    clearErrors();
+
+    const targetIndex = stepOrder.indexOf(stepId);
+    let valid = true;
+
+    if (targetIndex >= 0) {
+        valid = validateSetup() && valid;
+    }
+
+    if (targetIndex >= 1) {
+        valid = validateVersions() && valid;
+    }
+
+    if (targetIndex >= 2) {
+        valid = validateInput() && valid;
+    }
+
+    return valid;
+};
+
 const togglePromptVersion = (id) => {
     const selected = form.prompt_version_ids.includes(id);
 
     if (selected) {
         form.prompt_version_ids = form.prompt_version_ids.filter((value) => value !== id);
+        delete errors.prompt_version_ids;
         syncPromptSelection();
         return;
     }
 
     if (form.mode !== 'compare') {
         form.prompt_version_ids = [id];
+        delete errors.prompt_version_ids;
         return;
     }
 
     if (form.prompt_version_ids.length >= 3) {
         form.prompt_version_ids = [...form.prompt_version_ids.slice(1), id];
+        delete errors.prompt_version_ids;
         return;
     }
 
     form.prompt_version_ids = [...form.prompt_version_ids, id];
+    delete errors.prompt_version_ids;
 };
 
 const toggleTestCase = (id) => {
@@ -267,6 +366,23 @@ const toggleTestCase = (id) => {
     }
 
     form.test_case_ids = [...form.test_case_ids, id].slice(0, 50);
+    delete errors.test_case_ids;
+};
+
+const goToStep = (stepId) => {
+    const currentIndex = stepOrder.indexOf(activeStep.value);
+    const targetIndex = stepOrder.indexOf(stepId);
+
+    if (targetIndex <= currentIndex) {
+        activeStep.value = stepId;
+        return;
+    }
+
+    if (!validateThroughStep(stepOrder[targetIndex - 1])) {
+        return;
+    }
+
+    activeStep.value = stepId;
 };
 
 const goToPreviousStep = () => {
@@ -276,13 +392,16 @@ const goToPreviousStep = () => {
 };
 
 const goToNextStep = () => {
-    if (nextStep.value) {
+    if (nextStep.value && validateThroughStep(activeStep.value)) {
         activeStep.value = nextStep.value;
     }
 };
 
 const submit = async () => {
-    clearErrors();
+    if (!validateThroughStep('input')) {
+        return;
+    }
+
     submitting.value = true;
 
     const payload = {
@@ -332,7 +451,7 @@ const submit = async () => {
                     type="button"
                     class="page-frame-tab"
                     :class="{ 'page-frame-tab-active': activeStep === tab.id }"
-                    @click="activeStep = tab.id"
+                    @click="goToStep(tab.id)"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ index + 1 }}. {{ tab.label }}</span>
@@ -367,6 +486,7 @@ const submit = async () => {
                                 {{ useCase.name }}
                             </option>
                         </select>
+                        <div v-if="errors.use_case_id" class="field-help text-[var(--danger)]">{{ errors.use_case_id }}</div>
                     </div>
 
                     <div>
@@ -390,16 +510,19 @@ const submit = async () => {
                             Real API models come from
                             <Link :href="route('admin.ai-connections')" class="font-bold text-[var(--accent)] hover:underline">AI Connections</Link>.
                         </div>
+                        <div v-if="errors.model_name" class="field-help text-[var(--danger)]">{{ errors.model_name }}</div>
                     </div>
 
                     <div>
                         <label class="field-label">Temperature</label>
                         <input v-model="form.temperature" type="number" min="0" max="2" step="0.1" class="field-input">
+                        <div v-if="errors.temperature" class="field-help text-[var(--danger)]">{{ errors.temperature }}</div>
                     </div>
 
                     <div>
                         <label class="field-label">Max tokens</label>
                         <input v-model="form.max_tokens" type="number" min="64" max="4096" step="1" class="field-input">
+                        <div v-if="errors.max_tokens" class="field-help text-[var(--danger)]">{{ errors.max_tokens }}</div>
                     </div>
                 </div>
 
@@ -488,6 +611,8 @@ const submit = async () => {
                     Select a task first to load available prompt versions.
                 </div>
 
+                <div v-if="errors.prompt_version_ids" class="field-help mt-4 text-[var(--danger)]">{{ errors.prompt_version_ids }}</div>
+
                 <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
                     <div class="text-sm text-[var(--muted)]">Step 2 of 4</div>
                     <div class="flex flex-wrap gap-3">
@@ -520,6 +645,7 @@ const submit = async () => {
                         class="field-textarea"
                         placeholder="Paste a customer message, meeting notes, ticket text, or another realistic example."
                     />
+                    <div v-if="errors.input_text" class="field-help text-[var(--danger)]">{{ errors.input_text }}</div>
                 </div>
 
                 <div v-else-if="testCaseOptions.length" class="mt-4 space-y-3">
@@ -544,6 +670,8 @@ const submit = async () => {
                     Select a task first to load saved test cases.
                 </div>
 
+                <div v-if="errors.test_case_ids" class="field-help mt-4 text-[var(--danger)]">{{ errors.test_case_ids }}</div>
+
                 <div v-if="variableSchema.length" class="mt-5">
                     <div class="label-with-icon mb-0">
                         <Variable />
@@ -564,6 +692,7 @@ const submit = async () => {
                             </div>
                         </div>
                     </div>
+                    <div v-if="errors.variables" class="field-help mt-3 text-[var(--danger)]">{{ errors.variables }}</div>
                 </div>
 
                 <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
@@ -589,8 +718,11 @@ const submit = async () => {
                     help="Final checkpoint before execution. Review selections, compiled prompt content, and batch scope here before starting the run."
                 />
 
-                <div v-if="errors.prompt_version_ids || errors.input_text || errors.test_case_ids" class="mt-4 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
-                    {{ errors.prompt_version_ids || errors.input_text || errors.test_case_ids }}
+                <div
+                    v-if="errors.use_case_id || errors.model_name || errors.temperature || errors.max_tokens || errors.prompt_version_ids || errors.input_text || errors.test_case_ids || errors.variables"
+                    class="mt-4 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]"
+                >
+                    {{ errors.use_case_id || errors.model_name || errors.temperature || errors.max_tokens || errors.prompt_version_ids || errors.input_text || errors.test_case_ids || errors.variables }}
                 </div>
 
                 <div class="mt-4 grid gap-4 lg:grid-cols-2">
