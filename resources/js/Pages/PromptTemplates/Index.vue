@@ -6,6 +6,7 @@ import FilterDropdown from '@/Components/FilterDropdown.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
 import { Bot, ClipboardList, Filter, FolderKanban, UserRound } from 'lucide-vue-next';
 import { formatDateTime, formatScore } from '@/lib/formatters';
+import { routeWithQuery } from '@/lib/urlState';
 
 const props = defineProps({
     templates: {
@@ -73,6 +74,20 @@ const hasFilters = computed(() =>
 const selectedTemplate = computed(() =>
     props.templates.find((template) => template.id === selectedTemplateId.value) ?? props.templates[0] ?? null,
 );
+const selectedTemplateRunHref = computed(() => {
+    if (!selectedTemplate.value) {
+        return route('playground');
+    }
+
+    const latestVersionId = selectedTemplate.value.versions?.at(-1)?.id ?? '';
+
+    return routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: selectedTemplate.value.use_case_id,
+        prompt_template_id: selectedTemplate.value.id,
+        prompt_version_id: latestVersionId,
+    });
+});
 
 const statusBreakdown = computed(() =>
     statuses.map((status) => ({
@@ -376,7 +391,7 @@ onBeforeUnmount(() => {
 
                                             <div class="console-page-actions">
                                                 <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Open editor</Link>
-                                                <Link :href="route('playground')" class="btn-secondary">Run template</Link>
+                                                <Link :href="selectedTemplateRunHref" class="btn-secondary">Run template</Link>
                                             </div>
                                         </div>
 

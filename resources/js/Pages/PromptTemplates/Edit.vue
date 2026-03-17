@@ -7,7 +7,7 @@ import PanelHeader from '@/Components/PanelHeader.vue';
 import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, formatScore, parseJsonInput, parseTagList, safeJsonStringify } from '@/lib/formatters';
-import { hrefWithQuery, readQueryParam, useUrlState } from '@/lib/urlState';
+import { hrefWithQuery, readQueryParam, routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     promptTemplate: {
@@ -128,6 +128,14 @@ const libraryButtonLabel = computed(() => {
 
     return currentVersion.value?.library_entry ? 'Update approval' : 'Approve for library';
 });
+const experimentsHref = computed(() =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: templateForm.use_case_id || '',
+        prompt_template_id: props.promptTemplate?.id ?? '',
+        prompt_version_id: currentVersion.value?.id ?? '',
+    }),
+);
 
 const versionReference = (version) => `#${String(version.id).padStart(4, '0')}`;
 
@@ -319,7 +327,7 @@ const promoteToLibrary = async () => {
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompts</Link>
-                    <Link :href="route('playground')" class="btn-ghost">Open experiments</Link>
+                    <Link :href="experimentsHref" class="btn-ghost">Open experiments</Link>
                 </div>
             </div>
         </template>
