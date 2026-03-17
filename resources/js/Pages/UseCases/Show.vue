@@ -13,7 +13,7 @@ import {
 } from 'lucide-vue-next';
 import { computed, reactive } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
-import { formatDateTime } from '@/lib/formatters';
+import { formatDateTime, parseJsonInput, safeJsonStringify, truncateText } from '@/lib/formatters';
 import { routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
@@ -49,8 +49,11 @@ const testCaseDefaults = (testCase = null) => ({
     input_text: '',
     expected_output: testCase?.expected_output || '',
     expected_json: { ...(testCase?.expected_json ?? {}) },
+    expected_json_text: safeJsonStringify(testCase?.expected_json ?? {}, '{}'),
     variables_json: { ...(testCase?.variables_json ?? {}) },
+    variables_json_text: safeJsonStringify(testCase?.variables_json ?? {}, '{}'),
     metadata_json: { ...(testCase?.metadata_json ?? {}) },
+    metadata_json_text: safeJsonStringify(testCase?.metadata_json ?? {}, '{}'),
     status: testCase?.status || 'active',
     ...(testCase ? {
         title: testCase.title,
@@ -77,8 +80,11 @@ const applyTestCaseState = (testCase = null) => {
     testCaseForm.input_text = nextState.input_text;
     testCaseForm.expected_output = nextState.expected_output;
     testCaseForm.expected_json = nextState.expected_json;
+    testCaseForm.expected_json_text = nextState.expected_json_text;
     testCaseForm.variables_json = nextState.variables_json;
+    testCaseForm.variables_json_text = nextState.variables_json_text;
     testCaseForm.metadata_json = nextState.metadata_json;
+    testCaseForm.metadata_json_text = nextState.metadata_json_text;
     testCaseForm.status = nextState.status;
 };
 
@@ -147,13 +153,37 @@ const saveTestCase = async () => {
     testCaseForm.processing = true;
     uiState.testCaseNotice = '';
 
+    const expectedJson = parseJsonInput(testCaseForm.expected_json_text, {});
+    const variablesJson = parseJsonInput(testCaseForm.variables_json_text, {});
+    const metadataJson = parseJsonInput(testCaseForm.metadata_json_text, {});
+
+    testCaseForm.clearErrors();
+
+    if (!expectedJson.valid || !variablesJson.valid || !metadataJson.valid) {
+        if (!expectedJson.valid) {
+            testCaseForm.setError('expected_json_text', expectedJson.error || 'Expected JSON must be valid JSON.');
+        }
+
+        if (!variablesJson.valid) {
+            testCaseForm.setError('variables_json_text', variablesJson.error || 'Variables JSON must be valid JSON.');
+        }
+
+        if (!metadataJson.valid) {
+            testCaseForm.setError('metadata_json_text', metadataJson.error || 'Metadata JSON must be valid JSON.');
+        }
+
+        uiState.testCaseNotice = 'Fix the JSON fields before saving this test case.';
+        testCaseForm.processing = false;
+        return;
+    }
+
     const payload = {
         title: testCaseForm.title,
         input_text: testCaseForm.input_text,
         expected_output: testCaseForm.expected_output || null,
-        expected_json: testCaseForm.expected_json,
-        variables_json: testCaseForm.variables_json,
-        metadata_json: testCaseForm.metadata_json,
+        expected_json: expectedJson.value,
+        variables_json: variablesJson.value,
+        metadata_json: metadataJson.value,
         status: testCaseForm.status,
     };
 
@@ -475,8 +505,20 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                 </thead>
                                 <tbody>
                                     <tr v-for="testCase in useCase.test_cases" :key="testCase.id">
-                                        <td class="font-bold">{{ testCase.title }}</td>
-                                        <td class="text-sm text-[var(--muted)]">{{ testCase.input_text }}</td>
+                                        <td>
+                                            <div class="font-bold">{{ testCase.title }}</div>
+                                            <div class="mt-2 inline-meta text-xs text-[var(--muted)]">
+                                                <span class="inline-meta-item">Expected JSON {{ Object.keys(testCase.expected_json ?? {}).length ? 'configured' : 'empty' }}</span>
+                                                <span class="inline-meta-item">Variables {{ Object.keys(testCase.variables_json ?? {}).length }}</span>
+                                                <span class="inline-meta-item">Metadata {{ Object.keys(testCase.metadata_json ?? {}).length }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="text-sm text-[var(--muted)]">{{ truncateText(testCase.input_text, 180) }}</div>
+                                            <div v-if="testCase.expected_output" class="mt-2 text-xs text-[var(--muted)]">
+                                                Expected: {{ truncateText(testCase.expected_output, 140) }}
+                                            </div>
+                                        </td>
                                         <td><span class="status-chip">{{ testCase.status }}</span></td>
                                         <td v-if="canManage" class="text-right">
                                             <div class="flex flex-wrap justify-end gap-2">
@@ -545,6 +587,37 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     <label class="field-label">Input text</label>
                                     <textarea v-model="testCaseForm.input_text" class="field-textarea"></textarea>
                                     <div v-if="testCaseForm.errors.input_text" class="field-error">{{ testCaseForm.errors.input_text }}</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Expected output</label>
+                                    <textarea v-model="testCaseForm.expected_output" class="field-textarea" placeholder="Optional reference output for reviewers."></textarea>
+                                </div>
+                                <div>
+                                    <label class="field-label">Status</label>
+                                    <select v-model="testCaseForm.status" class="field-select">
+                                        <option value="active">Active</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                    <div v-if="testCaseForm.errors.status" class="field-error">{{ testCaseForm.errors.status }}</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Expected JSON</label>
+                                    <textarea v-model="testCaseForm.expected_json_text" class="field-textarea mono" placeholder="{}"></textarea>
+                                    <div class="field-help">Optional JSON structure expected from the run.</div>
+                                    <div v-if="testCaseForm.errors.expected_json_text" class="field-error">{{ testCaseForm.errors.expected_json_text }}</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Variables JSON</label>
+                                    <textarea v-model="testCaseForm.variables_json_text" class="field-textarea mono" placeholder="{}"></textarea>
+                                    <div class="field-help">Variables passed into the prompt for this case.</div>
+                                    <div v-if="testCaseForm.errors.variables_json_text" class="field-error">{{ testCaseForm.errors.variables_json_text }}</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Metadata JSON</label>
+                                    <textarea v-model="testCaseForm.metadata_json_text" class="field-textarea mono" placeholder="{}"></textarea>
+                                    <div class="field-help">Optional notes, tags, or source metadata for this case.</div>
+                                    <div v-if="testCaseForm.errors.metadata_json_text" class="field-error">{{ testCaseForm.errors.metadata_json_text }}</div>
                                 </div>
                                 <div class="flex flex-wrap gap-3">
                                     <button class="btn-primary self-start" :disabled="testCaseForm.processing">
