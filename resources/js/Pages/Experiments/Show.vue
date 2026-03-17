@@ -1,0 +1,442 @@
+<script setup>
+import axios from 'axios';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import EvaluationPanel from '@/Components/EvaluationPanel.vue';
+import PanelHeader from '@/Components/PanelHeader.vue';
+import { Activity, BadgeCheck, Bot, ClipboardList, Clock3, Coins, FileCode2, FileText, Gauge, ListChecks, TriangleAlert } from 'lucide-vue-next';
+import { formatDateTime, formatScore, safeJsonStringify, truncateText } from '@/lib/formatters';
+
+const props = defineProps({
+    experiment: {
+        type: Object,
+        required: true,
+    },
+});
+
+const page = usePage();
+const canManageLibrary = computed(() => (page.props.auth.abilities ?? []).includes('manage_library'));
+
+const experimentState = ref(props.experiment);
+const selectedRunId = ref(props.experiment.runs?.[0]?.id ?? null);
+const activeTab = ref('results');
+const promotionMessages = reactive({});
+let pollHandle = null;
+
+watch(
+    () => props.experiment,
+    (value) => {
+        experimentState.value = value;
+
+        if (!selectedRunId.value && value.runs?.length) {
+            selectedRunId.value = value.runs[0].id;
+        }
+    },
+    { deep: true },
+);
+
+const runs = computed(() => experimentState.value.runs ?? []);
+const summary = computed(() => experimentState.value.summary ?? {});
+const isRunning = computed(() => ['queued', 'running'].includes(experimentState.value.status));
+const batchActiveRun = computed(() =>
+    runs.value.find((run) => run.id === selectedRunId.value) ?? runs.value[0] ?? null,
+);
+
+const loadExperiment = async () => {
+    const response = await axios.get(route('api.experiments.show', experimentState.value.id));
+    experimentState.value = response.data.data;
+
+    if (!selectedRunId.value && experimentState.value.runs?.length) {
+        selectedRunId.value = experimentState.value.runs[0].id;
+    }
+};
+
+const startPolling = () => {
+    if (pollHandle) {
+        return;
+    }
+
+    pollHandle = window.setInterval(() => {
+        loadExperiment();
+    }, 4000);
+};
+
+const stopPolling = () => {
+    if (!pollHandle) {
+        return;
+    }
+
+    window.clearInterval(pollHandle);
+    pollHandle = null;
+};
+
+watch(isRunning, (running) => {
+    if (running) {
+        startPolling();
+        return;
+    }
+
+    stopPolling();
+}, { immediate: true });
+
+onMounted(() => {
+    if (!window.Echo) {
+        return;
+    }
+
+    window.Echo.private(`experiments.${experimentState.value.id}`)
+        .listen('.experiment.progress', () => {
+            loadExperiment();
+        });
+});
+
+onBeforeUnmount(() => {
+    stopPolling();
+
+    if (window.Echo) {
+        window.Echo.leave(`private-experiments.${experimentState.value.id}`);
+    }
+});
+
+const promoteRun = async (run) => {
+    if (!canManageLibrary.value) {
+        return;
+    }
+
+    promotionMessages[run.id] = 'Promoting...';
+
+    try {
+        await axios.post(route('api.library-entries.store'), {
+            prompt_version_id: run.prompt_version.id,
+            recommended_model: experimentState.value.model_name,
+            best_for: experimentState.value.use_case?.name || run.prompt_version.use_case || null,
+            usage_notes: `Promoted from experiment #${experimentState.value.id}.`,
+        });
+
+        promotionMessages[run.id] = 'Promoted to library.';
+    } catch (error) {
+        promotionMessages[run.id] = error.response?.data?.message || 'Promotion failed.';
+    }
+};
+</script>
+
+<template>
+    <Head :title="`Experiment #${experiment.id}`" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight">
+                        {{ experimentState.use_case?.name || 'Ad hoc experiment' }}
+                    </h1>
+                    <div class="mt-2 inline-meta">
+                        <span class="inline-meta-item">
+                            <ListChecks />
+                            {{ experimentState.mode }}
+                        </span>
+                        <span class="inline-meta-item">
+                            <Bot />
+                            {{ experimentState.model_name }}
+                        </span>
+                        <span class="inline-meta-item">
+                            <Activity />
+                            {{ experimentState.status }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" class="btn-secondary" @click="loadExperiment">Refresh</button>
+                    <Link :href="route('playground')" class="btn-primary">New experiment</Link>
+                </div>
+            </div>
+        </template>
+
+        <div class="space-y-6">
+            <section class="panel p-5">
+                <div class="summary-strip">
+                    <div class="summary-item">
+                        <div class="summary-item-label">Progress</div>
+                        <div class="summary-item-value">{{ experimentState.completed_runs }}/{{ experimentState.total_runs }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Average score</div>
+                        <div class="summary-item-value">{{ formatScore(summary.average_manual_score) }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Format pass rate</div>
+                        <div class="summary-item-value">
+                            {{ summary.format_pass_rate != null ? `${summary.format_pass_rate}%` : 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Average latency</div>
+                        <div class="summary-item-value">
+                            {{ summary.average_latency_ms != null ? `${summary.average_latency_ms} ms` : 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel p-5">
+                <div class="page-tabs">
+                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'results' }" @click="activeTab = 'results'">
+                        Results
+                    </button>
+                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'summary' }" @click="activeTab = 'summary'">
+                        Summary
+                    </button>
+                </div>
+            </section>
+
+            <section v-if="activeTab === 'results' && experimentState.mode !== 'batch'" class="space-y-4">
+                <div v-for="run in runs" :key="run.id" class="panel p-5">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="min-w-0">
+                            <div class="font-bold">{{ run.prompt_version?.name }} {{ run.prompt_version?.version_label }}</div>
+                            <div class="mt-1 text-sm text-[var(--muted)]">
+                                {{ run.prompt_version?.use_case || experimentState.use_case?.name || 'No task' }}
+                            </div>
+                        </div>
+                        <span class="status-chip">{{ run.status }}</span>
+                    </div>
+
+                    <div class="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
+                        <div class="guide-card">
+                            <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                <Clock3 />
+                                <span>Latency</span>
+                            </div>
+                            <div class="mt-1">{{ run.latency_ms != null ? `${run.latency_ms} ms` : 'N/A' }}</div>
+                        </div>
+                        <div class="guide-card">
+                            <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                <Coins />
+                                <span>Tokens</span>
+                            </div>
+                            <div class="mt-1">{{ run.token_input ?? 'N/A' }} in / {{ run.token_output ?? 'N/A' }} out</div>
+                        </div>
+                        <div class="guide-card">
+                            <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                <BadgeCheck />
+                                <span>Format</span>
+                            </div>
+                            <div class="mt-1">{{ run.format_valid ? 'Valid' : 'Invalid' }}</div>
+                        </div>
+                        <div class="guide-card">
+                            <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                <Gauge />
+                                <span>Manual average</span>
+                            </div>
+                            <div class="mt-1">{{ formatScore(run.manual_average_score) }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="label-with-icon">
+                            <FileText />
+                            <span>Input</span>
+                        </div>
+                        <div class="guide-card mt-2 text-sm leading-6">{{ run.input_text }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="label-with-icon">
+                            <Bot />
+                            <span>Output</span>
+                        </div>
+                        <pre class="code-block mt-2">{{ run.output_text || run.error_message || 'No output yet.' }}</pre>
+                        <pre v-if="run.output_json" class="code-block mt-3">{{ safeJsonStringify(run.output_json, '{}') }}</pre>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="label-with-icon">
+                            <FileCode2 />
+                            <span>Compiled prompt</span>
+                        </div>
+                        <pre class="code-block mt-2">{{ run.compiled_prompt || 'Prompt compilation is not available yet.' }}</pre>
+                    </div>
+
+                    <div v-if="run.error_message" class="mt-4 flex items-start gap-2 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
+                        <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>{{ run.error_message }}</span>
+                    </div>
+
+                    <div class="mt-4">
+                        <EvaluationPanel :run="run" @saved="loadExperiment" />
+                    </div>
+
+                    <div v-if="canManageLibrary" class="mt-4 flex items-center justify-between gap-4">
+                        <div class="text-sm text-[var(--muted)]">
+                            {{ promotionMessages[run.id] || 'Promote this version only if the team would confidently reuse it.' }}
+                        </div>
+                        <button type="button" class="btn-secondary" @click="promoteRun(run)">
+                            Promote to library
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div v-else-if="activeTab === 'results'" class="space-y-6">
+                <section class="panel overflow-hidden">
+                    <div class="border-b border-[var(--line)] px-5 py-4">
+                        <PanelHeader
+                            title="Batch runs"
+                            description="Open a row to inspect the strongest or weakest outputs first."
+                            :icon="ListChecks"
+                        />
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Test case</th>
+                                <th>Status</th>
+                                <th>Score</th>
+                                <th>Latency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="run in runs"
+                                :key="run.id"
+                                class="cursor-pointer"
+                                @click="selectedRunId = run.id"
+                            >
+                                <td>
+                                    <div class="font-bold">{{ run.test_case?.title || `Run #${run.id}` }}</div>
+                                    <div class="mt-1 text-sm text-[var(--muted)]">{{ truncateText(run.input_text, 120) }}</div>
+                                </td>
+                                <td><span class="status-chip">{{ run.status }}</span></td>
+                                <td>{{ formatScore(run.manual_average_score) }}</td>
+                                <td>{{ run.latency_ms != null ? `${run.latency_ms} ms` : 'N/A' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section v-if="batchActiveRun" class="panel p-5">
+                    <div class="flex items-start justify-between gap-4">
+                        <PanelHeader
+                            :title="batchActiveRun.test_case?.title || `Run #${batchActiveRun.id}`"
+                            :description="`${batchActiveRun.prompt_version?.name} ${batchActiveRun.prompt_version?.version_label}`"
+                            :icon="ClipboardList"
+                        />
+                        <span class="status-chip">{{ batchActiveRun.status }}</span>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="label-with-icon">
+                            <FileText />
+                            <span>Input</span>
+                        </div>
+                        <div class="guide-card mt-2 text-sm leading-6">{{ batchActiveRun.input_text }}</div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="label-with-icon">
+                            <Bot />
+                            <span>Output</span>
+                        </div>
+                        <pre class="code-block mt-2">{{ batchActiveRun.output_text || batchActiveRun.error_message || 'No output yet.' }}</pre>
+                        <pre v-if="batchActiveRun.output_json" class="code-block mt-3">{{ safeJsonStringify(batchActiveRun.output_json, '{}') }}</pre>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="label-with-icon">
+                            <FileCode2 />
+                            <span>Compiled prompt</span>
+                        </div>
+                        <pre class="code-block mt-2">{{ batchActiveRun.compiled_prompt || 'Prompt compilation is not available yet.' }}</pre>
+                    </div>
+
+                    <div class="mt-4">
+                        <EvaluationPanel :run="batchActiveRun" @saved="loadExperiment" />
+                    </div>
+                </section>
+            </div>
+
+            <section v-if="activeTab === 'summary'" class="panel p-5">
+                <PanelHeader
+                    title="Experiment context and summary"
+                    description="Use this section to understand what settings were used and how the run behaved overall."
+                    :icon="Activity"
+                />
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <ClipboardList />
+                            <span>Run metadata</span>
+                        </div>
+                        <div class="summary-list mt-4">
+                            <div class="summary-row">
+                                <span>Mode</span>
+                                <span class="capitalize">{{ experimentState.mode }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Provider</span>
+                                <span>{{ experimentState.provider }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Model</span>
+                                <span class="mono text-xs">{{ experimentState.model_name }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Temperature</span>
+                                <span>{{ experimentState.temperature }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Max tokens</span>
+                                <span>{{ experimentState.max_tokens }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Created</span>
+                                <span>{{ formatDateTime(experimentState.created_at) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <Gauge />
+                            <span>Experiment summary</span>
+                        </div>
+                        <div class="summary-list mt-4">
+                            <div class="summary-row">
+                                <span>Evaluated runs</span>
+                                <span>{{ summary.evaluated_runs ?? 0 }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Failed runs</span>
+                                <span>{{ experimentState.failed_runs }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Total runs</span>
+                                <span>{{ experimentState.total_runs }}</span>
+                            </div>
+                        </div>
+
+                        <div v-if="Object.keys(summary.most_common_errors ?? {}).length" class="mt-4">
+                            <div class="label-with-icon">
+                                <TriangleAlert />
+                                <span>Most common errors</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(count, message) in summary.most_common_errors"
+                                    :key="message"
+                                    class="guide-card"
+                                >
+                                    <div class="font-bold">{{ message }}</div>
+                                    <div class="mt-2 text-sm text-[var(--muted)]">{{ count }} runs</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </AuthenticatedLayout>
+</template>
