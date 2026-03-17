@@ -27,6 +27,7 @@ import {
     safeJsonStringify,
     truncateText,
 } from '@/lib/formatters';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCases: {
@@ -63,9 +64,13 @@ const form = reactive({
 });
 
 const submitting = ref(false);
-const activeStep = ref('setup');
 const errors = reactive({});
 const stepOrder = ['setup', 'versions', 'input', 'review'];
+const activeStep = useUrlState({
+    key: 'step',
+    defaultValue: 'setup',
+    allowedValues: stepOrder,
+});
 
 const selectedUseCase = computed(() =>
     props.useCases.find((useCase) => useCase.id === Number(form.use_case_id)) ?? props.useCases[0] ?? null,
