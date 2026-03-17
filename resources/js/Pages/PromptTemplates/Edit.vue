@@ -7,7 +7,7 @@ import PanelHeader from '@/Components/PanelHeader.vue';
 import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, formatScore, parseJsonInput, parseTagList, safeJsonStringify } from '@/lib/formatters';
-import { useUrlState } from '@/lib/urlState';
+import { hrefWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     promptTemplate: {
@@ -183,7 +183,7 @@ const saveTemplate = async () => {
             router.reload({ only: ['promptTemplate', 'useCases', 'models'] });
         } else {
             const response = await axios.post(route('api.prompts.store'), payload);
-            router.visit(response.data.redirect_url);
+            router.visit(hrefWithQuery(response.data.redirect_url, { tab: 'template' }));
         }
     } catch (error) {
         applyServerErrors(templateForm, error);

@@ -42,3 +42,25 @@ export const useUrlState = ({ key, defaultValue, allowedValues = [], omitIf = de
 
     return state;
 };
+
+export const hrefWithQuery = (href, query = {}) => {
+    if (typeof window === 'undefined') {
+        return href;
+    }
+
+    const url = new URL(href, window.location.origin);
+
+    Object.entries(query).forEach(([key, value]) => {
+        if (isBlank(value)) {
+            url.searchParams.delete(key);
+            return;
+        }
+
+        url.searchParams.set(key, `${value}`.trim());
+    });
+
+    return `${url.pathname}${url.search}${url.hash}`;
+};
+
+export const routeWithQuery = (name, routeParams = {}, query = {}) =>
+    hrefWithQuery(route(name, routeParams), query);

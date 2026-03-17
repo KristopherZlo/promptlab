@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import RoleBadge from '@/Components/RoleBadge.vue';
 import { Building2, Plus, RefreshCcw, Shield } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
-import { useUrlState } from '@/lib/urlState';
+import { routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     currentWorkspace: {
@@ -39,14 +39,14 @@ const createWorkspace = async () => {
     notices.workspace = '';
 
     try {
-        const response = await axios.post(route('api.teams.store'), {
+        await axios.post(route('api.teams.store'), {
             name: workspaceForm.name,
             description: workspaceForm.description || null,
         });
 
         workspaceForm.reset();
         activeTab.value = 'directory';
-        router.visit(response.data.redirect_url);
+        router.visit(routeWithQuery('admin.workspaces', {}, { tab: 'directory' }));
     } catch (error) {
         applyServerErrors(workspaceForm, error);
         notices.workspace = extractServerMessage(error, 'Workspace could not be created.');
@@ -61,7 +61,7 @@ const switchWorkspace = async (workspace) => {
 
     try {
         await axios.post(route('api.teams.switch'), { team_id: workspace.id });
-        router.visit(route('admin.workspaces'));
+        router.visit(routeWithQuery('admin.workspaces', {}, { tab: activeTab.value }));
     } catch (error) {
         notices.workspace = extractServerMessage(error, 'Workspace switch failed.');
     } finally {

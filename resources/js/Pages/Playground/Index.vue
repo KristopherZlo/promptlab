@@ -27,7 +27,7 @@ import {
     safeJsonStringify,
     truncateText,
 } from '@/lib/formatters';
-import { useUrlState } from '@/lib/urlState';
+import { hrefWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCases: {
@@ -295,7 +295,7 @@ const submit = async () => {
 
     try {
         const response = await axios.post(route('api.experiments.store'), payload);
-        router.visit(response.data.redirect_url);
+        router.visit(hrefWithQuery(response.data.redirect_url, { tab: 'results' }));
     } catch (error) {
         const serverErrors = error.response?.data?.errors ?? {};
 
