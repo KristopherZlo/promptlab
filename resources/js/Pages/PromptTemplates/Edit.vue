@@ -298,7 +298,7 @@ const promoteToLibrary = async () => {
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompts</Link>
-                    <Link :href="route('playground')" class="btn-ghost">Open playground</Link>
+                    <Link :href="route('playground')" class="btn-ghost">Open experiments</Link>
                 </div>
             </div>
         </template>

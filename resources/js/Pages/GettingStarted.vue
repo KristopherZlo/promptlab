@@ -27,8 +27,8 @@ const tourSteps = [
         selectors: ['[data-tour="nav-prompt-templates"]', '[data-tour="path-prompt-templates"]'],
     },
     {
-        title: 'Run and compare in Playground',
-        body: 'Playground is the execution area for one run, compare mode, and experiment review.',
+        title: 'Run and compare in Experiments',
+        body: 'Experiments is the execution area for one run, compare mode, and experiment review.',
         selectors: ['[data-tour="nav-playground"]', '[data-tour="path-playground"]'],
     },
     {
@@ -63,9 +63,9 @@ const primaryPaths = [
     },
     {
         title: 'Run an experiment',
-        body: 'Use Playground to test one version, compare several, or review recent runs.',
+        body: 'Use Experiments to test one version, compare several, or review recent runs.',
         route: 'playground',
-        action: 'Open playground',
+        action: 'Open experiments',
         icon: FlaskConical,
         tour: 'path-playground',
     },
@@ -80,9 +80,9 @@ const supportLinks = [
         tour: 'path-library',
     },
     {
-        title: 'Team & Access',
-        body: 'Roles, AI connections, and team settings live here.',
-        route: 'team-workspace.index',
+        title: 'Users & Access',
+        body: 'Roles, workspace administration, and AI connections live in the Administration area.',
+        route: 'admin.users-access',
         icon: Shield,
         tour: 'path-team-access',
     },
@@ -134,7 +134,7 @@ const supportLinks = [
                                 <div class="flex items-start gap-3">
                                     <FlaskConical class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
                                     <div>
-                                        <div class="font-bold">3. Open Playground</div>
+                                        <div class="font-bold">3. Open Experiments</div>
                                         <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
                                             Run the prompt on real input, compare outputs, and review the result.
                                         </div>

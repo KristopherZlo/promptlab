@@ -298,13 +298,13 @@ const submit = async () => {
 </script>
 
 <template>
-    <Head title="Playground" />
+    <Head title="Experiments" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-black tracking-tight">Playground</h1>
-                <p class="mt-1 text-sm text-[var(--muted)]">Configure one experiment step by step.</p>
+                <h1 class="text-2xl font-semibold tracking-tight">Experiments</h1>
+                <p class="mt-1 text-sm text-[var(--muted)]">Configure and launch one experiment step by step.</p>
             </div>
         </template>
 
@@ -327,8 +327,8 @@ const submit = async () => {
                     </div>
 
                     <div class="flex flex-wrap gap-3">
-                        <Link :href="route('team-workspace.index')" class="btn-secondary">Team AI settings</Link>
-                        <Link :href="route('prompt-templates.index')" class="btn-ghost">Edit prompt templates</Link>
+                        <Link :href="route('admin.ai-connections')" class="btn-secondary">AI connections</Link>
+                        <Link :href="route('prompt-templates.index')" class="btn-ghost">Prompt templates</Link>
                     </div>
                 </div>
             </section>
@@ -368,7 +368,7 @@ const submit = async () => {
                         </select>
                         <div class="field-help">
                             Real API models come from
-                            <Link :href="route('team-workspace.index')" class="font-bold text-[var(--accent)] hover:underline">Team &amp; Access</Link>.
+                            <Link :href="route('admin.ai-connections')" class="font-bold text-[var(--accent)] hover:underline">AI Connections</Link>.
                         </div>
                     </div>
 

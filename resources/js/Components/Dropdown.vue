@@ -6,6 +6,10 @@ const props = defineProps({
         type: String,
         default: 'right',
     },
+    position: {
+        type: String,
+        default: 'down',
+    },
     width: {
         type: String,
         default: '48',
@@ -28,17 +32,51 @@ onUnmounted(() => document.removeEventListener('keydown', closeOnEscape));
 const widthClass = computed(() => {
     return {
         48: 'w-48',
+        56: 'w-56',
+        64: 'w-64',
     }[props.width.toString()];
 });
 
 const alignmentClasses = computed(() => {
     if (props.align === 'left') {
-        return 'ltr:origin-top-left rtl:origin-top-right start-0';
+        return 'start-0';
     } else if (props.align === 'right') {
-        return 'ltr:origin-top-right rtl:origin-top-left end-0';
+        return 'end-0';
     } else {
-        return 'origin-top';
+        return '';
     }
+});
+
+const positionClasses = computed(() => {
+    if (props.position === 'up') {
+        return 'bottom-full mb-2';
+    }
+
+    return 'top-full mt-2';
+});
+
+const originClasses = computed(() => {
+    if (props.position === 'up') {
+        if (props.align === 'left') {
+            return 'origin-bottom-left';
+        }
+
+        if (props.align === 'right') {
+            return 'origin-bottom-right';
+        }
+
+        return 'origin-bottom';
+    }
+
+    if (props.align === 'left') {
+        return 'origin-top-left';
+    }
+
+    if (props.align === 'right') {
+        return 'origin-top-right';
+    }
+
+    return 'origin-top';
 });
 
 const open = ref(false);
@@ -67,8 +105,8 @@ const open = ref(false);
         >
             <div
                 v-show="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
-                :class="[widthClass, alignmentClasses]"
+                class="absolute z-50 rounded-md shadow-lg"
+                :class="[widthClass, alignmentClasses, positionClasses, originClasses, 'max-w-[calc(100vw-1rem)]']"
                 style="display: none"
                 @click="open = false"
             >

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdministrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExperimentController;
 use App\Http\Controllers\GettingStartedController;
@@ -32,6 +33,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/start-here', [GettingStartedController::class, 'index'])->name('getting-started');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/team-workspace', [TeamWorkspaceController::class, 'index'])->name('team-workspace.index');
+    Route::prefix('/admin')->name('admin.')->group(function () {
+        Route::get('/users-access', [AdministrationController::class, 'usersAccess'])->name('users-access');
+        Route::get('/workspaces', [AdministrationController::class, 'workspaces'])->name('workspaces');
+        Route::get('/ai-connections', [AdministrationController::class, 'aiConnections'])->name('ai-connections');
+        Route::get('/audit-log', [AdministrationController::class, 'auditLog'])->name('audit-log');
+    });
     Route::get('/use-cases', [UseCaseController::class, 'index'])->name('use-cases.index');
     Route::post('/use-cases', [UseCaseController::class, 'store'])->name('use-cases.store');
     Route::get('/use-cases/{useCase}', [UseCaseController::class, 'show'])->name('use-cases.show');

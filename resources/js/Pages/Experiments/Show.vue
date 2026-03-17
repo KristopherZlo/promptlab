@@ -148,7 +148,7 @@ const promoteRun = async (run) => {
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <button type="button" class="btn-secondary" @click="loadExperiment">Refresh</button>
-                    <Link :href="route('playground')" class="btn-primary">New experiment</Link>
+                    <Link :href="route('playground')" class="btn-primary">New run</Link>
                 </div>
             </div>
         </template>

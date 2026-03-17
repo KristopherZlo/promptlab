@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
-import { BookCopy, Bot, Clock3, FileText, FolderKanban, Search, Target, UserCheck } from 'lucide-vue-next';
+import { BookCopy, Search } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
 
 const props = defineProps({
@@ -52,26 +52,26 @@ const groupedCounts = computed(() => {
         counts[key] = (counts[key] ?? 0) + 1;
     }
 
-    return Object.entries(counts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((left, right) => right.count - left.count);
+    return Object.keys(counts).length;
 });
 </script>
 
 <template>
-    <Head title="Library" />
+    <Head title="Approved Library" />
 
     <AuthenticatedLayout>
         <template #header>
-            <div>
-                <h1 class="text-2xl font-black tracking-tight">Approved Prompt Library</h1>
-                <p class="mt-1 text-sm text-[var(--muted)]">Approved prompt versions for team reuse.</p>
+            <div class="page-lead">
+                <h1 class="text-2xl font-semibold tracking-tight">Approved Library</h1>
+                <p class="mt-1 text-sm text-[var(--muted)]">
+                    Approved prompt versions ready for controlled reuse.
+                </p>
             </div>
         </template>
 
         <div class="space-y-6">
             <section class="panel p-5">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="toolbar">
                     <div class="summary-strip">
                         <div class="summary-item">
                             <div class="summary-item-label">Approved entries</div>
@@ -79,7 +79,7 @@ const groupedCounts = computed(() => {
                         </div>
                         <div class="summary-item">
                             <div class="summary-item-label">Tasks covered</div>
-                            <div class="summary-item-value">{{ groupedCounts.length }}</div>
+                            <div class="summary-item-value">{{ groupedCounts }}</div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-item-label">Visible now</div>
@@ -91,9 +91,9 @@ const groupedCounts = computed(() => {
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-3">
+                    <div class="toolbar-actions">
                         <Link :href="route('prompt-templates.index')" class="btn-secondary">Review templates</Link>
-                        <Link :href="route('playground')" class="btn-primary">Run new experiment</Link>
+                        <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
                     </div>
                 </div>
             </section>
@@ -104,76 +104,49 @@ const groupedCounts = computed(() => {
                     description="Search by task, prompt name, model, or approval note."
                     :icon="Search"
                 />
-                <div class="mt-4">
-                    <input v-model="search" type="text" class="field-input" placeholder="Task, prompt, model, or note">
+                <div class="mt-4 table-toolbar">
+                    <input v-model="search" type="text" class="field-input md:max-w-sm" placeholder="Task, prompt, model, or note">
                 </div>
             </section>
 
-            <section v-if="filteredEntries.length" class="panel p-5">
-                <PanelHeader
-                    title="Approved entries"
-                    description="These prompt versions are already approved for reuse."
-                    :icon="BookCopy"
-                />
+            <section v-if="filteredEntries.length" class="panel overflow-hidden">
+                <div class="border-b border-[var(--line)] px-5 py-4">
+                    <PanelHeader
+                        title="Approved prompt catalog"
+                        description="Dense operational catalog instead of card-based browsing."
+                        :icon="BookCopy"
+                    />
+                </div>
 
-                <div class="mt-4 space-y-4">
-                    <div v-for="entry in filteredEntries" :key="entry.id" class="guide-card">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <div class="text-lg font-black tracking-tight">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Prompt</th>
+                            <th>Task</th>
+                            <th>Recommended model</th>
+                            <th>Best for</th>
+                            <th>Approved by</th>
+                            <th>Approved at</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="entry in filteredEntries" :key="entry.id">
+                            <td>
+                                <div class="font-semibold">
                                     {{ entry.prompt_version?.name }} {{ entry.prompt_version?.version_label }}
                                 </div>
-                                <div class="mt-2 inline-meta">
-                                    <span class="inline-meta-item">
-                                        <FolderKanban />
-                                        {{ entry.prompt_version?.use_case || 'No task' }}
-                                    </span>
+                                <div class="mt-1 text-sm text-[var(--muted)]">
+                                    {{ entry.usage_notes || 'No additional usage notes.' }}
                                 </div>
-                            </div>
-                            <div class="text-right text-sm">
-                                <div class="inline-meta-item justify-end">
-                                    <Bot />
-                                    <span class="mono text-xs">{{ entry.recommended_model || 'No model override' }}</span>
-                                </div>
-                                <div class="mt-1 inline-meta-item justify-end text-[var(--muted)]">
-                                    <Clock3 />
-                                    <span>{{ formatDateTime(entry.approved_at) }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 grid gap-4 md:grid-cols-2">
-                            <div class="guide-card">
-                                <div class="text-block-title">
-                                    <Target />
-                                    <span>Best for</span>
-                                </div>
-                                <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                                    {{ entry.best_for || 'General internal use' }}
-                                </div>
-                            </div>
-                            <div class="guide-card">
-                                <div class="text-block-title">
-                                    <UserCheck />
-                                    <span>Approved by</span>
-                                </div>
-                                <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                                    {{ entry.approved_by || 'Unknown reviewer' }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <div class="label-with-icon">
-                                <FileText />
-                                <span>Usage notes</span>
-                            </div>
-                            <div class="guide-card mt-2 text-sm leading-6">
-                                {{ entry.usage_notes || 'No additional notes.' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                            </td>
+                            <td>{{ entry.prompt_version?.use_case || 'No task' }}</td>
+                            <td class="mono text-xs">{{ entry.recommended_model || 'No override' }}</td>
+                            <td class="text-sm text-[var(--muted)]">{{ entry.best_for || 'General internal use' }}</td>
+                            <td>{{ entry.approved_by || 'Unknown reviewer' }}</td>
+                            <td class="text-sm text-[var(--muted)]">{{ formatDateTime(entry.approved_at) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </section>
 
             <div v-else class="empty-state">

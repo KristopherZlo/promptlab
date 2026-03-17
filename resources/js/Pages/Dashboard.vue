@@ -35,8 +35,8 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-black tracking-tight">Dashboard</h1>
-                <p class="mt-1 text-sm text-[var(--muted)]">Recent activity, prompt quality, and review signals.</p>
+                <h1 class="text-2xl font-semibold tracking-tight">Dashboard</h1>
+                <p class="mt-1 text-sm text-[var(--muted)]">Operational summary for tasks, experiments, approvals, and quality signals.</p>
             </div>
         </template>
 
@@ -64,7 +64,7 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
 
                     <div class="flex flex-wrap gap-3">
                         <Link :href="route('use-cases.index')" class="btn-secondary">Open tasks</Link>
-                        <Link :href="route('playground')" class="btn-primary">Run experiment</Link>
+                        <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
                     </div>
                 </div>
             </section>
@@ -114,7 +114,7 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
 
                 <div class="mt-4 grid gap-4 lg:grid-cols-2">
                     <div class="panel-muted p-4">
-                        <div class="flex items-center gap-2 font-bold">
+                        <div class="flex items-center gap-2 font-semibold">
                             <AlertTriangle class="h-4 w-4 text-[var(--danger)]" />
                             Problem cases
                         </div>
@@ -138,7 +138,7 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
                         <div class="flex items-start gap-3">
                             <Medal class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
                             <div class="w-full">
-                                <div class="font-bold">Top performing prompts</div>
+                                <div class="font-semibold">Top performing prompts</div>
                                 <div class="mt-3 space-y-3">
                                     <div
                                         v-for="prompt in overview.top_performing_prompts"
@@ -165,7 +165,7 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
                         <div class="flex items-start gap-3">
                             <ClipboardList class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
                             <div class="w-full">
-                                <div class="font-bold">Most used prompts</div>
+                                <div class="font-semibold">Most used prompts</div>
                                 <div class="mt-3 space-y-3">
                                     <div
                                         v-for="prompt in overview.most_used_prompts"
@@ -192,7 +192,7 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
                         <div class="flex items-start gap-3">
                             <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-[var(--danger)]" />
                             <div class="w-full">
-                                <div class="font-bold">Failed format outputs</div>
+                                <div class="font-semibold">Failed format outputs</div>
                                 <div class="mt-3 space-y-3">
                                     <div
                                         v-for="item in overview.failed_format_outputs"
@@ -215,10 +215,10 @@ const topModel = computed(() => props.overview.top_models[0] ?? null);
                         <div class="flex items-start gap-3">
                             <Shield class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
                             <div class="w-full">
-                                <div class="font-bold">Model coverage</div>
+                                <div class="font-semibold">Model coverage</div>
                                 <div class="mt-3 space-y-3">
                                     <div v-if="topModel" class="guide-card">
-                                        <div class="font-bold">Top model right now</div>
+                                        <div class="font-semibold">Top model right now</div>
                                         <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
                                             {{ topModel.model_name }} leads with average score {{ formatScore(topModel.average_score) }}.
                                         </div>

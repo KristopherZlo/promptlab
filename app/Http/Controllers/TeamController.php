@@ -24,7 +24,7 @@ class TeamController extends Controller
                 'slug' => $team->slug,
                 'description' => $team->description,
             ],
-            'redirect_url' => route('team-workspace.index'),
+            'redirect_url' => route('admin.workspaces'),
         ], 201);
     }
 

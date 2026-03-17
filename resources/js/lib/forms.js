@@ -35,3 +35,20 @@ export const formatRoleLabel = (value) =>
         .filter(Boolean)
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
+
+export const formatPlatformRoleLabel = (value) => {
+    if (value === 'admin') {
+        return 'Platform Admin';
+    }
+
+    if (value === 'team_member') {
+        return 'Platform User';
+    }
+
+    return formatRoleLabel(value);
+};
+
+export const formatAbilityLabel = (value) =>
+    formatRoleLabel(value)
+        .replace(/\bAi\b/g, 'AI')
+        .replace(/\bLlm\b/g, 'LLM');

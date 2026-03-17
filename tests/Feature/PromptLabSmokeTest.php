@@ -145,6 +145,26 @@ class PromptLabSmokeTest extends TestCase
             ->assertOk();
 
         $this->actingAs($user)
+            ->get('/admin/users-access')
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get('/admin/workspaces')
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get('/admin/ai-connections')
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get('/admin/audit-log')
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get('/team-workspace')
+            ->assertRedirect(route('admin.users-access', absolute: false));
+
+        $this->actingAs($user)
             ->get("/experiments/{$experiment->id}")
             ->assertOk();
 

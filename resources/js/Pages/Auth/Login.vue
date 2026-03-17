@@ -30,9 +30,9 @@ const submit = () => {
         <Head title="Log in" />
 
         <div>
-            <h1 class="text-2xl font-semibold tracking-tight">Log in</h1>
+            <h1 class="text-2xl font-semibold tracking-tight">Sign in</h1>
             <p class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                Access PromptLab on this XAMPP instance to run compare tests, review outputs, and manage approved prompts.
+                Access the internal PromptLab workspace on this instance.
             </p>
         </div>
 

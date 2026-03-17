@@ -99,7 +99,7 @@ const closeCreateModal = () => {
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-black tracking-tight">Tasks</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">Tasks</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">Business tasks, saved examples, and linked prompt work.</p>
             </div>
         </template>

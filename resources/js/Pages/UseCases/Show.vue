@@ -111,7 +111,7 @@ const createTestCase = async () => {
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-black tracking-tight">{{ useCase.name }}</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">{{ useCase.name }}</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">{{ useCase.description }}</p>
                 <div class="mt-2 inline-meta">
                     <span class="inline-meta-item">
@@ -158,7 +158,7 @@ const createTestCase = async () => {
 
                     <div class="flex flex-wrap gap-3">
                         <Link :href="route('prompt-templates.create')" class="btn-secondary">New prompt template</Link>
-                        <Link :href="route('playground')" class="btn-primary">Run experiment</Link>
+                        <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
                     </div>
                 </div>
             </section>

@@ -2,54 +2,85 @@
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { BookCopy, ChevronRight, Compass, FileStack, FlaskConical, FolderKanban, LayoutDashboard, UserRound, Users } from 'lucide-vue-next';
+import {
+    BookCopy,
+    Bot,
+    Building2,
+    ChevronRight,
+    FileStack,
+    FlaskConical,
+    FolderKanban,
+    History,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Settings,
+    ShieldCheck,
+    UserRound,
+    Users,
+} from 'lucide-vue-next';
+import { formatPlatformRoleLabel, formatRoleLabel } from '@/lib/forms';
+import Dropdown from '@/Components/Dropdown.vue';
 
 const page = usePage();
 const mobileOpen = ref(false);
 const switchingTeam = ref(false);
 
-const navigationGroups = [
-    {
-        label: 'Orientation',
-        items: [
-            { label: 'Start Here', route: 'getting-started', current: ['getting-started'], icon: Compass },
-            { label: 'Dashboard', route: 'dashboard', current: ['dashboard'], icon: LayoutDashboard },
-        ],
-    },
-    {
-        label: 'Build',
-        items: [
-            { label: 'Tasks', route: 'use-cases.index', current: ['use-cases.*'], icon: FolderKanban, tour: 'nav-use-cases' },
-            { label: 'Prompt Templates', route: 'prompt-templates.index', current: ['prompt-templates.*', 'prompt-versions.*'], icon: FileStack, tour: 'nav-prompt-templates' },
-        ],
-    },
-    {
-        label: 'Run and Review',
-        items: [
-            { label: 'Playground', route: 'playground', current: ['playground', 'experiments.show'], icon: FlaskConical, tour: 'nav-playground' },
-            { label: 'Approved Library', route: 'library.index', current: ['library.*'], icon: BookCopy, tour: 'nav-library' },
-        ],
-    },
-    {
-        label: 'Workspace',
-        items: [
-            { label: 'Team & Access', route: 'team-workspace.index', current: ['team-workspace.*'], icon: Users, tour: 'nav-team-access' },
-        ],
-    },
-];
+const iconMap = {
+    dashboard: LayoutDashboard,
+    tasks: FolderKanban,
+    prompts: FileStack,
+    experiments: FlaskConical,
+    library: BookCopy,
+    'users-access': Users,
+    workspaces: Building2,
+    'ai-connections': Bot,
+    'audit-log': History,
+    profile: UserRound,
+};
 
-const user = computed(() => page.props.auth.user);
-const currentTeam = computed(() => page.props.auth.current_team);
-const teams = computed(() => page.props.auth.teams ?? []);
+const user = computed(() => page.props.auth?.user);
+const currentTeam = computed(() => page.props.auth?.current_team);
+const navigationSections = computed(() => page.props.navigation?.sections ?? []);
 const teamOptions = computed(() => {
-    if (teams.value.length) {
-        return teams.value;
+    const teams = page.props.auth?.teams ?? [];
+
+    if (teams.length) {
+        return teams;
     }
 
     return currentTeam.value ? [currentTeam.value] : [];
 });
-const flash = computed(() => page.props.flash?.success);
+
 const isActive = (item) => item.current.some((pattern) => route().current(pattern));
+const iconFor = (item) => iconMap[item.id] ?? LayoutDashboard;
+const closeMobileMenu = () => {
+    mobileOpen.value = false;
+};
+const userRoleLabel = computed(() => {
+    if (currentTeam.value?.team_role) {
+        return formatRoleLabel(currentTeam.value.team_role);
+    }
+
+    return formatPlatformRoleLabel(user.value?.platform_role);
+});
+const userInitials = computed(() => {
+    const firstName = `${user.value?.first_name ?? ''}`.trim();
+    const lastName = `${user.value?.last_name ?? ''}`.trim();
+
+    if (firstName || lastName) {
+        return `${firstName.charAt(0)}${lastName.charAt(0)}`.trim().toUpperCase();
+    }
+
+    return `${user.value?.name ?? ''}`
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join('')
+        .toUpperCase();
+});
+
 const breadcrumbItems = computed(() => {
     const component = page.component;
     const props = page.props;
@@ -58,61 +89,59 @@ const breadcrumbItems = computed(() => {
     ];
 
     if (component === 'Dashboard') {
-        items.push({ label: 'Dashboard' });
-        return items;
-    }
-
-    if (component === 'GettingStarted') {
-        items.push({ label: 'Start Here' });
-        return items;
+        return [...items, { label: 'Dashboard' }];
     }
 
     if (component === 'UseCases/Index') {
-        items.push({ label: 'Tasks' });
-        return items;
+        return [...items, { label: 'Tasks' }];
     }
 
     if (component === 'UseCases/Show') {
-        items.push({ label: 'Tasks', href: route('use-cases.index') });
-        items.push({ label: props.useCase?.name || 'Task' });
-        return items;
+        return [...items, { label: 'Tasks', href: route('use-cases.index') }, { label: props.useCase?.name || 'Task' }];
     }
 
     if (component === 'PromptTemplates/Index') {
-        items.push({ label: 'Prompt Templates' });
-        return items;
+        return [...items, { label: 'Prompt Templates' }];
     }
 
     if (component === 'PromptTemplates/Edit') {
-        items.push({ label: 'Prompt Templates', href: route('prompt-templates.index') });
-        items.push({ label: props.promptTemplate?.name || 'New Template' });
-        return items;
+        return [...items, { label: 'Prompt Templates', href: route('prompt-templates.index') }, { label: props.promptTemplate?.name || 'Template' }];
     }
 
     if (component === 'Playground/Index') {
-        items.push({ label: 'Playground' });
-        return items;
+        return [...items, { label: 'Experiments' }];
     }
 
     if (component === 'Experiments/Show') {
-        items.push({ label: 'Playground', href: route('playground') });
-        items.push({ label: props.experiment?.use_case?.name || `Experiment #${props.experiment?.id ?? ''}`.trim() });
-        return items;
+        return [...items, { label: 'Experiments', href: route('playground') }, { label: props.experiment?.use_case?.name || `Experiment #${props.experiment?.id ?? ''}`.trim() }];
     }
 
     if (component === 'Library/Index') {
-        items.push({ label: 'Approved Library' });
-        return items;
+        return [...items, { label: 'Approved Library' }];
     }
 
-    if (component === 'TeamWorkspace/Index') {
-        items.push({ label: 'Team & Access' });
-        return items;
+    if (component === 'Admin/UsersAccess') {
+        return [...items, { label: 'Administration' }, { label: 'Users & Access' }];
+    }
+
+    if (component === 'Admin/Workspaces') {
+        return [...items, { label: 'Administration' }, { label: 'Workspaces' }];
+    }
+
+    if (component === 'Admin/AiConnections') {
+        return [...items, { label: 'Administration' }, { label: 'AI Connections' }];
+    }
+
+    if (component === 'Admin/AuditLog') {
+        return [...items, { label: 'Administration' }, { label: 'Audit Log' }];
     }
 
     if (component === 'Profile/Edit') {
-        items.push({ label: 'Profile' });
-        return items;
+        return [...items, { label: 'Profile' }];
+    }
+
+    if (component === 'GettingStarted') {
+        return [...items, { label: 'Help' }];
     }
 
     return items;
@@ -138,74 +167,80 @@ const switchTeam = async (event) => {
 
 <template>
     <div class="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
-        <div class="flex min-h-screen">
-            <aside class="hidden h-screen w-[260px] shrink-0 border-r border-[var(--sidebar-line)] bg-[var(--sidebar)] text-white lg:sticky lg:top-0 lg:flex lg:flex-col lg:overflow-hidden">
-                <div class="border-b border-[var(--sidebar-line)] px-5 py-5">
-                    <Link :href="route('dashboard')" class="block">
-                        <div class="text-xl font-black tracking-tight">PromptLab</div>
-                        <div class="mt-1 text-sm text-white/70">Team prompt experimentation workspace</div>
+        <div class="shell">
+            <div v-if="mobileOpen" class="shell-overlay lg:hidden" @click="closeMobileMenu"></div>
+
+            <aside class="shell-sidebar" :class="{ 'shell-sidebar-open': mobileOpen }">
+                <div class="shell-brand">
+                    <Link :href="route('dashboard')" class="block" @click="closeMobileMenu">
+                        <div class="shell-brand-title">PromptLab</div>
+                        <div class="shell-brand-subtitle">Internal AI operations workspace</div>
                     </Link>
                 </div>
 
-                <nav class="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-                    <div>
-                        <div v-for="group in navigationGroups" :key="group.label">
-                            <div class="sidebar-group-label">{{ group.label }}</div>
-                            <div class="space-y-1">
-                                <Link
-                                    v-for="item in group.items"
-                                    :key="item.route"
-                                    :href="route(item.route)"
-                                    :data-tour="item.tour"
-                                    class="flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm font-bold transition"
-                                    :class="isActive(item)
-                                        ? 'bg-white text-[var(--sidebar)]'
-                                        : 'text-white/76 hover:bg-[var(--sidebar-hover)] hover:text-white'"
-                                >
-                                    <component :is="item.icon" class="h-4 w-4 shrink-0" />
-                                    <span>{{ item.label }}</span>
-                                </Link>
-                            </div>
+                <nav class="shell-nav">
+                    <div v-for="section in navigationSections" :key="section.id" class="shell-nav-section">
+                        <div class="shell-nav-label">{{ section.label }}</div>
+                        <div class="space-y-1">
+                            <Link
+                                v-for="item in section.items"
+                                :key="item.id"
+                                :href="route(item.route)"
+                                class="shell-nav-link"
+                                :class="{ 'shell-nav-link-active': isActive(item) }"
+                                @click="closeMobileMenu"
+                            >
+                                <component :is="iconFor(item)" class="h-4 w-4 shrink-0" />
+                                <span>{{ item.label }}</span>
+                            </Link>
                         </div>
                     </div>
                 </nav>
 
-                <div class="border-t border-[var(--sidebar-line)] px-5 py-4">
-                    <div class="mb-3">
-                        <select
-                            class="field-select sidebar-select !py-2"
-                            :value="currentTeam?.id || ''"
-                            :disabled="switchingTeam || teamOptions.length <= 1"
-                            aria-label="Switch active team"
-                            data-tour="team-switcher"
-                            @change="switchTeam"
-                        >
-                            <option v-if="!teamOptions.length" value="">
-                                No team selected
-                            </option>
-                            <option v-for="team in teamOptions" :key="team.id" :value="team.id">
-                                {{ team.name }}
-                            </option>
-                        </select>
-                    </div>
+                <div class="shell-sidebar-footer">
+                    <div class="shell-profile-row">
+                        <Dropdown align="left" position="up" width="56" content-classes="profile-menu">
+                            <template #trigger>
+                                <button type="button" class="shell-avatar-button" aria-label="Open profile menu">
+                                    <span class="shell-avatar-circle">{{ userInitials }}</span>
+                                </button>
+                            </template>
 
-                    <div class="flex items-center gap-2 text-sm font-bold">
-                        <UserRound class="h-4 w-4 shrink-0" />
-                        <span>{{ user?.name }}</span>
-                    </div>
-                    <div class="mt-1 text-sm text-white/68">{{ user?.email }}</div>
-                    <div class="mt-4 flex gap-4 text-sm">
-                        <Link :href="route('profile.edit')" class="text-white/80 hover:text-white">Profile</Link>
-                        <Link :href="route('logout')" method="post" as="button" class="text-white/80 hover:text-white">Log out</Link>
+                            <template #content>
+                                <div class="profile-menu-header">
+                                    <div class="shell-avatar-circle shell-avatar-circle-menu">{{ userInitials }}</div>
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-[var(--ink)]">{{ user?.name }}</div>
+                                        <div class="mt-1 text-sm text-[var(--muted)]">{{ userRoleLabel }}</div>
+                                    </div>
+                                </div>
+                                <div class="profile-menu-actions">
+                                    <Link :href="route('profile.edit')" class="profile-menu-link">
+                                        <Settings class="h-4 w-4" />
+                                        <span>Profile settings</span>
+                                    </Link>
+                                    <Link :href="route('logout')" method="post" as="button" class="btn-danger w-full">
+                                        <LogOut class="h-4 w-4" />
+                                        <span>Log out</span>
+                                    </Link>
+                                </div>
+                            </template>
+                        </Dropdown>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="shell-profile-name">{{ user?.name }}</div>
+                            <div class="shell-profile-role">{{ userRoleLabel }}</div>
+                        </div>
                     </div>
                 </div>
             </aside>
 
-            <div class="min-w-0 flex-1">
-                <header class="border-b border-[var(--line)] bg-white">
-                    <div class="flex items-center gap-4 px-5 py-4 lg:px-8">
-                        <button type="button" class="btn-secondary lg:hidden" @click="mobileOpen = !mobileOpen">
-                            Menu
+            <div class="shell-main">
+                <header class="shell-header">
+                    <div class="shell-header-row">
+                        <button type="button" class="shell-menu-button lg:hidden" @click="mobileOpen = !mobileOpen">
+                            <Menu class="h-4 w-4" />
+                            <span>Menu</span>
                         </button>
 
                         <div class="min-w-0 flex-1">
@@ -225,38 +260,43 @@ const switchTeam = async (event) => {
                             <slot name="header" />
                         </div>
 
-                        <div class="hidden self-end gap-3 lg:flex">
-                            <Link :href="route('playground')" class="btn-primary">Run experiment</Link>
+                        <div class="shell-header-actions">
+                            <div class="shell-team-switch">
+                                <label class="shell-meta-label">Workspace</label>
+                                <select
+                                    class="field-select shell-select"
+                                    :value="currentTeam?.id || ''"
+                                    :disabled="switchingTeam || teamOptions.length <= 1"
+                                    @change="switchTeam"
+                                >
+                                    <option v-for="team in teamOptions" :key="team.id" :value="team.id">
+                                        {{ team.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <Link :href="route('playground')" class="btn-primary">New run</Link>
                         </div>
                     </div>
 
-                    <div v-if="mobileOpen" class="border-t border-[var(--line)] px-5 py-3 lg:hidden">
-                        <div v-for="group in navigationGroups" :key="group.label" class="mt-3 first:mt-0">
-                            <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">
-                                {{ group.label }}
-                            </div>
-                            <div class="space-y-1">
-                                <Link
-                                    v-for="item in group.items"
-                                    :key="item.route"
-                                    :href="route(item.route)"
-                                    :data-tour="item.tour"
-                                    class="flex items-center gap-3 rounded-[8px] px-3 py-2 text-sm font-bold"
-                                    :class="isActive(item)
-                                        ? 'bg-[rgba(97,31,105,0.1)] text-[var(--accent)]'
-                                        : 'text-[var(--muted)] hover:bg-[var(--panel-muted)] hover:text-[var(--ink)]'"
-                                >
-                                    <component :is="item.icon" class="h-4 w-4 shrink-0" />
-                                    <span>{{ item.label }}</span>
-                                </Link>
-                            </div>
+                    <div class="shell-context-row">
+                        <div class="inline-meta text-xs">
+                            <span class="inline-meta-item">
+                                <ShieldCheck />
+                                Platform: {{ formatPlatformRoleLabel(user?.platform_role) }}
+                            </span>
+                            <span v-if="currentTeam?.team_role" class="inline-meta-item">
+                                <ShieldCheck />
+                                Workspace: {{ formatRoleLabel(currentTeam.team_role) }}
+                            </span>
+                            <span v-if="currentTeam?.slug" class="inline-meta-item mono">
+                                {{ currentTeam.slug }}
+                            </span>
                         </div>
                     </div>
                 </header>
 
-                <main class="px-5 py-6 lg:px-8">
-                    <div v-if="flash" class="panel mb-6 px-4 py-3 text-sm">{{ flash }}</div>
-
+                <main class="shell-content">
+                    <div v-if="page.props.flash?.success" class="notice-banner mb-6">{{ page.props.flash.success }}</div>
                     <slot />
                 </main>
             </div>
