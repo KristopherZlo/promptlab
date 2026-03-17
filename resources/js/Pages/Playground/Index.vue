@@ -125,6 +125,11 @@ const activePromptVersions = computed(() =>
         .map((id) => versionOptions.value.find((version) => version.id === id))
         .filter(Boolean),
 );
+const selectedModel = computed(() =>
+    props.models.find((model) => model.value === form.model_name)
+    ?? availableModels.value.find((model) => model.value === form.model_name)
+    ?? null,
+);
 const primaryVersion = computed(() => activePromptVersions.value[0] ?? null);
 const variableSchema = computed(() => primaryVersion.value?.variables_schema ?? []);
 const requiredVariableFields = computed(() =>
@@ -189,6 +194,14 @@ const selectionStats = computed(() => ({
     promptCount: form.prompt_version_ids.length,
     batchCount: form.test_case_ids.length,
 }));
+const selectedTemplateNames = computed(() =>
+    [...new Set(activePromptVersions.value.map((version) => version.template_name).filter(Boolean))],
+);
+const selectedVersionSummary = computed(() =>
+    activePromptVersions.value
+        .map((version) => `${version.template_name} ${version.version_label}`)
+        .join(', '),
+);
 
 const activeStepIndex = computed(() => stepOrder.indexOf(activeStep.value));
 const previousStep = computed(() => stepOrder[activeStepIndex.value - 1] ?? null);
@@ -733,6 +746,35 @@ const submit = async () => {
                                 <div class="font-bold">Selection summary</div>
 
                                 <div class="mt-3 space-y-3">
+                                    <div>
+                                        <div class="inline-meta-item text-sm font-bold text-[var(--muted)]">
+                                            <Eye />
+                                            <span>Source context</span>
+                                        </div>
+                                        <div class="summary-list mt-3">
+                                            <div class="summary-row">
+                                                <span>Task</span>
+                                                <span>{{ selectedUseCase?.name || 'Not selected' }}</span>
+                                            </div>
+                                            <div class="summary-row">
+                                                <span>Mode</span>
+                                                <span>{{ modeGuide.title }}</span>
+                                            </div>
+                                            <div class="summary-row">
+                                                <span>Model</span>
+                                                <span>{{ selectedModel?.label || 'Not selected' }}</span>
+                                            </div>
+                                            <div class="summary-row">
+                                                <span>Templates</span>
+                                                <span>{{ selectedTemplateNames.join(', ') || 'No templates selected' }}</span>
+                                            </div>
+                                            <div class="summary-row">
+                                                <span>Versions</span>
+                                                <span>{{ selectedVersionSummary || 'No versions selected' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <div class="inline-meta-item text-sm font-bold text-[var(--muted)]">
                                             <Layers3 />
