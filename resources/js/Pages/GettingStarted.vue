@@ -104,9 +104,14 @@ const supportLinks = [
 
         <div class="space-y-6">
             <section class="panel p-6">
-                <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <PanelHeader
+                    title="Recommended order"
+                    description="Short guidance for the normal path through the product."
+                    help="Explains the shortest working path for most teams: start from tasks, move to prompt templates, then execute in experiments."
+                />
+
+                <div class="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div class="min-w-0 flex-1">
-                        <h2 class="section-title">Use this order</h2>
                         <ol class="mt-4 grid gap-3 lg:grid-cols-3">
                             <li class="guide-card">
                                 <div class="flex items-start gap-3">
@@ -156,6 +161,7 @@ const supportLinks = [
                 <PanelHeader
                     title="Main areas"
                     description="These are the only pages most teams need day to day."
+                    help="Highlights the primary day-to-day pages used for operational work."
                 />
 
                 <div class="mt-4 grid gap-4 md:grid-cols-3">
@@ -177,6 +183,7 @@ const supportLinks = [
                 <PanelHeader
                     title="Other pages"
                     description="Open these when you need approved prompts or workspace setup."
+                    help="Covers the secondary pages used for approved prompt reuse and administrative configuration."
                 />
 
                 <div class="mt-4 grid gap-4 md:grid-cols-2">

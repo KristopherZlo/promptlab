@@ -2,8 +2,10 @@
 import { computed, ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import FilterDropdown from '@/Components/FilterDropdown.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
-import { History, Search } from 'lucide-vue-next';
+import SearchFilterBar from '@/Components/SearchFilterBar.vue';
+import { History } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
 
 const props = defineProps({
@@ -59,9 +61,15 @@ const filteredEntries = computed(() => {
             </div>
         </template>
 
-        <div class="space-y-6">
+        <div class="page-frame-content">
             <section class="panel p-5">
-                <div class="toolbar">
+                <PanelHeader
+                    title="Audit snapshot"
+                    description="Visible event totals for the current workspace and the active filter result."
+                    help="Summarizes audit volume so administrators can quickly see how much activity is loaded and how much remains after filtering."
+                />
+
+                <div class="toolbar mt-4">
                     <div class="summary-strip">
                         <div class="summary-item">
                             <div class="summary-item-label">Workspace</div>
@@ -83,31 +91,33 @@ const filteredEntries = computed(() => {
                 </div>
             </section>
 
-            <section class="panel p-4">
-                <PanelHeader
-                    title="Filter audit entries"
-                    description="Filter by action or search across actors, subjects, and payload details."
-                    :icon="Search"
-                />
-
-                <div class="mt-4 table-toolbar">
-                    <input v-model="search" type="text" class="field-input md:max-w-sm" placeholder="Search actor, action, or subject">
-                    <select v-model="action" class="field-select md:max-w-[220px]">
-                        <option value="">All actions</option>
-                        <option v-for="item in actions" :key="item" :value="item">
-                            {{ item }}
-                        </option>
-                    </select>
-                </div>
-            </section>
-
             <section class="panel overflow-hidden">
                 <div class="border-b border-[var(--line)] px-5 py-4">
                     <PanelHeader
                         title="Administrative events"
                         description="A compact record of who changed what and when."
                         :icon="History"
+                        help="Main audit table for tracing administrative actions, who performed them, and when they happened."
                     />
+                </div>
+
+                <div class="px-5 py-4">
+                    <SearchFilterBar
+                        :model-value="search"
+                        placeholder="Search actor, action, or subject..."
+                        @update:model-value="search = $event"
+                    >
+                        <FilterDropdown
+                            label="Action"
+                            :icon="History"
+                            :options="actions.map((item) => ({ label: item, value: item }))"
+                            :selected="action"
+                            :selected-label="action"
+                            width="240px"
+                            @select="action = $event"
+                            @clear="action = ''"
+                        />
+                    </SearchFilterBar>
                 </div>
 
                 <table class="data-table">

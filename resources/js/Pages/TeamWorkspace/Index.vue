@@ -60,6 +60,24 @@ const editingConnectionId = ref(null);
 const activeTab = ref('members');
 const memberRemoval = useUndoableAction();
 const connectionRemoval = useUndoableAction();
+const tabs = computed(() => {
+    const items = [
+        { id: 'members', label: 'Members', icon: Users },
+        { id: 'roles', label: 'Roles', icon: Shield },
+    ];
+
+    if (canManageConnections.value) {
+        items.push({ id: 'connections', label: 'AI connections', icon: Bot });
+    }
+
+    if (canViewAudit.value) {
+        items.push({ id: 'audit', label: 'Audit', icon: History });
+    }
+
+    items.push({ id: 'team', label: 'Workspace', icon: Settings2 });
+
+    return items;
+});
 
 const roleDescriptions = {
     owner: 'Full control over the team, people, AI connections, and approvals.',
@@ -243,7 +261,22 @@ const scheduleConnectionRemoval = (connection) => {
             </div>
         </template>
 
-        <div class="space-y-6">
+        <div class="page-frame">
+            <aside class="page-frame-rail">
+                <button
+                    v-for="tab in tabs"
+                    :key="tab.id"
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    @click="activeTab = tab.id"
+                >
+                    <component :is="tab.icon" class="h-4 w-4 shrink-0" />
+                    <span>{{ tab.label }}</span>
+                </button>
+            </aside>
+
+            <div class="page-frame-content">
             <section class="panel p-5">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div class="summary-strip">
@@ -269,23 +302,6 @@ const scheduleConnectionRemoval = (connection) => {
                         <Link :href="route('dashboard')" class="btn-secondary">Back to workspace</Link>
                         <Link :href="route('playground')" class="btn-primary">Run experiment</Link>
                     </div>
-                </div>
-            </section>
-
-            <section class="panel p-5">
-                <div class="page-tabs">
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'members' }" @click="activeTab = 'members'">
-                        Members
-                    </button>
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'connections' }" @click="activeTab = 'connections'">
-                        AI connections
-                    </button>
-                    <button v-if="canViewAudit" type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'audit' }" @click="activeTab = 'audit'">
-                        Audit
-                    </button>
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'team' }" @click="activeTab = 'team'">
-                        Team
-                    </button>
                 </div>
             </section>
 
@@ -411,7 +427,7 @@ const scheduleConnectionRemoval = (connection) => {
                 </form>
             </section>
 
-            <section v-if="activeTab === 'members'" class="panel p-5">
+            <section v-if="activeTab === 'roles'" class="panel p-5">
                 <PanelHeader
                     title="Team roles"
                     description="Roles separate administration from prompt authoring and review."
@@ -620,6 +636,7 @@ const scheduleConnectionRemoval = (connection) => {
                     </button>
                 </form>
             </section>
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>

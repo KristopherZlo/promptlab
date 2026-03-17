@@ -35,6 +35,16 @@ class PromptTemplateController extends Controller
             }
         }
 
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+
+            $query->where(function ($builder) use ($search): void {
+                $builder
+                    ->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
+            });
+        }
+
         if ($request->filled('author')) {
             $query->whereHas('creator', fn ($builder) => $builder->where('name', 'like', '%'.$request->input('author').'%'));
         }
@@ -47,7 +57,7 @@ class PromptTemplateController extends Controller
 
         return Inertia::render('PromptTemplates/Index', [
             'templates' => PromptTemplateResource::collection($templates)->resolve(),
-            'filters' => $request->only(['use_case_id', 'task_type', 'status', 'author', 'preferred_model']),
+            'filters' => $request->only(['search', 'use_case_id', 'task_type', 'status', 'author', 'preferred_model']),
             'useCases' => UseCase::orderBy('name')->get(['id', 'name']),
         ]);
     }

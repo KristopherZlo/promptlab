@@ -7,6 +7,7 @@ import {
     Bot,
     Building2,
     ChevronRight,
+    Compass,
     FileStack,
     FlaskConical,
     FolderKanban,
@@ -37,11 +38,37 @@ const iconMap = {
     'ai-connections': Bot,
     'audit-log': History,
     profile: UserRound,
+    'team-workspace': ShieldCheck,
+    guide: Compass,
+};
+
+const dataTourMap = {
+    tasks: 'nav-use-cases',
+    prompts: 'nav-prompt-templates',
+    experiments: 'nav-playground',
+    library: 'nav-library',
+    'team-workspace': 'nav-team-access',
 };
 
 const user = computed(() => page.props.auth?.user);
 const currentTeam = computed(() => page.props.auth?.current_team);
 const navigationSections = computed(() => page.props.navigation?.sections ?? []);
+
+const workspaceTools = computed(() => [
+    {
+        id: 'team-workspace',
+        label: 'Workspace Settings',
+        route: 'team-workspace.index',
+        current: ['team-workspace.index'],
+    },
+    {
+        id: 'guide',
+        label: 'Start Here',
+        route: 'getting-started',
+        current: ['getting-started'],
+    },
+]);
+
 const teamOptions = computed(() => {
     const teams = page.props.auth?.teams ?? [];
 
@@ -54,9 +81,29 @@ const teamOptions = computed(() => {
 
 const isActive = (item) => item.current.some((pattern) => route().current(pattern));
 const iconFor = (item) => iconMap[item.id] ?? LayoutDashboard;
-const closeMobileMenu = () => {
-    mobileOpen.value = false;
-};
+const dataTourFor = (item) => dataTourMap[item.id] ?? null;
+
+const currentSection = computed(() => navigationSections.value.find((section) => section.items.some(isActive)) ?? null);
+const currentItem = computed(() =>
+    currentSection.value?.items.find(isActive)
+    ?? workspaceTools.value.find(isActive)
+    ?? navigationSections.value.flatMap((section) => section.items).find(isActive)
+    ?? null,
+);
+const breadcrumbs = computed(() => {
+    const items = [{ label: currentTeam.value?.name || 'Workspace' }];
+
+    if (currentSection.value?.label && currentSection.value.label !== currentItem.value?.label) {
+        items.push({ label: currentSection.value.label });
+    }
+
+    if (currentItem.value?.label) {
+        items.push({ label: currentItem.value.label });
+    }
+
+    return items;
+});
+
 const userRoleLabel = computed(() => {
     if (currentTeam.value?.team_role) {
         return formatRoleLabel(currentTeam.value.team_role);
@@ -64,6 +111,7 @@ const userRoleLabel = computed(() => {
 
     return formatPlatformRoleLabel(user.value?.platform_role);
 });
+
 const userInitials = computed(() => {
     const firstName = `${user.value?.first_name ?? ''}`.trim();
     const lastName = `${user.value?.last_name ?? ''}`.trim();
@@ -81,71 +129,15 @@ const userInitials = computed(() => {
         .toUpperCase();
 });
 
-const breadcrumbItems = computed(() => {
-    const component = page.component;
-    const props = page.props;
-    const items = [
-        { label: 'PromptLab', href: route('dashboard') },
-    ];
-
-    if (component === 'Dashboard') {
-        return [...items, { label: 'Dashboard' }];
-    }
-
-    if (component === 'UseCases/Index') {
-        return [...items, { label: 'Tasks' }];
-    }
-
-    if (component === 'UseCases/Show') {
-        return [...items, { label: 'Tasks', href: route('use-cases.index') }, { label: props.useCase?.name || 'Task' }];
-    }
-
-    if (component === 'PromptTemplates/Index') {
-        return [...items, { label: 'Prompt Templates' }];
-    }
-
-    if (component === 'PromptTemplates/Edit') {
-        return [...items, { label: 'Prompt Templates', href: route('prompt-templates.index') }, { label: props.promptTemplate?.name || 'Template' }];
-    }
-
-    if (component === 'Playground/Index') {
-        return [...items, { label: 'Experiments' }];
-    }
-
-    if (component === 'Experiments/Show') {
-        return [...items, { label: 'Experiments', href: route('playground') }, { label: props.experiment?.use_case?.name || `Experiment #${props.experiment?.id ?? ''}`.trim() }];
-    }
-
-    if (component === 'Library/Index') {
-        return [...items, { label: 'Approved Library' }];
-    }
-
-    if (component === 'Admin/UsersAccess') {
-        return [...items, { label: 'Administration' }, { label: 'Users & Access' }];
-    }
-
-    if (component === 'Admin/Workspaces') {
-        return [...items, { label: 'Administration' }, { label: 'Workspaces' }];
-    }
-
-    if (component === 'Admin/AiConnections') {
-        return [...items, { label: 'Administration' }, { label: 'AI Connections' }];
-    }
-
-    if (component === 'Admin/AuditLog') {
-        return [...items, { label: 'Administration' }, { label: 'Audit Log' }];
-    }
-
-    if (component === 'Profile/Edit') {
-        return [...items, { label: 'Profile' }];
-    }
-
-    if (component === 'GettingStarted') {
-        return [...items, { label: 'Help' }];
-    }
-
-    return items;
-});
+const teamInitials = computed(() =>
+    `${currentTeam.value?.name ?? 'Workspace'}`
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join('')
+        .toUpperCase(),
+);
 
 const switchTeam = async (event) => {
     const teamId = Number(event.target.value);
@@ -163,31 +155,72 @@ const switchTeam = async (event) => {
         switchingTeam.value = false;
     }
 };
+
+const closeMobileMenu = () => {
+    mobileOpen.value = false;
+};
 </script>
 
 <template>
     <div class="min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
-        <div class="shell">
-            <div v-if="mobileOpen" class="shell-overlay lg:hidden" @click="closeMobileMenu"></div>
+        <div class="app-shell">
+            <div v-if="mobileOpen" class="app-overlay" @click="closeMobileMenu"></div>
 
-            <aside class="shell-sidebar" :class="{ 'shell-sidebar-open': mobileOpen }">
-                <div class="shell-brand">
-                    <Link :href="route('dashboard')" class="block" @click="closeMobileMenu">
-                        <div class="shell-brand-title">PromptLab</div>
-                        <div class="shell-brand-subtitle">Internal AI operations workspace</div>
+            <aside class="app-sidebar" :class="{ 'app-sidebar-open': mobileOpen }">
+                <div class="app-sidebar-head">
+                    <Link :href="route('dashboard')" class="app-brand" @click="closeMobileMenu">
+                        <span class="app-brand-mark">{{ teamInitials }}</span>
+                        <div class="min-w-0">
+                            <div class="app-brand-title">PromptFactory</div>
+                            <div class="app-brand-meta">{{ currentTeam?.name || 'Personal workspace' }}</div>
+                        </div>
                     </Link>
                 </div>
 
-                <nav class="shell-nav">
-                    <div v-for="section in navigationSections" :key="section.id" class="shell-nav-section">
-                        <div class="shell-nav-label">{{ section.label }}</div>
+                <div class="app-sidebar-block">
+                    <label class="field-label mb-2">Workspace</label>
+                    <select
+                        data-tour="team-switcher"
+                        class="field-select"
+                        :value="currentTeam?.id || ''"
+                        :disabled="switchingTeam || teamOptions.length <= 1"
+                        @change="switchTeam"
+                    >
+                        <option v-for="team in teamOptions" :key="team.id" :value="team.id">
+                            {{ team.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <nav class="app-sidebar-nav">
+                    <div v-for="section in navigationSections" :key="section.id" class="app-nav-group">
+                        <div class="app-nav-group-label">{{ section.label }}</div>
                         <div class="space-y-1">
                             <Link
                                 v-for="item in section.items"
                                 :key="item.id"
                                 :href="route(item.route)"
-                                class="shell-nav-link"
-                                :class="{ 'shell-nav-link-active': isActive(item) }"
+                                class="app-nav-item"
+                                :class="{ 'app-nav-item-active': isActive(item) }"
+                                :data-tour="dataTourFor(item)"
+                                @click="closeMobileMenu"
+                            >
+                                <component :is="iconFor(item)" class="h-4 w-4 shrink-0" />
+                                <span>{{ item.label }}</span>
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div class="app-nav-group">
+                        <div class="app-nav-group-label">Tools</div>
+                        <div class="space-y-1">
+                            <Link
+                                v-for="item in workspaceTools"
+                                :key="item.id"
+                                :href="route(item.route)"
+                                class="app-nav-item"
+                                :class="{ 'app-nav-item-active': isActive(item) }"
+                                :data-tour="dataTourFor(item)"
                                 @click="closeMobileMenu"
                             >
                                 <component :is="iconFor(item)" class="h-4 w-4 shrink-0" />
@@ -197,107 +230,75 @@ const switchTeam = async (event) => {
                     </div>
                 </nav>
 
-                <div class="shell-sidebar-footer">
-                    <div class="shell-profile-row">
-                        <Dropdown align="left" position="up" width="56" content-classes="profile-menu">
-                            <template #trigger>
-                                <button type="button" class="shell-avatar-button" aria-label="Open profile menu">
-                                    <span class="shell-avatar-circle">{{ userInitials }}</span>
-                                </button>
-                            </template>
-
-                            <template #content>
-                                <div class="profile-menu-header">
-                                    <div class="shell-avatar-circle shell-avatar-circle-menu">{{ userInitials }}</div>
-                                    <div class="min-w-0">
-                                        <div class="font-semibold text-[var(--ink)]">{{ user?.name }}</div>
-                                        <div class="mt-1 text-sm text-[var(--muted)]">{{ userRoleLabel }}</div>
-                                    </div>
-                                </div>
-                                <div class="profile-menu-actions">
-                                    <Link :href="route('profile.edit')" class="profile-menu-link">
-                                        <Settings class="h-4 w-4" />
-                                        <span>Profile settings</span>
-                                    </Link>
-                                    <Link :href="route('logout')" method="post" as="button" class="btn-danger w-full">
-                                        <LogOut class="h-4 w-4" />
-                                        <span>Log out</span>
-                                    </Link>
-                                </div>
-                            </template>
-                        </Dropdown>
-
-                        <div class="min-w-0 flex-1">
-                            <div class="shell-profile-name">{{ user?.name }}</div>
-                            <div class="shell-profile-role">{{ userRoleLabel }}</div>
-                        </div>
-                    </div>
-                </div>
             </aside>
 
-            <div class="shell-main">
-                <header class="shell-header">
-                    <div class="shell-header-row">
-                        <button type="button" class="shell-menu-button lg:hidden" @click="mobileOpen = !mobileOpen">
-                            <Menu class="h-4 w-4" />
-                            <span>Menu</span>
-                        </button>
-
-                        <div class="min-w-0 flex-1">
-                            <nav v-if="breadcrumbItems.length" class="breadcrumbs">
-                                <template v-for="(item, index) in breadcrumbItems" :key="`${item.label}-${index}`">
-                                    <ChevronRight v-if="index > 0" class="breadcrumb-separator" />
-                                    <Link
-                                        v-if="item.href && index < breadcrumbItems.length - 1"
-                                        :href="item.href"
-                                        class="breadcrumb-link"
-                                    >
+            <div class="app-main">
+                <header class="app-topbar">
+                    <div class="app-topbar-row">
+                        <div class="app-topbar-path">
+                            <button type="button" class="app-mobile-button" @click="mobileOpen = !mobileOpen">
+                                <Menu class="h-4 w-4" />
+                                <span>Menu</span>
+                            </button>
+                            <nav class="app-breadcrumb">
+                                <template v-for="(item, index) in breadcrumbs" :key="`${item.label}-${index}`">
+                                    <ChevronRight v-if="index > 0" class="h-3.5 w-3.5" />
+                                    <span :class="{ 'app-breadcrumb-current': index === breadcrumbs.length - 1 }">
                                         {{ item.label }}
-                                    </Link>
-                                    <span v-else class="breadcrumb-current">{{ item.label }}</span>
+                                    </span>
                                 </template>
                             </nav>
-                            <slot name="header" />
                         </div>
 
-                        <div class="shell-header-actions">
-                            <div class="shell-team-switch">
-                                <label class="shell-meta-label">Workspace</label>
-                                <select
-                                    class="field-select shell-select"
-                                    :value="currentTeam?.id || ''"
-                                    :disabled="switchingTeam || teamOptions.length <= 1"
-                                    @change="switchTeam"
-                                >
-                                    <option v-for="team in teamOptions" :key="team.id" :value="team.id">
-                                        {{ team.name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <Link :href="route('playground')" class="btn-primary">New run</Link>
-                        </div>
-                    </div>
+                        <div class="app-topbar-actions">
+                            <Dropdown align="right" width="56" content-classes="profile-menu">
+                                <template #trigger>
+                                    <button type="button" class="app-user-trigger" aria-label="Open user menu">
+                                        <span class="app-avatar">{{ userInitials }}</span>
+                                        <div class="app-user-copy">
+                                            <div class="app-user-name">{{ user?.name }}</div>
+                                            <div class="app-user-role">{{ userRoleLabel }}</div>
+                                        </div>
+                                    </button>
+                                </template>
 
-                    <div class="shell-context-row">
-                        <div class="inline-meta text-xs">
-                            <span class="inline-meta-item">
-                                <ShieldCheck />
-                                Platform: {{ formatPlatformRoleLabel(user?.platform_role) }}
-                            </span>
-                            <span v-if="currentTeam?.team_role" class="inline-meta-item">
-                                <ShieldCheck />
-                                Workspace: {{ formatRoleLabel(currentTeam.team_role) }}
-                            </span>
-                            <span v-if="currentTeam?.slug" class="inline-meta-item mono">
-                                {{ currentTeam.slug }}
-                            </span>
+                                <template #content>
+                                    <div class="profile-menu-header">
+                                        <div class="app-avatar app-avatar-large">{{ userInitials }}</div>
+                                        <div class="min-w-0">
+                                            <div class="font-semibold text-[var(--ink)]">{{ user?.name }}</div>
+                                            <div class="mt-1 text-sm text-[var(--muted)]">{{ userRoleLabel }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="profile-menu-actions">
+                                        <Link :href="route('profile.edit')" class="profile-menu-link">
+                                            <Settings class="h-4 w-4" />
+                                            <span>Profile</span>
+                                        </Link>
+                                        <Link :href="route('logout')" method="post" as="button" class="btn-danger w-full">
+                                            <LogOut class="h-4 w-4" />
+                                            <span>Log out</span>
+                                        </Link>
+                                    </div>
+                                </template>
+                            </Dropdown>
                         </div>
                     </div>
                 </header>
 
-                <main class="shell-content">
-                    <div v-if="page.props.flash?.success" class="notice-banner mb-6">{{ page.props.flash.success }}</div>
-                    <slot />
+                <main class="app-page">
+                    <section class="app-page-card">
+                        <div class="app-page-card-head">
+                            <div class="app-page-header">
+                                <slot name="header" />
+                            </div>
+                        </div>
+
+                        <div class="app-page-card-body">
+                            <div v-if="page.props.flash?.success" class="notice-banner">{{ page.props.flash.success }}</div>
+                            <slot />
+                        </div>
+                    </section>
                 </main>
             </div>
         </div>

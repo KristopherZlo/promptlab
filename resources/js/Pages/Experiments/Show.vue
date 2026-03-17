@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import EvaluationPanel from '@/Components/EvaluationPanel.vue';
+import HelpHint from '@/Components/HelpHint.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import { Activity, BadgeCheck, Bot, ClipboardList, Clock3, Coins, FileCode2, FileText, Gauge, ListChecks, TriangleAlert } from 'lucide-vue-next';
 import { formatDateTime, formatScore, safeJsonStringify, truncateText } from '@/lib/formatters';
@@ -23,6 +24,10 @@ const selectedRunId = ref(props.experiment.runs?.[0]?.id ?? null);
 const activeTab = ref('results');
 const promotionMessages = reactive({});
 let pollHandle = null;
+const tabItems = [
+    { id: 'results', label: 'Results', icon: ListChecks },
+    { id: 'summary', label: 'Summary', icon: Activity },
+];
 
 watch(
     () => props.experiment,
@@ -153,9 +158,30 @@ const promoteRun = async (run) => {
             </div>
         </template>
 
-        <div class="space-y-6">
+        <div class="page-frame">
+            <aside class="page-frame-rail">
+                <button
+                    v-for="tab in tabItems"
+                    :key="tab.id"
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    @click="activeTab = tab.id"
+                >
+                    <component :is="tab.icon" class="h-4 w-4 shrink-0" />
+                    <span>{{ tab.label }}</span>
+                </button>
+            </aside>
+
+            <div class="page-frame-content">
             <section class="panel p-5">
-                <div class="summary-strip">
+                <PanelHeader
+                    title="Experiment snapshot"
+                    description="Current progress, quality, and runtime signals for this experiment."
+                    help="Shows the high-level progress and quality metrics for the experiment so reviewers can understand overall status before drilling into individual runs."
+                />
+
+                <div class="summary-strip mt-4">
                     <div class="summary-item">
                         <div class="summary-item-label">Progress</div>
                         <div class="summary-item-value">{{ experimentState.completed_runs }}/{{ experimentState.total_runs }}</div>
@@ -179,17 +205,6 @@ const promoteRun = async (run) => {
                 </div>
             </section>
 
-            <section class="panel p-5">
-                <div class="page-tabs">
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'results' }" @click="activeTab = 'results'">
-                        Results
-                    </button>
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'summary' }" @click="activeTab = 'summary'">
-                        Summary
-                    </button>
-                </div>
-            </section>
-
             <section v-if="activeTab === 'results' && experimentState.mode !== 'batch'" class="space-y-4">
                 <div v-for="run in runs" :key="run.id" class="panel p-5">
                     <div class="flex items-start justify-between gap-4">
@@ -199,7 +214,13 @@ const promoteRun = async (run) => {
                                 {{ run.prompt_version?.use_case || experimentState.use_case?.name || 'No task' }}
                             </div>
                         </div>
-                        <span class="status-chip">{{ run.status }}</span>
+                        <div class="flex items-center gap-3">
+                            <HelpHint
+                                text="This run card contains one prompt version output, its compiled prompt, runtime metrics, and evaluation controls."
+                                :label="`Help for run ${run.id}`"
+                            />
+                            <span class="status-chip">{{ run.status }}</span>
+                        </div>
                     </div>
 
                     <div class="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
@@ -285,6 +306,7 @@ const promoteRun = async (run) => {
                             title="Batch runs"
                             description="Open a row to inspect the strongest or weakest outputs first."
                             :icon="ListChecks"
+                            help="Lists every batch result so reviewers can pick a saved case and inspect its output in detail."
                         />
                     </div>
                     <table class="data-table">
@@ -321,6 +343,7 @@ const promoteRun = async (run) => {
                             :title="batchActiveRun.test_case?.title || `Run #${batchActiveRun.id}`"
                             :description="`${batchActiveRun.prompt_version?.name} ${batchActiveRun.prompt_version?.version_label}`"
                             :icon="ClipboardList"
+                            help="Shows the currently selected batch result, including the input, output, compiled prompt, and evaluation tools for that case."
                         />
                         <span class="status-chip">{{ batchActiveRun.status }}</span>
                     </div>
@@ -361,6 +384,7 @@ const promoteRun = async (run) => {
                     title="Experiment context and summary"
                     description="Use this section to understand what settings were used and how the run behaved overall."
                     :icon="Activity"
+                    help="Explains the experiment configuration and aggregates the most important result signals after execution."
                 />
 
                 <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -437,6 +461,7 @@ const promoteRun = async (run) => {
                 </div>
 
             </section>
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>

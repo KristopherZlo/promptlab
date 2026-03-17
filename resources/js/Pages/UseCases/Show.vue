@@ -1,9 +1,16 @@
 <script setup>
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import PanelHeader from '@/Components/PanelHeader.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { CalendarClock, FileStack, FlaskConical, FolderKanban, Settings2, UserRound } from 'lucide-vue-next';
+import {
+    CalendarClock,
+    FileStack,
+    FlaskConical,
+    FolderKanban,
+    LayoutDashboard,
+    Settings2,
+    UserRound,
+} from 'lucide-vue-next';
 import { reactive, ref } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime } from '@/lib/formatters';
@@ -50,6 +57,7 @@ const uiState = reactive({
     useCaseNotice: '',
     testCaseNotice: '',
 });
+
 const activeTab = ref('overview');
 
 const saveUseCase = async () => {
@@ -103,6 +111,14 @@ const createTestCase = async () => {
         testCaseForm.processing = false;
     }
 };
+
+const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'templates', label: 'Templates', icon: FileStack },
+    { id: 'experiments', label: 'Experiments', icon: FlaskConical },
+    { id: 'test-cases', label: 'Test cases', icon: FolderKanban },
+    { id: 'settings', label: 'Settings', icon: Settings2, manageOnly: true },
+];
 </script>
 
 <template>
@@ -111,9 +127,11 @@ const createTestCase = async () => {
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-semibold tracking-tight">{{ useCase.name }}</h1>
-                <p class="mt-1 text-sm text-[var(--muted)]">{{ useCase.description }}</p>
-                <div class="mt-2 inline-meta">
+                <h1>{{ useCase.name }}</h1>
+                <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
+                    One task, split into separate views for overview, prompt work, experiments, reusable cases, and configuration.
+                </p>
+                <div class="mt-3 inline-meta">
                     <span class="inline-meta-item">
                         <UserRound />
                         {{ useCase.created_by || 'Unknown owner' }}
@@ -134,68 +152,116 @@ const createTestCase = async () => {
             </div>
         </template>
 
-        <div class="space-y-6">
-            <section class="panel p-5">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="summary-strip">
-                        <div class="summary-item">
-                            <div class="summary-item-label">Prompt templates</div>
-                            <div class="summary-item-value">{{ detail.prompt_templates_count }}</div>
+        <div class="page-frame">
+            <aside class="page-frame-rail">
+                <button
+                    v-for="tab in tabs.filter((item) => !item.manageOnly || canManage)"
+                    :key="tab.id"
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    @click="activeTab = tab.id"
+                >
+                    <component :is="tab.icon" class="h-4 w-4 shrink-0" />
+                    <span>{{ tab.label }}</span>
+                </button>
+            </aside>
+
+            <div class="page-frame-content">
+                <section class="surface-block">
+                    <div class="surface-block-header">
+                        <div>
+                            <h2 class="section-title">Task status</h2>
+                            <p class="text-sm text-[var(--muted)]">Keep high-level maturity signals in one stable area while the detailed work happens in tabs.</p>
                         </div>
-                        <div class="summary-item">
-                            <div class="summary-item-label">Test cases</div>
-                            <div class="summary-item-value">{{ detail.test_cases_count }}</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-item-label">Runs</div>
-                            <div class="summary-item-value">{{ detail.runs_count }}</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-item-label">Average score</div>
-                            <div class="summary-item-value">{{ detail.average_score?.toFixed(1) || 'N/A' }}</div>
+                        <div class="console-page-actions">
+                            <Link
+                                v-if="canManage && activeTab !== 'templates'"
+                                :href="route('prompt-templates.create')"
+                                class="btn-secondary"
+                            >
+                                New prompt template
+                            </Link>
+                            <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-3">
-                        <Link :href="route('prompt-templates.create')" class="btn-secondary">New prompt template</Link>
-                        <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
+                    <div class="surface-block-body">
+                        <div class="summary-strip">
+                            <div class="summary-item">
+                                <div class="summary-item-label">Prompt templates</div>
+                                <div class="summary-item-value">{{ detail.prompt_templates_count }}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-item-label">Test cases</div>
+                                <div class="summary-item-value">{{ detail.test_cases_count }}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-item-label">Runs</div>
+                                <div class="summary-item-value">{{ detail.runs_count }}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-item-label">Average score</div>
+                                <div class="summary-item-value">{{ detail.average_score?.toFixed(1) || 'N/A' }}</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <section class="panel p-5">
-                <div class="page-tabs">
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'overview' }" @click="activeTab = 'overview'">
-                        Overview
-                    </button>
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'test-cases' }" @click="activeTab = 'test-cases'">
-                        Test cases
-                    </button>
-                    <button
-                        v-if="canManage"
-                        type="button"
-                        class="page-tab"
-                        :class="{ 'page-tab-active': activeTab === 'settings' }"
-                        @click="activeTab = 'settings'"
-                    >
-                        Settings
-                    </button>
-                </div>
-            </section>
-
-            <div v-if="activeTab === 'overview'" class="space-y-6">
-                <section class="panel overflow-hidden">
-                    <div class="border-b border-[var(--line)] px-5 py-4">
-                        <PanelHeader
-                            title="Prompt templates"
-                            description="Templates attached to this task."
-                            :icon="FileStack"
-                        >
-                            <template #actions>
-                                <Link :href="route('prompt-templates.create')" class="btn-secondary">New template</Link>
-                            </template>
-                        </PanelHeader>
+                <section v-if="activeTab === 'overview'" class="surface-block">
+                    <div class="surface-block-header">
+                        <div>
+                            <h2 class="section-title">Overview</h2>
+                            <p class="text-sm text-[var(--muted)]">Reference information that defines the task and its current best reusable prompt.</p>
+                        </div>
                     </div>
+
+                    <div class="surface-block-body space-y-4">
+                        <div class="key-value-grid">
+                            <div class="key-value-item">
+                                <div class="key-value-label">Status</div>
+                                <div class="key-value-value capitalize">{{ useCase.status }}</div>
+                            </div>
+                            <div class="key-value-item">
+                                <div class="key-value-label">Input label</div>
+                                <div class="key-value-value">{{ useCase.primary_input_label || 'Not set' }}</div>
+                            </div>
+                            <div class="key-value-item">
+                                <div class="key-value-label">Slug</div>
+                                <div class="key-value-value mono text-sm">{{ useCase.slug || 'Auto-generated' }}</div>
+                            </div>
+                            <div class="key-value-item">
+                                <div class="key-value-label">Business goal</div>
+                                <div class="key-value-value">{{ useCase.business_goal || 'No business goal recorded yet.' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="surface-muted">
+                            <div class="console-field-label">Best prompt</div>
+                            <div class="mt-3">
+                                <template v-if="useCase.best_prompt">
+                                    <div class="font-semibold text-[var(--ink)]">
+                                        {{ useCase.best_prompt.name }} {{ useCase.best_prompt.version_label }}
+                                    </div>
+                                    <div class="mt-1 text-sm text-[var(--muted)]">
+                                        {{ useCase.best_prompt.average_score?.toFixed(1) }} average score
+                                    </div>
+                                </template>
+                                <span v-else>No evaluated prompt yet.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section v-else-if="activeTab === 'templates'" class="surface-block">
+                    <div class="surface-block-header">
+                        <div>
+                            <h2 class="section-title">Prompt templates</h2>
+                            <p class="text-sm text-[var(--muted)]">Keep all prompt families for this task in their own view.</p>
+                        </div>
+                        <Link v-if="canManage" :href="route('prompt-templates.create')" class="btn-primary">New template</Link>
+                    </div>
+
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -224,16 +290,16 @@ const createTestCase = async () => {
                     </table>
                 </section>
 
-                <section class="panel overflow-hidden">
-                    <div class="border-b border-[var(--line)] px-5 py-4">
-                        <PanelHeader
-                            title="Recent experiments"
-                            description="Latest runs for this task."
-                            :icon="FlaskConical"
-                        />
+                <section v-else-if="activeTab === 'experiments'" class="surface-block">
+                    <div class="surface-block-header">
+                        <div>
+                            <h2 class="section-title">Recent experiments</h2>
+                            <p class="text-sm text-[var(--muted)]">Review execution history separately from task definition.</p>
+                        </div>
                     </div>
-                    <div class="divide-y divide-[var(--line)]">
-                        <div v-for="experiment in recentExperiments" :key="experiment.id" class="px-5 py-4">
+
+                    <div class="record-list">
+                        <div v-for="experiment in recentExperiments" :key="experiment.id" class="record-list-item">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <Link :href="route('experiments.show', experiment.id)" class="font-bold hover:underline">
@@ -257,119 +323,119 @@ const createTestCase = async () => {
                                 <span class="status-chip">{{ experiment.status }}</span>
                             </div>
                         </div>
-                        <div v-if="recentExperiments.length === 0" class="px-5 py-5 text-sm text-[var(--muted)]">
+                        <div v-if="recentExperiments.length === 0" class="record-list-item text-sm text-[var(--muted)]">
                             No recent experiments for this task.
                         </div>
                     </div>
                 </section>
-            </div>
 
-            <div v-else-if="activeTab === 'test-cases'" class="space-y-6">
-                <section class="panel overflow-hidden">
-                    <div class="border-b border-[var(--line)] px-5 py-4">
-                        <PanelHeader
-                            title="Saved test cases"
-                            description="Reusable inputs for compare and batch runs."
-                            :icon="FolderKanban"
-                        />
+                <section v-else-if="activeTab === 'test-cases'" class="surface-block">
+                    <div class="surface-block-header">
+                        <div>
+                            <h2 class="section-title">Saved test cases</h2>
+                            <p class="text-sm text-[var(--muted)]">Keep reusable inputs and the form for adding new cases in their own layer.</p>
+                        </div>
                     </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Input</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="testCase in useCase.test_cases" :key="testCase.id">
-                                <td class="font-bold">{{ testCase.title }}</td>
-                                <td class="text-sm text-[var(--muted)]">{{ testCase.input_text }}</td>
-                                <td><span class="status-chip">{{ testCase.status }}</span></td>
-                            </tr>
-                            <tr v-if="useCase.test_cases.length === 0">
-                                <td colspan="3" class="text-[var(--muted)]">No saved test cases yet.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                    <div class="surface-block-body space-y-6">
+                        <div class="surface-muted">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Input</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="testCase in useCase.test_cases" :key="testCase.id">
+                                        <td class="font-bold">{{ testCase.title }}</td>
+                                        <td class="text-sm text-[var(--muted)]">{{ testCase.input_text }}</td>
+                                        <td><span class="status-chip">{{ testCase.status }}</span></td>
+                                    </tr>
+                                    <tr v-if="useCase.test_cases.length === 0">
+                                        <td colspan="3" class="text-[var(--muted)]">No saved test cases yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div v-if="canManage" class="surface-muted">
+                            <div class="section-title">Add test case</div>
+                            <p class="mt-2 text-sm text-[var(--muted)]">Save a new reusable example for future compare or batch runs.</p>
+
+                            <div v-if="uiState.testCaseNotice" class="notice-banner mt-4">
+                                {{ uiState.testCaseNotice }}
+                            </div>
+
+                            <form class="mt-5 grid gap-4" @submit.prevent="createTestCase">
+                                <div>
+                                    <label class="field-label">Title</label>
+                                    <input v-model="testCaseForm.title" type="text" class="field-input">
+                                    <div v-if="testCaseForm.errors.title" class="field-error">{{ testCaseForm.errors.title }}</div>
+                                </div>
+                                <div>
+                                    <label class="field-label">Input text</label>
+                                    <textarea v-model="testCaseForm.input_text" class="field-textarea"></textarea>
+                                    <div v-if="testCaseForm.errors.input_text" class="field-error">{{ testCaseForm.errors.input_text }}</div>
+                                </div>
+                                <button class="btn-primary self-start" :disabled="testCaseForm.processing">Create test case</button>
+                            </form>
+                        </div>
+                    </div>
                 </section>
 
-                <details v-if="canManage" class="disclosure">
-                    <summary class="disclosure-summary">
+                <section v-else class="surface-block">
+                    <div class="surface-block-header">
                         <div>
-                            <div class="section-title">Add test case</div>
-                            <div class="mt-1 text-sm text-[var(--muted)]">Save a new reusable example for this task.</div>
+                            <h2 class="section-title">Settings</h2>
+                            <p class="text-sm text-[var(--muted)]">Update the stable task definition separately from prompt and experiment review.</p>
                         </div>
-                        <span class="text-sm font-bold text-[var(--muted)]">Open</span>
-                    </summary>
+                        <button class="btn-primary" :disabled="editForm.processing" @click="saveUseCase">
+                            {{ editForm.processing ? 'Saving...' : 'Save task' }}
+                        </button>
+                    </div>
 
-                    <div class="disclosure-content">
-                        <div v-if="uiState.testCaseNotice" class="notice-banner mb-4">
-                            {{ uiState.testCaseNotice }}
+                    <div class="surface-block-body">
+                        <div v-if="uiState.useCaseNotice" class="notice-banner mb-5">
+                            {{ uiState.useCaseNotice }}
                         </div>
-                        <form class="grid gap-4" @submit.prevent="createTestCase">
+
+                        <form class="grid gap-4 md:grid-cols-2" @submit.prevent="saveUseCase">
                             <div>
-                                <label class="field-label">Title</label>
-                                <input v-model="testCaseForm.title" type="text" class="field-input">
-                                <div v-if="testCaseForm.errors.title" class="field-error">{{ testCaseForm.errors.title }}</div>
+                                <label class="field-label">Name</label>
+                                <input v-model="editForm.name" type="text" class="field-input">
+                                <div v-if="editForm.errors.name" class="field-error">{{ editForm.errors.name }}</div>
                             </div>
                             <div>
-                                <label class="field-label">Input text</label>
-                                <textarea v-model="testCaseForm.input_text" class="field-textarea"></textarea>
-                                <div v-if="testCaseForm.errors.input_text" class="field-error">{{ testCaseForm.errors.input_text }}</div>
+                                <label class="field-label">Slug</label>
+                                <input v-model="editForm.slug" type="text" class="field-input">
                             </div>
-                            <button class="btn-primary self-start" :disabled="testCaseForm.processing">Create test case</button>
+                            <div class="md:col-span-2">
+                                <label class="field-label">Description</label>
+                                <textarea v-model="editForm.description" class="field-textarea"></textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="field-label">Business goal</label>
+                                <textarea v-model="editForm.business_goal" class="field-textarea"></textarea>
+                            </div>
+                            <div>
+                                <label class="field-label">Input label</label>
+                                <input v-model="editForm.primary_input_label" type="text" class="field-input">
+                            </div>
+                            <div>
+                                <label class="field-label">Status</label>
+                                <select v-model="editForm.status" class="field-select">
+                                    <option value="active">Active</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                                <div v-if="editForm.errors.status" class="field-error">{{ editForm.errors.status }}</div>
+                            </div>
                         </form>
                     </div>
-                </details>
+                </section>
             </div>
-
-            <section v-else-if="canManage" class="panel p-5">
-                <PanelHeader
-                    title="Edit task"
-                    description="Update the task definition and status."
-                    :icon="Settings2"
-                />
-                <div v-if="uiState.useCaseNotice" class="notice-banner mt-4">
-                    {{ uiState.useCaseNotice }}
-                </div>
-                <form class="mt-4 grid gap-4 md:grid-cols-2" @submit.prevent="saveUseCase">
-                    <div>
-                        <label class="field-label">Name</label>
-                        <input v-model="editForm.name" type="text" class="field-input">
-                        <div v-if="editForm.errors.name" class="field-error">{{ editForm.errors.name }}</div>
-                    </div>
-                    <div>
-                        <label class="field-label">Slug</label>
-                        <input v-model="editForm.slug" type="text" class="field-input">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="field-label">Description</label>
-                        <textarea v-model="editForm.description" class="field-textarea"></textarea>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="field-label">Business goal</label>
-                        <textarea v-model="editForm.business_goal" class="field-textarea"></textarea>
-                    </div>
-                    <div>
-                        <label class="field-label">Input label</label>
-                        <input v-model="editForm.primary_input_label" type="text" class="field-input">
-                    </div>
-                    <div>
-                        <label class="field-label">Status</label>
-                        <select v-model="editForm.status" class="field-select">
-                            <option value="active">Active</option>
-                            <option value="draft">Draft</option>
-                            <option value="archived">Archived</option>
-                        </select>
-                        <div v-if="editForm.errors.status" class="field-error">{{ editForm.errors.status }}</div>
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <button class="btn-primary" :disabled="editForm.processing">Save task</button>
-                    </div>
-                </form>
-            </section>
         </div>
     </AuthenticatedLayout>
 </template>

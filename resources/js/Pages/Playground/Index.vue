@@ -158,6 +158,12 @@ const previousStep = computed(() => stepOrder[activeStepIndex.value - 1] ?? null
 const nextStep = computed(() => stepOrder[activeStepIndex.value + 1] ?? null);
 const canGoBack = computed(() => previousStep.value !== null);
 const canGoNext = computed(() => nextStep.value !== null);
+const stepTabs = [
+    { id: 'setup', label: 'Setup', icon: Settings2 },
+    { id: 'versions', label: 'Versions', icon: ListChecks },
+    { id: 'input', label: 'Input', icon: Variable },
+    { id: 'review', label: 'Review', icon: Play },
+];
 
 const syncPromptSelection = () => {
     const validIds = versionOptions.value.map((version) => version.id);
@@ -308,36 +314,38 @@ const submit = async () => {
             </div>
         </template>
 
-        <div class="space-y-6">
-            <section class="panel p-5">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="page-tabs">
-                        <button type="button" class="page-tab" :class="{ 'page-tab-active': activeStep === 'setup' }" @click="activeStep = 'setup'">
-                            1. Setup
-                        </button>
-                        <button type="button" class="page-tab" :class="{ 'page-tab-active': activeStep === 'versions' }" @click="activeStep = 'versions'">
-                            2. Versions
-                        </button>
-                        <button type="button" class="page-tab" :class="{ 'page-tab-active': activeStep === 'input' }" @click="activeStep = 'input'">
-                            3. Input
-                        </button>
-                        <button type="button" class="page-tab" :class="{ 'page-tab-active': activeStep === 'review' }" @click="activeStep = 'review'">
-                            4. Review
-                        </button>
-                    </div>
+        <div class="page-frame">
+            <aside class="page-frame-rail">
+                <button
+                    v-for="(tab, index) in stepTabs"
+                    :key="tab.id"
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeStep === tab.id }"
+                    @click="activeStep = tab.id"
+                >
+                    <component :is="tab.icon" class="h-4 w-4 shrink-0" />
+                    <span>{{ index + 1 }}. {{ tab.label }}</span>
+                </button>
 
-                    <div class="flex flex-wrap gap-3">
-                        <Link :href="route('admin.ai-connections')" class="btn-secondary">AI connections</Link>
-                        <Link :href="route('prompt-templates.index')" class="btn-ghost">Prompt templates</Link>
-                    </div>
-                </div>
-            </section>
+                <Link :href="route('admin.ai-connections')" class="page-frame-tab">
+                    <Bot class="h-4 w-4 shrink-0" />
+                    <span>AI connections</span>
+                </Link>
+                <Link :href="route('prompt-templates.index')" class="page-frame-tab">
+                    <FileCode2 class="h-4 w-4 shrink-0" />
+                    <span>Prompt templates</span>
+                </Link>
+            </aside>
+
+            <div class="page-frame-content">
 
             <section v-if="activeStep === 'setup'" class="panel p-5">
                 <PanelHeader
                     title="1. Experiment setup"
                     description="Choose the task, the experiment mode, and the runtime settings first."
                     :icon="Settings2"
+                    help="Defines the business task, experiment mode, model, and runtime settings that will apply to the run."
                 />
 
                 <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -414,6 +422,7 @@ const submit = async () => {
                             ? 'Select two or three versions for side-by-side review.'
                             : 'Select the version this experiment should execute.'"
                         :icon="ListChecks"
+                        help="Selects the prompt versions this experiment will execute. In compare mode this is where the candidates are chosen side by side."
                     />
                     <div class="text-sm text-[var(--muted)]">
                         {{ selectionStats.promptCount }}/{{ maxPromptCount }} selected
@@ -485,6 +494,7 @@ const submit = async () => {
                         ? 'Select the saved cases that should be included in the batch run.'
                         : 'Paste a realistic business example and fill the variables required by the selected version.'"
                     :icon="Variable"
+                    help="Provides the real business input or the saved batch cases that will be sent to the selected prompt version."
                 />
 
                 <div v-if="form.mode !== 'batch'" class="mt-4">
@@ -556,6 +566,7 @@ const submit = async () => {
                     title="4. Preview and run"
                     description="Review the selection summary and assembled prompt before launching the experiment."
                     :icon="Play"
+                    help="Final checkpoint before execution. Review selections, compiled prompt content, and batch scope here before starting the run."
                 />
 
                 <div v-if="errors.prompt_version_ids || errors.input_text || errors.test_case_ids" class="mt-4 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
@@ -639,6 +650,7 @@ const submit = async () => {
                         title="Recent experiments"
                         description="Open one when you want to continue review or compare with the run you are about to start."
                         :icon="FlaskConical"
+                        help="Shows recent experiment runs so you can reopen prior work or compare the new run with recent output."
                     />
                 </div>
 
@@ -675,6 +687,7 @@ const submit = async () => {
                     </div>
                 </div>
             </section>
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>

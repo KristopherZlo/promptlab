@@ -81,6 +81,11 @@ const notices = reactive({
     version: '',
 });
 const activeTab = ref('template');
+const tabItems = computed(() => [
+    { id: 'template', label: 'Template', icon: FileStack, disabled: false },
+    { id: 'versions', label: 'Versions', icon: Workflow, disabled: !props.promptTemplate },
+    { id: 'library', label: 'Approval', icon: BookCopy, disabled: !props.promptTemplate },
+]);
 
 const versions = computed(() => props.promptTemplate?.versions ?? []);
 const versionHistory = computed(() => [...versions.value].reverse());
@@ -303,35 +308,31 @@ const promoteToLibrary = async () => {
             </div>
         </template>
 
-        <div class="space-y-6">
-            <section class="panel p-5">
-                <div class="page-tabs">
-                    <button type="button" class="page-tab" :class="{ 'page-tab-active': activeTab === 'template' }" @click="activeTab = 'template'">
-                        Template
-                    </button>
-                    <button
-                        type="button"
-                        class="page-tab"
-                        :class="{ 'page-tab-active': activeTab === 'versions' }"
-                        :disabled="!promptTemplate"
-                        @click="activeTab = 'versions'"
-                    >
-                        Versions
-                    </button>
-                    <button
-                        type="button"
-                        class="page-tab"
-                        :class="{ 'page-tab-active': activeTab === 'library' }"
-                        :disabled="!promptTemplate"
-                        @click="activeTab = 'library'"
-                    >
-                        Approval
-                    </button>
-                </div>
-            </section>
+        <div class="page-frame">
+            <aside class="page-frame-rail">
+                <button
+                    v-for="tab in tabItems"
+                    :key="tab.id"
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    :disabled="tab.disabled"
+                    @click="activeTab = tab.id"
+                >
+                    <component :is="tab.icon" class="h-4 w-4 shrink-0" />
+                    <span>{{ tab.label }}</span>
+                </button>
+            </aside>
 
+            <div class="page-frame-content">
             <section v-if="activeTab === 'template' && promptTemplate" class="panel p-5">
-                <div class="summary-strip">
+                <PanelHeader
+                    title="Template snapshot"
+                    description="Current assignment, status, revision count, and approval state."
+                    help="Summarizes the current state of this prompt family so you can see its task alignment and approval progress at a glance."
+                />
+
+                <div class="summary-strip mt-4">
                     <div class="summary-item">
                         <div class="summary-item-label">Task</div>
                         <div class="summary-item-value">{{ useCaseName }}</div>
@@ -357,6 +358,7 @@ const promoteToLibrary = async () => {
                         title="Template details"
                         description="Stable metadata for this prompt family."
                         :icon="FileStack"
+                        help="Edits the stable metadata shared by all revisions in this prompt family, including task mapping and default model."
                     />
                     <button type="button" class="btn-primary" :disabled="templateForm.processing" @click="saveTemplate">
                         {{ templateForm.processing ? 'Saving...' : 'Save template' }}
@@ -451,6 +453,7 @@ const promoteToLibrary = async () => {
                                 title="Revision history"
                                 description="Newest revisions first. Pick one revision to inspect or edit."
                                 :icon="Workflow"
+                                help="Shows the saved revision timeline so the team can reopen prior changes, compare versions, or branch a new draft."
                             />
 
                             <div class="flex flex-wrap gap-3">
@@ -543,6 +546,7 @@ const promoteToLibrary = async () => {
                                     :title="versionPanelTitle"
                                     :description="versionPanelSummary"
                                     :icon="Settings2"
+                                    help="Edits one specific revision, including prompt text, variables, output validation, and revision notes."
                                 />
                                 <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
                                     {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save revision' : 'Create revision' }}
@@ -708,6 +712,7 @@ const promoteToLibrary = async () => {
                     title="Approval and library handoff"
                     description="Approve one revision when the team is ready to reuse it in the shared library."
                     :icon="BookCopy"
+                    help="This is the final handoff area where one revision is promoted into the approved library for broader reuse."
                 />
 
                 <div v-if="currentVersion" class="summary-strip mt-4">
@@ -795,6 +800,7 @@ const promoteToLibrary = async () => {
 
             <div v-else-if="activeTab !== 'template'" class="empty-state">
                 Save the template first. After that, version work and approval will unlock below.
+            </div>
             </div>
         </div>
     </AuthenticatedLayout>

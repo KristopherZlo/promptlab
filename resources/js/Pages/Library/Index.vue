@@ -3,7 +3,8 @@ import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
-import { BookCopy, Search } from 'lucide-vue-next';
+import SearchFilterBar from '@/Components/SearchFilterBar.vue';
+import { BookCopy } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
 
 const props = defineProps({
@@ -69,9 +70,15 @@ const groupedCounts = computed(() => {
             </div>
         </template>
 
-        <div class="space-y-6">
+        <div class="page-frame-content">
             <section class="panel p-5">
-                <div class="toolbar">
+                <PanelHeader
+                    title="Library snapshot"
+                    description="Coverage, visibility, and quick actions for the approved prompt catalog."
+                    help="Shows how many approved prompt entries exist, how broadly they cover tasks, and what portion is currently visible in the catalog."
+                />
+
+                <div class="toolbar mt-4">
                     <div class="summary-strip">
                         <div class="summary-item">
                             <div class="summary-item-label">Approved entries</div>
@@ -98,27 +105,25 @@ const groupedCounts = computed(() => {
                 </div>
             </section>
 
-            <section class="panel p-4">
-                <PanelHeader
-                    title="Search approved entries"
-                    description="Search by task, prompt name, model, or approval note."
-                    :icon="Search"
-                />
-                <div class="mt-4 table-toolbar">
-                    <input v-model="search" type="text" class="field-input md:max-w-sm" placeholder="Task, prompt, model, or note">
-                </div>
-            </section>
-
-            <section v-if="filteredEntries.length" class="panel overflow-hidden">
+            <section class="panel overflow-hidden">
                 <div class="border-b border-[var(--line)] px-5 py-4">
                     <PanelHeader
                         title="Approved prompt catalog"
                         description="Dense operational catalog instead of card-based browsing."
                         :icon="BookCopy"
+                        help="Provides the shared catalog of approved prompt versions that teams can reuse with less review overhead."
                     />
                 </div>
 
-                <table class="data-table">
+                <div class="px-5 py-4">
+                    <SearchFilterBar
+                        :model-value="search"
+                        placeholder="Search by task, prompt, model, or note..."
+                        @update:model-value="search = $event"
+                    />
+                </div>
+
+                <table v-if="filteredEntries.length" class="data-table">
                     <thead>
                         <tr>
                             <th>Prompt</th>
@@ -147,11 +152,11 @@ const groupedCounts = computed(() => {
                         </tr>
                     </tbody>
                 </table>
-            </section>
 
-            <div v-else class="empty-state">
-                No approved prompts match the current search.
-            </div>
+                <div v-else class="empty-state mx-5 mb-5">
+                    No approved prompts match the current search.
+                </div>
+            </section>
         </div>
     </AuthenticatedLayout>
 </template>

@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     mustVerifyEmail: {
@@ -33,6 +34,7 @@ const deleteForm = useForm({
 });
 
 const accountDeletion = useUndoableAction();
+const activeTab = ref('profile');
 
 const saveProfile = () => {
     profileForm.patch(route('profile.update'), {
@@ -80,9 +82,62 @@ const scheduleAccountDeletion = () => {
             </div>
         </template>
 
-        <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <section class="space-y-6">
-                <div class="panel p-5">
+        <div class="page-frame">
+            <aside class="page-frame-rail">
+                <button
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === 'profile' }"
+                    @click="activeTab = 'profile'"
+                >
+                    <span>Profile</span>
+                </button>
+                <button
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === 'password' }"
+                    @click="activeTab = 'password'"
+                >
+                    <span>Password</span>
+                </button>
+                <button
+                    type="button"
+                    class="page-frame-tab"
+                    :class="{ 'page-frame-tab-active': activeTab === 'danger' }"
+                    @click="activeTab = 'danger'"
+                >
+                    <span>Danger zone</span>
+                </button>
+            </aside>
+
+            <div class="page-frame-content">
+                <section class="panel p-5">
+                    <h2 class="section-title">Account summary</h2>
+                    <div class="summary-list mt-4">
+                        <div class="summary-row">
+                            <span>Name</span>
+                            <span>{{ user.display_name || user.name }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>First name</span>
+                            <span>{{ user.first_name || 'Not set' }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Last name</span>
+                            <span>{{ user.last_name || 'Not set' }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Email</span>
+                            <span>{{ user.email }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Role</span>
+                            <span class="capitalize">{{ user.role }}</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div v-if="activeTab === 'profile'" class="panel p-5">
                     <div class="flex items-center justify-between gap-4">
                         <div>
                             <h2 class="section-title">Profile details</h2>
@@ -128,7 +183,7 @@ const scheduleAccountDeletion = () => {
                     </div>
                 </div>
 
-                <div class="panel p-5">
+                <div v-else-if="activeTab === 'password'" class="panel p-5">
                     <div class="flex items-center justify-between gap-4">
                         <div>
                             <h2 class="section-title">Password</h2>
@@ -165,36 +220,8 @@ const scheduleAccountDeletion = () => {
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <section class="space-y-6">
-                <div class="panel p-5">
-                    <h2 class="section-title">Account summary</h2>
-                    <div class="summary-list mt-4">
-                        <div class="summary-row">
-                            <span>Name</span>
-                            <span>{{ user.display_name || user.name }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>First name</span>
-                            <span>{{ user.first_name || 'Not set' }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Last name</span>
-                            <span>{{ user.last_name || 'Not set' }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Email</span>
-                            <span>{{ user.email }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Role</span>
-                            <span class="capitalize">{{ user.role }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="panel p-5">
+                <div v-else class="panel p-5">
                     <h2 class="section-title">Danger zone</h2>
                     <p class="mt-2 text-sm text-[var(--muted)]">
                         Deleting the account signs you out and permanently removes your workspace access.
@@ -226,7 +253,7 @@ const scheduleAccountDeletion = () => {
                         </button>
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>
