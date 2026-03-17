@@ -16,6 +16,20 @@ const normalizeValue = (value, defaultValue, allowedValues) => {
     return nextValue;
 };
 
+export const readQueryParam = (key) => {
+    if (typeof window === 'undefined') {
+        return '';
+    }
+
+    return new URL(window.location.href).searchParams.get(key)?.trim() ?? '';
+};
+
+export const readQueryList = (key) =>
+    readQueryParam(key)
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean);
+
 export const useUrlState = ({ key, defaultValue, allowedValues = [], omitIf = defaultValue }) => {
     const initialValue = typeof window === 'undefined'
         ? defaultValue

@@ -7,7 +7,7 @@ import PanelHeader from '@/Components/PanelHeader.vue';
 import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, formatScore, parseJsonInput, parseTagList, safeJsonStringify } from '@/lib/formatters';
-import { hrefWithQuery, useUrlState } from '@/lib/urlState';
+import { hrefWithQuery, readQueryParam, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     promptTemplate: {
@@ -26,6 +26,8 @@ const props = defineProps({
 
 const page = usePage();
 const canManageLibrary = computed(() => (page.props.auth.abilities ?? []).includes('manage_library'));
+const requestedUseCaseId = Number.parseInt(readQueryParam('use_case_id'), 10);
+const requestedVersionId = Number.parseInt(readQueryParam('prompt_version_id'), 10);
 
 const taskTypes = ['summarization', 'classification', 'rewrite', 'extraction', 'generation'];
 const statuses = ['active', 'draft', 'archived'];
@@ -41,7 +43,8 @@ const applyState = (form, state) => {
 };
 
 const templateDefaults = () => ({
-    use_case_id: props.promptTemplate?.use_case_id ?? props.useCases[0]?.id ?? '',
+    use_case_id: props.promptTemplate?.use_case_id
+        ?? (props.useCases.some((useCase) => useCase.id === requestedUseCaseId) ? requestedUseCaseId : props.useCases[0]?.id ?? ''),
     name: props.promptTemplate?.name ?? '',
     description: props.promptTemplate?.description ?? '',
     task_type: props.promptTemplate?.task_type ?? 'summarization',
@@ -65,7 +68,11 @@ const versionDefaults = (source = null) => ({
 const templateForm = useForm(templateDefaults());
 const versionForm = useForm(versionDefaults());
 
-const selectedVersionId = ref(props.promptTemplate?.versions?.at(-1)?.id ?? null);
+const selectedVersionId = ref(
+    props.promptTemplate?.versions?.some((version) => version.id === requestedVersionId)
+        ? requestedVersionId
+        : props.promptTemplate?.versions?.at(-1)?.id ?? null,
+);
 const jsonErrors = reactive({
     variables_schema: '',
     output_schema_json: '',
@@ -88,7 +95,9 @@ const tabItems = computed(() => [
 ]);
 const activeTab = useUrlState({
     key: 'tab',
-    defaultValue: 'template',
+    defaultValue: props.promptTemplate && props.promptTemplate.versions?.some((version) => version.id === requestedVersionId)
+        ? 'versions'
+        : 'template',
     allowedValues: props.promptTemplate
         ? ['template', 'versions', 'library']
         : ['template'],

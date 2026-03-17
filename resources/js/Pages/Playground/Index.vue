@@ -27,7 +27,7 @@ import {
     safeJsonStringify,
     truncateText,
 } from '@/lib/formatters';
-import { hrefWithQuery, useUrlState } from '@/lib/urlState';
+import { hrefWithQuery, readQueryList, readQueryParam, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCases: {
@@ -44,17 +44,51 @@ const props = defineProps({
     },
 });
 
+const requestedMode = readQueryParam('mode');
+const requestedUseCaseId = Number.parseInt(readQueryParam('use_case_id'), 10);
+const requestedTemplateId = Number.parseInt(readQueryParam('prompt_template_id'), 10);
+const requestedVersionIds = readQueryList('prompt_version_id')
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isInteger(value) && value > 0);
+const allPromptTemplates = props.useCases.flatMap((useCase) =>
+    (useCase.prompt_templates ?? []).map((template) => ({
+        ...template,
+        use_case_id: useCase.id,
+    })),
+);
+const requestedTemplate = allPromptTemplates.find((template) => template.id === requestedTemplateId) ?? null;
+const requestedVersion = requestedVersionIds.length > 0
+    ? allPromptTemplates
+        .flatMap((template) => (template.versions ?? []).map((version) => ({
+            ...version,
+            use_case_id: template.use_case_id,
+        })))
+        .find((version) => version.id === requestedVersionIds[0]) ?? null
+    : null;
 const availableModels = computed(() =>
     props.models.filter((model) => model.available || model.value.startsWith('mock:')),
 );
 
-const defaultUseCaseId = props.useCases[0]?.id ?? '';
+const defaultUseCaseId = props.useCases.some((useCase) => useCase.id === requestedUseCaseId)
+    ? requestedUseCaseId
+    : requestedVersion?.use_case_id
+        ?? requestedTemplate?.use_case_id
+        ?? props.useCases[0]?.id
+        ?? '';
 const defaultModel = availableModels.value[0]?.value ?? props.models[0]?.value ?? '';
+const defaultMode = ['single', 'compare', 'batch'].includes(requestedMode) ? requestedMode : 'single';
+const defaultPromptVersionIds = requestedVersionIds.length > 0
+    ? requestedVersionIds
+    : (requestedTemplate?.versions ?? [])
+        .slice()
+        .sort((left, right) => right.id - left.id)
+        .slice(0, 1)
+        .map((version) => version.id);
 
 const form = reactive({
     use_case_id: defaultUseCaseId,
-    mode: 'single',
-    prompt_version_ids: [],
+    mode: defaultMode,
+    prompt_version_ids: defaultPromptVersionIds,
     input_text: '',
     variables: {},
     test_case_ids: [],
