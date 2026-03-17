@@ -11,9 +11,10 @@ import {
     Settings2,
     UserRound,
 } from 'lucide-vue-next';
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime } from '@/lib/formatters';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCase: {
@@ -57,8 +58,6 @@ const uiState = reactive({
     useCaseNotice: '',
     testCaseNotice: '',
 });
-
-const activeTab = ref('overview');
 
 const saveUseCase = async () => {
     editForm.processing = true;
@@ -119,6 +118,13 @@ const tabs = [
     { id: 'test-cases', label: 'Test cases', icon: FolderKanban },
     { id: 'settings', label: 'Settings', icon: Settings2, manageOnly: true },
 ];
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'overview',
+    allowedValues: tabs
+        .filter((item) => !item.manageOnly || props.canManage)
+        .map((item) => item.id),
+});
 </script>
 
 <template>

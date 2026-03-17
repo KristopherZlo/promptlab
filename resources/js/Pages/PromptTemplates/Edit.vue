@@ -7,6 +7,7 @@ import PanelHeader from '@/Components/PanelHeader.vue';
 import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, formatScore, parseJsonInput, parseTagList, safeJsonStringify } from '@/lib/formatters';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     promptTemplate: {
@@ -80,12 +81,18 @@ const notices = reactive({
     template: '',
     version: '',
 });
-const activeTab = ref('template');
 const tabItems = computed(() => [
     { id: 'template', label: 'Template', icon: FileStack, disabled: false },
     { id: 'versions', label: 'Versions', icon: Workflow, disabled: !props.promptTemplate },
     { id: 'library', label: 'Approval', icon: BookCopy, disabled: !props.promptTemplate },
 ]);
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'template',
+    allowedValues: props.promptTemplate
+        ? ['template', 'versions', 'library']
+        : ['template'],
+});
 
 const versions = computed(() => props.promptTemplate?.versions ?? []);
 const versionHistory = computed(() => [...versions.value].reverse());

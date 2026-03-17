@@ -8,6 +8,7 @@ import HelpHint from '@/Components/HelpHint.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import { Activity, BadgeCheck, Bot, ClipboardList, Clock3, Coins, FileCode2, FileText, Gauge, ListChecks, TriangleAlert } from 'lucide-vue-next';
 import { formatDateTime, formatScore, safeJsonStringify, truncateText } from '@/lib/formatters';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     experiment: {
@@ -21,13 +22,17 @@ const canManageLibrary = computed(() => (page.props.auth.abilities ?? []).includ
 
 const experimentState = ref(props.experiment);
 const selectedRunId = ref(props.experiment.runs?.[0]?.id ?? null);
-const activeTab = ref('results');
 const promotionMessages = reactive({});
 let pollHandle = null;
 const tabItems = [
     { id: 'results', label: 'Results', icon: ListChecks },
     { id: 'summary', label: 'Summary', icon: Activity },
 ];
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'results',
+    allowedValues: tabItems.map((item) => item.id),
+});
 
 watch(
     () => props.experiment,

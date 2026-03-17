@@ -15,6 +15,7 @@ import {
     formatRoleLabel,
 } from '@/lib/forms';
 import { useUndoableAction } from '@/lib/useUndoableAction';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     team: {
@@ -33,7 +34,6 @@ const props = defineProps({
 
 const page = usePage();
 const inviteOpen = ref(false);
-const activeTab = ref('members');
 const search = ref('');
 const selectedMembershipId = ref(null);
 const notices = reactive({
@@ -45,6 +45,11 @@ const tabs = [
     { id: 'members', label: 'Members' },
     { id: 'roles', label: 'Roles' },
 ];
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'members',
+    allowedValues: tabs.map((item) => item.id),
+});
 
 const roleDescriptions = {
     owner: 'Full workspace control, including access, AI settings, and approvals.',

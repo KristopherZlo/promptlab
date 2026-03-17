@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import RoleBadge from '@/Components/RoleBadge.vue';
 import { Building2, Plus, RefreshCcw, Shield } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     currentWorkspace: {
@@ -18,7 +19,11 @@ const props = defineProps({
     },
 });
 
-const activeTab = ref('directory');
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'directory',
+    allowedValues: ['directory', 'current', 'create'],
+});
 const switchingWorkspaceId = ref(null);
 const notices = reactive({
     workspace: '',

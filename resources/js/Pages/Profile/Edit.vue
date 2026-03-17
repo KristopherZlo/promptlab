@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     mustVerifyEmail: {
@@ -34,7 +34,11 @@ const deleteForm = useForm({
 });
 
 const accountDeletion = useUndoableAction();
-const activeTab = ref('profile');
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'profile',
+    allowedValues: ['profile', 'password', 'danger'],
+});
 
 const saveProfile = () => {
     profileForm.patch(route('profile.update'), {

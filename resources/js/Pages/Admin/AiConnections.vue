@@ -7,6 +7,7 @@ import UndoBanner from '@/Components/UndoBanner.vue';
 import { Bot, KeyRound, ListChecks, Settings2 } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { useUndoableAction } from '@/lib/useUndoableAction';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     team: {
@@ -19,7 +20,11 @@ const props = defineProps({
     },
 });
 
-const activeTab = ref('connections');
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'connections',
+    allowedValues: ['connections', 'editor'],
+});
 const editingConnectionId = ref(null);
 const notices = reactive({
     connection: '',
