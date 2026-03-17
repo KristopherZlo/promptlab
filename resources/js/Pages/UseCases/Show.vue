@@ -126,6 +126,10 @@ const activeTab = useUrlState({
         .map((item) => item.id),
 });
 const createTemplateHref = routeWithQuery('prompt-templates.create', {}, { use_case_id: props.useCase.id });
+const runUseCaseHref = routeWithQuery('playground', {}, {
+    mode: 'single',
+    use_case_id: props.useCase.id,
+});
 </script>
 
 <template>
@@ -189,7 +193,7 @@ const createTemplateHref = routeWithQuery('prompt-templates.create', {}, { use_c
                             >
                                 New prompt template
                             </Link>
-                            <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
+                            <Link :href="runUseCaseHref" class="btn-primary">Run task</Link>
                         </div>
                     </div>
 

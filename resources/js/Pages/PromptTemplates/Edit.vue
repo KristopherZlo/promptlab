@@ -136,6 +136,7 @@ const experimentsHref = computed(() =>
         prompt_version_id: currentVersion.value?.id ?? '',
     }),
 );
+const experimentsButtonLabel = computed(() => (currentVersion.value ? 'Run current version' : 'Open experiments'));
 
 const versionReference = (version) => `#${String(version.id).padStart(4, '0')}`;
 
@@ -327,7 +328,7 @@ const promoteToLibrary = async () => {
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompts</Link>
-                    <Link :href="experimentsHref" class="btn-ghost">Open experiments</Link>
+                    <Link :href="experimentsHref" class="btn-ghost">{{ experimentsButtonLabel }}</Link>
                 </div>
             </div>
         </template>
@@ -572,9 +573,12 @@ const promoteToLibrary = async () => {
                                     :icon="Settings2"
                                     help="Edits one specific revision, including prompt text, variables, output validation, and revision notes."
                                 />
-                                <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
-                                    {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save revision' : 'Create revision' }}
-                                </button>
+                                <div class="flex flex-wrap gap-3">
+                                    <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Run current version</Link>
+                                    <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
+                                        {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save revision' : 'Create revision' }}
+                                    </button>
+                                </div>
                             </div>
 
                             <div v-if="notices.version" class="notice-banner">

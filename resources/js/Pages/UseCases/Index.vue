@@ -58,6 +58,13 @@ const selectedTemplateCreateHref = computed(() =>
         selectedUseCase.value?.id ? { use_case_id: selectedUseCase.value.id } : {},
     ),
 );
+const selectedUseCaseRunHref = computed(() =>
+    routeWithQuery(
+        'playground',
+        {},
+        selectedUseCase.value?.id ? { mode: 'single', use_case_id: selectedUseCase.value.id } : {},
+    ),
+);
 
 const statusOptions = [
     { label: 'Active', value: 'active' },
@@ -324,7 +331,7 @@ const activeTab = useUrlState({
 
                                             <div class="console-page-actions">
                                                 <Link :href="route('use-cases.show', selectedUseCase.id)" class="btn-primary">Open task</Link>
-                                                <Link v-if="canManage" :href="route('playground')" class="btn-secondary">Run experiment</Link>
+                                                <Link v-if="canManage" :href="selectedUseCaseRunHref" class="btn-secondary">Run experiment</Link>
                                             </div>
                                         </div>
 
