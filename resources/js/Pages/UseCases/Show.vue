@@ -11,7 +11,7 @@ import {
     Settings2,
     UserRound,
 } from 'lucide-vue-next';
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime } from '@/lib/formatters';
 import { routeWithQuery, useUrlState } from '@/lib/urlState';
@@ -44,20 +44,56 @@ const editForm = useForm({
     status: props.useCase.status,
 });
 
-const testCaseForm = useForm({
+const testCaseDefaults = (testCase = null) => ({
     title: '',
     input_text: '',
-    expected_output: '',
-    expected_json: {},
-    variables_json: {},
-    metadata_json: {},
-    status: 'active',
+    expected_output: testCase?.expected_output || '',
+    expected_json: { ...(testCase?.expected_json ?? {}) },
+    variables_json: { ...(testCase?.variables_json ?? {}) },
+    metadata_json: { ...(testCase?.metadata_json ?? {}) },
+    status: testCase?.status || 'active',
+    ...(testCase ? {
+        title: testCase.title,
+        input_text: testCase.input_text,
+    } : {}),
 });
+const testCaseForm = useForm(testCaseDefaults());
 
 const uiState = reactive({
     useCaseNotice: '',
     testCaseNotice: '',
+    editingTestCaseId: null,
 });
+
+const editingTestCase = computed(() =>
+    props.useCase.test_cases.find((testCase) => testCase.id === uiState.editingTestCaseId) ?? null,
+);
+
+const applyTestCaseState = (testCase = null) => {
+    const nextState = testCaseDefaults(testCase);
+
+    testCaseForm.title = nextState.title;
+    testCaseForm.input_text = nextState.input_text;
+    testCaseForm.expected_output = nextState.expected_output;
+    testCaseForm.expected_json = nextState.expected_json;
+    testCaseForm.variables_json = nextState.variables_json;
+    testCaseForm.metadata_json = nextState.metadata_json;
+    testCaseForm.status = nextState.status;
+};
+
+const resetTestCaseComposer = () => {
+    uiState.editingTestCaseId = null;
+    uiState.testCaseNotice = '';
+    applyTestCaseState();
+    testCaseForm.clearErrors();
+};
+
+const beginEditTestCase = (testCase) => {
+    uiState.editingTestCaseId = testCase.id;
+    uiState.testCaseNotice = '';
+    applyTestCaseState(testCase);
+    testCaseForm.clearErrors();
+};
 
 const saveUseCase = async () => {
     editForm.processing = true;
@@ -84,28 +120,39 @@ const saveUseCase = async () => {
     }
 };
 
-const createTestCase = async () => {
+const saveTestCase = async () => {
     testCaseForm.processing = true;
     uiState.testCaseNotice = '';
 
-    try {
-        await axios.post(route('api.test-cases.store', props.useCase.id), {
-            title: testCaseForm.title,
-            input_text: testCaseForm.input_text,
-            expected_output: testCaseForm.expected_output || null,
-            expected_json: testCaseForm.expected_json,
-            variables_json: testCaseForm.variables_json,
-            metadata_json: testCaseForm.metadata_json,
-            status: testCaseForm.status,
-        });
+    const payload = {
+        title: testCaseForm.title,
+        input_text: testCaseForm.input_text,
+        expected_output: testCaseForm.expected_output || null,
+        expected_json: testCaseForm.expected_json,
+        variables_json: testCaseForm.variables_json,
+        metadata_json: testCaseForm.metadata_json,
+        status: testCaseForm.status,
+    };
 
-        testCaseForm.reset();
-        testCaseForm.status = 'active';
-        uiState.testCaseNotice = 'Test case added to this task.';
+    try {
+        if (uiState.editingTestCaseId) {
+            await axios.put(route('api.test-cases.update', uiState.editingTestCaseId), payload);
+            uiState.testCaseNotice = 'Test case updated.';
+        } else {
+            await axios.post(route('api.test-cases.store', props.useCase.id), payload);
+            uiState.testCaseNotice = 'Test case added to this task.';
+        }
+
+        applyTestCaseState();
+        uiState.editingTestCaseId = null;
+        testCaseForm.clearErrors();
         router.reload({ only: ['useCase', 'detail'] });
     } catch (error) {
         applyServerErrors(testCaseForm, error);
-        uiState.testCaseNotice = extractServerMessage(error, 'Test case could not be created.');
+        uiState.testCaseNotice = extractServerMessage(
+            error,
+            uiState.editingTestCaseId ? 'Test case could not be updated.' : 'Test case could not be created.',
+        );
     } finally {
         testCaseForm.processing = false;
     }
@@ -356,6 +403,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                         <th>Title</th>
                                         <th>Input</th>
                                         <th>Status</th>
+                                        <th v-if="canManage"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -363,23 +411,30 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                         <td class="font-bold">{{ testCase.title }}</td>
                                         <td class="text-sm text-[var(--muted)]">{{ testCase.input_text }}</td>
                                         <td><span class="status-chip">{{ testCase.status }}</span></td>
+                                        <td v-if="canManage" class="text-right">
+                                            <button type="button" class="btn-ghost" @click="beginEditTestCase(testCase)">Edit</button>
+                                        </td>
                                     </tr>
                                     <tr v-if="useCase.test_cases.length === 0">
-                                        <td colspan="3" class="text-[var(--muted)]">No saved test cases yet.</td>
+                                        <td :colspan="canManage ? 4 : 3" class="text-[var(--muted)]">No saved test cases yet.</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div v-if="canManage" class="surface-muted">
-                            <div class="section-title">Add test case</div>
-                            <p class="mt-2 text-sm text-[var(--muted)]">Save a new reusable example for future compare or batch runs.</p>
+                            <div class="section-title">{{ editingTestCase ? 'Edit test case' : 'Add test case' }}</div>
+                            <p class="mt-2 text-sm text-[var(--muted)]">
+                                {{ editingTestCase
+                                    ? 'Update the reusable example without leaving the task page.'
+                                    : 'Save a new reusable example for future compare or batch runs.' }}
+                            </p>
 
                             <div v-if="uiState.testCaseNotice" class="notice-banner mt-4">
                                 {{ uiState.testCaseNotice }}
                             </div>
 
-                            <form class="mt-5 grid gap-4" @submit.prevent="createTestCase">
+                            <form class="mt-5 grid gap-4" @submit.prevent="saveTestCase">
                                 <div>
                                     <label class="field-label">Title</label>
                                     <input v-model="testCaseForm.title" type="text" class="field-input">
@@ -390,7 +445,20 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     <textarea v-model="testCaseForm.input_text" class="field-textarea"></textarea>
                                     <div v-if="testCaseForm.errors.input_text" class="field-error">{{ testCaseForm.errors.input_text }}</div>
                                 </div>
-                                <button class="btn-primary self-start" :disabled="testCaseForm.processing">Create test case</button>
+                                <div class="flex flex-wrap gap-3">
+                                    <button class="btn-primary self-start" :disabled="testCaseForm.processing">
+                                        {{ testCaseForm.processing ? 'Saving...' : editingTestCase ? 'Save changes' : 'Create test case' }}
+                                    </button>
+                                    <button
+                                        v-if="editingTestCase"
+                                        type="button"
+                                        class="btn-secondary self-start"
+                                        :disabled="testCaseForm.processing"
+                                        @click="resetTestCaseComposer"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     </div>
