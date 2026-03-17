@@ -1,9 +1,10 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { FlaskConical, Gauge } from 'lucide-vue-next';
 import { formatScore } from '@/lib/formatters';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     overview: {
@@ -16,7 +17,6 @@ const props = defineProps({
     },
 });
 
-const activeTab = ref('overview');
 const topModel = computed(() => props.overview.top_models[0] ?? null);
 
 const tabs = [
@@ -25,6 +25,11 @@ const tabs = [
     { id: 'models', label: 'Models' },
     { id: 'attention', label: 'Attention' },
 ];
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'overview',
+    allowedValues: tabs.map((item) => item.id),
+});
 </script>
 
 <template>

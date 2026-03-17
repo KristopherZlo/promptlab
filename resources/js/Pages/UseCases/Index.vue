@@ -8,6 +8,7 @@ import { CalendarClock, FileStack, Filter, FolderKanban, Plus, UserRound } from 
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime } from '@/lib/formatters';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCases: {
@@ -33,7 +34,6 @@ const createForm = useForm({
     status: 'active',
 });
 
-const activeTab = ref('directory');
 const search = ref(props.filters.search ?? '');
 const selectedUseCaseId = ref(null);
 const uiState = reactive({
@@ -165,6 +165,11 @@ const tabs = computed(() => {
     }
 
     return items;
+});
+const activeTab = useUrlState({
+    key: 'tab',
+    defaultValue: 'directory',
+    allowedValues: tabs.value.map((item) => item.id),
 });
 </script>
 
