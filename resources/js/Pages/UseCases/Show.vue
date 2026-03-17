@@ -14,7 +14,7 @@ import {
 import { reactive } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime } from '@/lib/formatters';
-import { useUrlState } from '@/lib/urlState';
+import { routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCase: {
@@ -125,6 +125,7 @@ const activeTab = useUrlState({
         .filter((item) => !item.manageOnly || props.canManage)
         .map((item) => item.id),
 });
+const createTemplateHref = routeWithQuery('prompt-templates.create', {}, { use_case_id: props.useCase.id });
 </script>
 
 <template>
@@ -183,7 +184,7 @@ const activeTab = useUrlState({
                         <div class="console-page-actions">
                             <Link
                                 v-if="canManage && activeTab !== 'templates'"
-                                :href="route('prompt-templates.create')"
+                                :href="createTemplateHref"
                                 class="btn-secondary"
                             >
                                 New prompt template
@@ -265,7 +266,7 @@ const activeTab = useUrlState({
                             <h2 class="section-title">Prompt templates</h2>
                             <p class="text-sm text-[var(--muted)]">Keep all prompt families for this task in their own view.</p>
                         </div>
-                        <Link v-if="canManage" :href="route('prompt-templates.create')" class="btn-primary">New template</Link>
+                        <Link v-if="canManage" :href="createTemplateHref" class="btn-primary">New template</Link>
                     </div>
 
                     <table class="data-table">

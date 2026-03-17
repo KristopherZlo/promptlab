@@ -8,7 +8,7 @@ import { CalendarClock, FileStack, Filter, FolderKanban, Plus, UserRound } from 
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime } from '@/lib/formatters';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
-import { useUrlState } from '@/lib/urlState';
+import { routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCases: {
@@ -50,6 +50,13 @@ const statusCounts = computed(() => ({
 
 const selectedUseCase = computed(() =>
     props.useCases.find((item) => item.id === selectedUseCaseId.value) ?? props.useCases[0] ?? null,
+);
+const selectedTemplateCreateHref = computed(() =>
+    routeWithQuery(
+        'prompt-templates.create',
+        {},
+        selectedUseCase.value?.id ? { use_case_id: selectedUseCase.value.id } : {},
+    ),
 );
 
 const statusOptions = [
@@ -209,7 +216,7 @@ const activeTab = useUrlState({
                             <p class="text-sm text-[var(--muted)]">Browse tasks on the left and inspect the selected task on the right.</p>
                         </div>
                         <div class="console-page-actions">
-                            <Link v-if="canManage" :href="route('prompt-templates.create')" class="btn-secondary">New prompt template</Link>
+                            <Link v-if="canManage" :href="selectedTemplateCreateHref" class="btn-secondary">New prompt template</Link>
                         </div>
                     </div>
 
