@@ -6,6 +6,7 @@ import PanelHeader from '@/Components/PanelHeader.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
 import { BookCopy } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
+import { routeWithQuery } from '@/lib/urlState';
 
 const props = defineProps({
     entries: {
@@ -55,6 +56,22 @@ const groupedCounts = computed(() => {
 
     return Object.keys(counts).length;
 });
+
+const entryApprovalHref = (entry) =>
+    entry.prompt_version?.prompt_template_id
+        ? routeWithQuery('prompt-templates.show', entry.prompt_version.prompt_template_id, {
+            tab: 'approval',
+            prompt_version_id: entry.prompt_version?.id,
+        })
+        : route('prompt-templates.index');
+
+const entryRunHref = (entry) =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: entry.prompt_version?.use_case_id,
+        prompt_template_id: entry.prompt_version?.prompt_template_id,
+        prompt_version_id: entry.prompt_version?.id,
+    });
 </script>
 
 <template>
@@ -137,11 +154,15 @@ const groupedCounts = computed(() => {
                     <tbody>
                         <tr v-for="entry in filteredEntries" :key="entry.id">
                             <td>
-                                <div class="font-semibold">
+                                <Link :href="entryApprovalHref(entry)" class="font-semibold hover:underline">
                                     {{ entry.prompt_version?.name }} {{ entry.prompt_version?.version_label }}
-                                </div>
+                                </Link>
                                 <div class="mt-1 text-sm text-[var(--muted)]">
                                     {{ entry.usage_notes || 'No additional usage notes.' }}
+                                </div>
+                                <div class="mt-3 flex flex-wrap gap-3 text-sm">
+                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Review approval</Link>
+                                    <Link :href="entryRunHref(entry)" class="app-inline-link">Run prompt</Link>
                                 </div>
                             </td>
                             <td>{{ entry.prompt_version?.use_case || 'No task' }}</td>

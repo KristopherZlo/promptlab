@@ -19,6 +19,8 @@ class LibraryEntryResource extends JsonResource
             'approved_by' => $this->whenLoaded('approver', fn () => $this->approver?->display_name),
             'prompt_version' => $this->whenLoaded('promptVersion', fn () => [
                 'id' => $this->promptVersion?->id,
+                'prompt_template_id' => $this->promptVersion?->prompt_template_id,
+                'use_case_id' => $this->promptVersion?->promptTemplate?->use_case_id,
                 'version_label' => $this->promptVersion?->version_label,
                 'name' => $this->promptVersion?->promptTemplate?->name,
                 'use_case' => $this->promptVersion?->promptTemplate?->useCase?->name,

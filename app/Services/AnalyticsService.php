@@ -29,6 +29,7 @@ class AnalyticsService
                 ->get()
                 ->map(fn (Experiment $experiment) => [
                     'id' => $experiment->id,
+                    'use_case_id' => $experiment->use_case_id,
                     'mode' => $experiment->mode,
                     'status' => $experiment->status,
                     'use_case' => $experiment->useCase?->name,
@@ -47,6 +48,8 @@ class AnalyticsService
                 ->get()
                 ->map(fn (PromptVersion $version) => [
                     'id' => $version->id,
+                    'prompt_template_id' => $version->prompt_template_id,
+                    'use_case_id' => $version->promptTemplate?->use_case_id,
                     'name' => $version->promptTemplate?->name,
                     'version_label' => $version->version_label,
                     'use_case' => $version->promptTemplate?->useCase?->name,
@@ -64,6 +67,10 @@ class AnalyticsService
                 ->get()
                 ->map(fn (ExperimentRun $run) => [
                     'id' => $run->id,
+                    'experiment_id' => $run->experiment_id,
+                    'prompt_version_id' => $run->prompt_version_id,
+                    'prompt_template_id' => $run->promptVersion?->prompt_template_id,
+                    'use_case_id' => $run->promptVersion?->promptTemplate?->use_case_id,
                     'prompt' => $run->promptVersion?->promptTemplate?->name,
                     'version_label' => $run->promptVersion?->version_label,
                     'use_case' => $run->promptVersion?->promptTemplate?->useCase?->name,
@@ -82,6 +89,7 @@ class AnalyticsService
                 ->get()
                 ->map(fn (TestCase $testCase) => [
                     'id' => $testCase->id,
+                    'use_case_id' => $testCase->use_case_id,
                     'title' => $testCase->title,
                     'use_case' => $testCase->useCase?->name,
                     'failed_count' => $testCase->failed_count,
@@ -190,6 +198,8 @@ class AnalyticsService
 
                 return [
                     'id' => $version->id,
+                    'prompt_template_id' => $version->prompt_template_id,
+                    'use_case_id' => $version->promptTemplate?->use_case_id,
                     'name' => $version->promptTemplate?->name,
                     'version_label' => $version->version_label,
                     'use_case' => $version->promptTemplate?->useCase?->name,

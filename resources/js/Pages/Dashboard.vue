@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { FlaskConical, Gauge } from 'lucide-vue-next';
 import { formatScore } from '@/lib/formatters';
-import { useUrlState } from '@/lib/urlState';
+import { routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     overview: {
@@ -30,6 +30,32 @@ const activeTab = useUrlState({
     defaultValue: 'overview',
     allowedValues: tabs.map((item) => item.id),
 });
+
+const promptEditorHref = (prompt, tab = 'versions') =>
+    prompt?.prompt_template_id
+        ? routeWithQuery('prompt-templates.show', prompt.prompt_template_id, {
+            tab,
+            prompt_version_id: prompt.id,
+        })
+        : route('prompt-templates.index');
+
+const promptRunHref = (prompt) =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: prompt.use_case_id,
+        prompt_template_id: prompt.prompt_template_id,
+        prompt_version_id: prompt.id,
+    });
+
+const problemCaseHref = (item) =>
+    item.use_case_id
+        ? routeWithQuery('use-cases.show', item.use_case_id, { tab: 'test-cases' })
+        : route('use-cases.index');
+
+const failedRunHref = (item) =>
+    item.experiment_id
+        ? routeWithQuery('experiments.show', item.experiment_id, { tab: 'results' })
+        : route('playground');
 </script>
 
 <template>
@@ -146,10 +172,14 @@ const activeTab = useUrlState({
                                 <div v-for="prompt in overview.top_performing_prompts.slice(0, 6)" :key="prompt.id" class="record-list-item">
                                     <div class="flex items-start justify-between gap-4">
                                         <div>
-                                            <div class="font-semibold text-[var(--ink)]">
+                                            <Link :href="promptEditorHref(prompt)" class="font-semibold text-[var(--ink)] hover:underline">
                                                 {{ prompt.name }} <span class="text-[var(--muted)]">{{ prompt.version_label }}</span>
-                                            </div>
+                                            </Link>
                                             <div class="mt-1 text-sm text-[var(--muted)]">{{ prompt.use_case }}</div>
+                                            <div class="mt-3 flex flex-wrap gap-3 text-sm">
+                                                <Link :href="promptEditorHref(prompt)" class="app-inline-link">Open version</Link>
+                                                <Link :href="promptRunHref(prompt)" class="app-inline-link">Run version</Link>
+                                            </div>
                                         </div>
                                         <div class="text-sm font-semibold">{{ prompt.average_score?.toFixed(1) ?? 'Not scored' }}</div>
                                     </div>
@@ -169,10 +199,14 @@ const activeTab = useUrlState({
                                 <div v-for="prompt in overview.most_used_prompts.slice(0, 6)" :key="prompt.id" class="record-list-item">
                                     <div class="flex items-start justify-between gap-4">
                                         <div>
-                                            <div class="font-semibold text-[var(--ink)]">
+                                            <Link :href="promptEditorHref(prompt)" class="font-semibold text-[var(--ink)] hover:underline">
                                                 {{ prompt.name }} <span class="text-[var(--muted)]">{{ prompt.version_label }}</span>
-                                            </div>
+                                            </Link>
                                             <div class="mt-1 text-sm text-[var(--muted)]">{{ prompt.use_case }}</div>
+                                            <div class="mt-3 flex flex-wrap gap-3 text-sm">
+                                                <Link :href="promptEditorHref(prompt)" class="app-inline-link">Open version</Link>
+                                                <Link :href="promptRunHref(prompt)" class="app-inline-link">Run version</Link>
+                                            </div>
                                         </div>
                                         <div class="text-sm">{{ prompt.runs }} runs</div>
                                     </div>
@@ -239,9 +273,14 @@ const activeTab = useUrlState({
                             <div class="text-sm font-semibold text-[var(--ink)]">Problem cases</div>
                             <div class="record-list mt-4">
                                 <div v-for="item in overview.problem_cases" :key="item.id" class="record-list-item">
-                                    <div class="font-semibold text-[var(--ink)]">{{ item.title }}</div>
+                                    <Link :href="problemCaseHref(item)" class="font-semibold text-[var(--ink)] hover:underline">
+                                        {{ item.title }}
+                                    </Link>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ item.use_case }}</div>
                                     <div class="mt-2 text-sm">{{ item.failed_count }} failed or invalid runs</div>
+                                    <div class="mt-3">
+                                        <Link :href="problemCaseHref(item)" class="app-inline-link">Open test cases</Link>
+                                    </div>
                                 </div>
                                 <div v-if="overview.problem_cases.length === 0" class="record-list-item text-sm text-[var(--muted)]">
                                     No active problem cases.
@@ -253,11 +292,21 @@ const activeTab = useUrlState({
                             <div class="text-sm font-semibold text-[var(--ink)]">Invalid format outputs</div>
                             <div class="record-list mt-4">
                                 <div v-for="item in overview.failed_format_outputs" :key="`failed-${item.id}`" class="record-list-item">
-                                    <div class="font-semibold text-[var(--ink)]">
+                                    <Link :href="failedRunHref(item)" class="font-semibold text-[var(--ink)] hover:underline">
                                         {{ item.prompt }} <span class="text-[var(--muted)]">{{ item.version_label }}</span>
-                                    </div>
+                                    </Link>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ item.use_case }}</div>
                                     <div class="mt-2 text-sm">{{ item.error }}</div>
+                                    <div class="mt-3 flex flex-wrap gap-3 text-sm">
+                                        <Link :href="failedRunHref(item)" class="app-inline-link">Review experiment</Link>
+                                        <Link
+                                            v-if="item.prompt_template_id"
+                                            :href="promptEditorHref({ id: item.prompt_version_id, prompt_template_id: item.prompt_template_id })"
+                                            class="app-inline-link"
+                                        >
+                                            Open version
+                                        </Link>
+                                    </div>
                                 </div>
                                 <div v-if="overview.failed_format_outputs.length === 0" class="record-list-item text-sm text-[var(--muted)]">
                                     No invalid format outputs right now.
