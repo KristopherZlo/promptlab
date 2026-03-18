@@ -24,6 +24,10 @@ class LibraryEntryResource extends JsonResource
                 'version_label' => $this->promptVersion?->version_label,
                 'name' => $this->promptVersion?->promptTemplate?->name,
                 'use_case' => $this->promptVersion?->promptTemplate?->useCase?->name,
+                'description' => $this->promptVersion?->promptTemplate?->description,
+                'change_summary' => $this->promptVersion?->change_summary,
+                'preferred_model' => $this->promptVersion?->preferred_model,
+                'notes' => $this->promptVersion?->notes,
             ]),
         ];
     }

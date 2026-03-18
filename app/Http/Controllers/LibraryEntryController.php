@@ -15,11 +15,16 @@ use Inertia\Response;
 
 class LibraryEntryController extends Controller
 {
+    private function baseQuery()
+    {
+        return LibraryEntry::with(['promptVersion.promptTemplate.useCase', 'approver']);
+    }
+
     public function index(Request $request): Response|JsonResponse
     {
         $this->authorizeTeamAbility($request, 'view_workspace');
 
-        $entries = LibraryEntry::with(['promptVersion.promptTemplate.useCase', 'approver'])
+        $entries = $this->baseQuery()
             ->latest('approved_at')
             ->get();
 
@@ -29,6 +34,22 @@ class LibraryEntryController extends Controller
 
         return Inertia::render('Library/Index', [
             'entries' => LibraryEntryResource::collection($entries)->resolve(),
+            'canManage' => $request->user()?->canInTeam('manage_library'),
+        ]);
+    }
+
+    public function show(Request $request, LibraryEntry $libraryEntry): Response|JsonResponse
+    {
+        $this->authorizeTeamAbility($request, 'view_workspace');
+
+        $libraryEntry->loadMissing(['promptVersion.promptTemplate.useCase', 'approver']);
+
+        if ($this->isApiRequest($request)) {
+            return response()->json(['data' => new LibraryEntryResource($libraryEntry)]);
+        }
+
+        return Inertia::render('Library/Show', [
+            'entry' => (new LibraryEntryResource($libraryEntry))->resolve(),
             'canManage' => $request->user()?->canInTeam('manage_library'),
         ]);
     }

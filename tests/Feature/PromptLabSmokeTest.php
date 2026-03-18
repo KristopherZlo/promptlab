@@ -104,7 +104,7 @@ class PromptLabSmokeTest extends TestCase
             'status' => 'success',
         ]);
 
-        LibraryEntry::create([
+        $libraryEntry = LibraryEntry::create([
             'team_id' => $team->id,
             'prompt_version_id' => $promptVersion->id,
             'approved_by' => $user->id,
@@ -171,5 +171,14 @@ class PromptLabSmokeTest extends TestCase
         $this->actingAs($user)
             ->get('/library')
             ->assertOk();
+
+        $this->actingAs($user)
+            ->get("/library/{$libraryEntry->id}")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Library/Show')
+                ->where('entry.id', $libraryEntry->id)
+                ->where('entry.prompt_version.id', $promptVersion->id)
+            );
     }
 }

@@ -1,0 +1,149 @@
+<script setup>
+import { Head, Link } from '@inertiajs/vue3';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PanelHeader from '@/Components/PanelHeader.vue';
+import { BookCopy, ClipboardList, FileText } from 'lucide-vue-next';
+import { formatDateTime } from '@/lib/formatters';
+
+defineProps({
+    entry: {
+        type: Object,
+        required: true,
+    },
+    canManage: {
+        type: Boolean,
+        required: true,
+    },
+});
+</script>
+
+<template>
+    <Head :title="`${entry.prompt_version?.name || 'Library entry'} ${entry.prompt_version?.version_label || ''}`.trim()" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        {{ entry.prompt_version?.name || 'Approved library entry' }}
+                        <span v-if="entry.prompt_version?.version_label">{{ entry.prompt_version.version_label }}</span>
+                    </h1>
+                    <p class="mt-1 text-sm text-[var(--muted)]">
+                        Approved prompt entry for controlled reuse across the workspace.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
+                </div>
+            </div>
+        </template>
+
+        <div class="page-frame-content">
+            <section class="panel p-5">
+                <PanelHeader
+                    title="Approval snapshot"
+                    description="Key approval details and current recommendation metadata."
+                    :icon="BookCopy"
+                    help="Shows who approved the entry, when it happened, which task it belongs to, and what model or usage guidance the team should follow."
+                />
+
+                <div class="summary-strip mt-4">
+                    <div class="summary-item">
+                        <div class="summary-item-label">Task</div>
+                        <div class="summary-item-value">{{ entry.prompt_version?.use_case || 'No task' }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Recommended model</div>
+                        <div class="summary-item-value mono text-xs">{{ entry.recommended_model || 'No override' }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Approved by</div>
+                        <div class="summary-item-value">{{ entry.approved_by || 'Unknown reviewer' }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Approved at</div>
+                        <div class="summary-item-value">{{ entry.approved_at ? formatDateTime(entry.approved_at) : 'Not recorded' }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel p-5">
+                <PanelHeader
+                    title="Usage guidance"
+                    description="Operational notes for when this approved prompt should be reused."
+                    :icon="ClipboardList"
+                    help="Keeps the reuse guidance visible alongside the approved entry so the team can understand intended fit before launching experiments."
+                />
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <ClipboardList />
+                            <span>Best for</span>
+                        </div>
+                        <div class="mt-3 text-sm leading-6 text-[var(--muted)]">
+                            {{ entry.best_for || 'General internal use.' }}
+                        </div>
+                    </div>
+
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <FileText />
+                            <span>Usage notes</span>
+                        </div>
+                        <div class="mt-3 text-sm leading-6 text-[var(--muted)]">
+                            {{ entry.usage_notes || 'No additional notes were saved for this approval.' }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel p-5">
+                <PanelHeader
+                    title="Source snapshot"
+                    description="Basic context about the prompt version that was approved."
+                    :icon="FileText"
+                    help="Summarizes the underlying prompt version so reviewers can verify what was approved before jumping into source or experiments."
+                />
+
+                <div class="summary-strip mt-4">
+                    <div class="summary-item">
+                        <div class="summary-item-label">Version</div>
+                        <div class="summary-item-value">{{ entry.prompt_version?.version_label || 'Unknown' }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Template model</div>
+                        <div class="summary-item-value mono text-xs">{{ entry.prompt_version?.preferred_model || 'No preference' }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Approval access</div>
+                        <div class="summary-item-value">{{ canManage ? 'Manage' : 'Read only' }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <ClipboardList />
+                            <span>Change summary</span>
+                        </div>
+                        <div class="mt-3 text-sm leading-6 text-[var(--muted)]">
+                            {{ entry.prompt_version?.change_summary || 'No change summary recorded.' }}
+                        </div>
+                    </div>
+
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <FileText />
+                            <span>Revision notes</span>
+                        </div>
+                        <div class="mt-3 text-sm leading-6 text-[var(--muted)]">
+                            {{ entry.prompt_version?.notes || 'No revision notes recorded.' }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </AuthenticatedLayout>
+</template>

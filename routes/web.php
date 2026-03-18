@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/playground', [PlaygroundController::class, 'index'])->name('playground');
     Route::get('/experiments/{experiment}', [ExperimentController::class, 'show'])->name('experiments.show');
     Route::get('/library', [LibraryEntryController::class, 'index'])->name('library.index');
+    Route::get('/library/{libraryEntry}', [LibraryEntryController::class, 'show'])->name('library.show');
 
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
     Route::post('/teams/switch', [TeamController::class, 'switch'])->name('teams.switch');

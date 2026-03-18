@@ -37,6 +37,7 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
     Route::post('/evaluations', [EvaluationController::class, 'store'])->name('evaluations.store');
 
     Route::get('/library-entries', [LibraryEntryController::class, 'index'])->name('library-entries.index');
+    Route::get('/library-entries/{libraryEntry}', [LibraryEntryController::class, 'show'])->name('library-entries.show');
     Route::post('/library-entries', [LibraryEntryController::class, 'store'])->name('library-entries.store');
 
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');

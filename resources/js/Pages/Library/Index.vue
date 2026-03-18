@@ -72,6 +72,8 @@ const entryRunHref = (entry) =>
         prompt_template_id: entry.prompt_version?.prompt_template_id,
         prompt_version_id: entry.prompt_version?.id,
     });
+
+const entryDetailHref = (entry) => route('library.show', entry.id);
 </script>
 
 <template>
@@ -154,7 +156,7 @@ const entryRunHref = (entry) =>
                     <tbody>
                         <tr v-for="entry in filteredEntries" :key="entry.id">
                             <td>
-                                <Link :href="entryApprovalHref(entry)" class="font-semibold hover:underline">
+                                <Link :href="entryDetailHref(entry)" class="font-semibold hover:underline">
                                     {{ entry.prompt_version?.name }} {{ entry.prompt_version?.version_label }}
                                 </Link>
                                 <div class="mt-1 text-sm text-[var(--muted)]">
