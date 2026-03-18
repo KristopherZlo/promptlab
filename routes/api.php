@@ -39,6 +39,7 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
     Route::get('/library-entries', [LibraryEntryController::class, 'index'])->name('library-entries.index');
     Route::get('/library-entries/{libraryEntry}', [LibraryEntryController::class, 'show'])->name('library-entries.show');
     Route::post('/library-entries', [LibraryEntryController::class, 'store'])->name('library-entries.store');
+    Route::delete('/library-entries/{libraryEntry}', [LibraryEntryController::class, 'destroy'])->name('library-entries.destroy');
 
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
     Route::post('/teams/switch', [TeamController::class, 'switch'])->name('teams.switch');

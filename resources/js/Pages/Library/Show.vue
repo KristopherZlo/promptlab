@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import { BookCopy, ClipboardList, FileText } from 'lucide-vue-next';
@@ -43,6 +43,22 @@ const runHref = computed(() =>
         model_name: props.entry.recommended_model || props.entry.prompt_version?.preferred_model || '',
     }),
 );
+
+const revokeEntry = () => {
+    if (!props.canManage) {
+        return;
+    }
+
+    const promptLabel = `${props.entry.prompt_version?.name || 'this prompt'} ${props.entry.prompt_version?.version_label || ''}`.trim();
+
+    if (!window.confirm(`Revoke library approval for ${promptLabel}?`)) {
+        return;
+    }
+
+    router.delete(route('library.destroy', props.entry.id), {
+        preserveScroll: false,
+    });
+};
 </script>
 
 <template>
@@ -65,6 +81,9 @@ const runHref = computed(() =>
                     <Link :href="runHref" class="btn-primary">Run from library</Link>
                     <Link :href="sourceVersionHref" class="btn-secondary">Open source version</Link>
                     <Link :href="approvalHref" class="btn-secondary">Review approval</Link>
+                    <button v-if="canManage" type="button" class="btn-ghost text-[var(--danger)]" @click="revokeEntry">
+                        Revoke approval
+                    </button>
                     <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
                 </div>
             </div>

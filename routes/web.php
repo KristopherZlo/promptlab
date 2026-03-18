@@ -60,6 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/experiments/{experiment}', [ExperimentController::class, 'show'])->name('experiments.show');
     Route::get('/library', [LibraryEntryController::class, 'index'])->name('library.index');
     Route::get('/library/{libraryEntry}', [LibraryEntryController::class, 'show'])->name('library.show');
+    Route::delete('/library/{libraryEntry}', [LibraryEntryController::class, 'destroy'])->name('library.destroy');
 
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
     Route::post('/teams/switch', [TeamController::class, 'switch'])->name('teams.switch');

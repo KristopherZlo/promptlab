@@ -83,4 +83,32 @@ class LibraryEntryController extends Controller
 
         return to_route('library.index')->with('success', 'Prompt promoted to library.');
     }
+
+    public function destroy(Request $request, LibraryEntry $libraryEntry, ActivityLogService $activity): RedirectResponse|JsonResponse
+    {
+        $this->authorizeTeamAbility($request, 'manage_library');
+
+        $libraryEntry->loadMissing(['promptVersion.promptTemplate.useCase', 'approver']);
+        $promptVersion = $libraryEntry->promptVersion;
+
+        if ($promptVersion) {
+            $promptVersion->update([
+                'is_library_approved' => false,
+            ]);
+        }
+
+        $activity->record('library.revoked', $libraryEntry, [
+            'prompt_version_id' => $promptVersion?->id,
+            'version_label' => $promptVersion?->version_label,
+            'recommended_model' => $libraryEntry->recommended_model,
+        ], $request->user());
+
+        $libraryEntry->delete();
+
+        if ($this->isApiRequest($request)) {
+            return response()->json(['message' => 'Prompt removed from library.']);
+        }
+
+        return to_route('library.index')->with('success', 'Prompt removed from library.');
+    }
 }
