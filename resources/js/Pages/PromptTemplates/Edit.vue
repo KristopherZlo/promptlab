@@ -105,6 +105,17 @@ const activeTab = useUrlState({
 
 const versions = computed(() => props.promptTemplate?.versions ?? []);
 const versionHistory = computed(() => [...versions.value].reverse());
+const approvedHistory = computed(() =>
+    versions.value
+        .filter((version) => version.library_entry?.id)
+        .sort((left, right) => {
+            const leftTime = new Date(left.library_entry?.approved_at ?? left.created_at ?? 0).getTime();
+            const rightTime = new Date(right.library_entry?.approved_at ?? right.created_at ?? 0).getTime();
+
+            return rightTime - leftTime || right.id - left.id;
+        }),
+);
+const currentApprovedVersion = computed(() => approvedHistory.value[0] ?? null);
 const currentVersion = computed(() =>
     versions.value.find((version) => version.id === selectedVersionId.value) ?? null,
 );
@@ -137,6 +148,18 @@ const experimentsHref = computed(() =>
     }),
 );
 const experimentsButtonLabel = computed(() => (currentVersion.value ? 'Run current version' : 'Open experiments'));
+const versionLibraryHref = (version) =>
+    version?.library_entry?.id
+        ? route('library.show', version.library_entry.id)
+        : route('library.index');
+const versionRunHref = (version) =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: templateForm.use_case_id || '',
+        prompt_template_id: props.promptTemplate?.id ?? '',
+        prompt_version_id: version?.id ?? '',
+        model_name: version?.library_entry?.recommended_model ?? version?.preferred_model ?? templateForm.preferred_model ?? '',
+    });
 
 const versionReference = (version) => `#${String(version.id).padStart(4, '0')}`;
 
@@ -775,6 +798,93 @@ const promoteToLibrary = async () => {
                     <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
                         Select one revision, fill the handoff fields below, and click the approval button. Approved revisions appear in the shared library for the whole team.
                     </div>
+                </div>
+
+                <div v-if="currentApprovedVersion" class="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <BookCopy />
+                            <span>Current approved source</span>
+                        </div>
+
+                        <div class="summary-list mt-4">
+                            <div class="summary-row">
+                                <span>Version</span>
+                                <span>{{ currentApprovedVersion.version_label }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Approved by</span>
+                                <span>{{ currentApprovedVersion.library_entry?.approved_by || 'Unknown reviewer' }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Approved at</span>
+                                <span>{{ currentApprovedVersion.library_entry?.approved_at ? formatDateTime(currentApprovedVersion.library_entry.approved_at) : 'Not recorded' }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Recommended model</span>
+                                <span class="mono text-xs">{{ currentApprovedVersion.library_entry?.recommended_model || currentApprovedVersion.preferred_model || 'No override' }}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Best for</span>
+                                <span>{{ currentApprovedVersion.library_entry?.best_for || 'General internal use' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-sm leading-6 text-[var(--muted)]">
+                            {{ currentApprovedVersion.library_entry?.usage_notes || currentApprovedVersion.notes || 'No usage notes recorded for the current library source.' }}
+                        </div>
+
+                        <div class="mt-4 flex flex-wrap gap-3 text-sm">
+                            <button
+                                v-if="currentVersion?.id !== currentApprovedVersion.id"
+                                type="button"
+                                class="app-inline-link"
+                                @click="selectVersion(currentApprovedVersion)"
+                            >
+                                Select approved version
+                            </button>
+                            <Link :href="versionLibraryHref(currentApprovedVersion)" class="app-inline-link">Open library entry</Link>
+                            <Link :href="versionRunHref(currentApprovedVersion)" class="app-inline-link">Run approved version</Link>
+                        </div>
+                    </div>
+
+                    <div class="panel-muted p-4">
+                        <div class="text-block-title">
+                            <Workflow />
+                            <span>Approval history</span>
+                        </div>
+
+                        <div class="mt-4 space-y-3">
+                            <button
+                                v-for="version in approvedHistory"
+                                :key="`approval-${version.id}`"
+                                type="button"
+                                class="guide-card w-full text-left"
+                                @click="selectVersion(version)"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div class="font-bold">{{ version.version_label }}</div>
+                                        <div class="mt-1 text-sm text-[var(--muted)]">
+                                            {{ version.library_entry?.approved_by || 'Unknown reviewer' }}
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-[var(--muted)]">
+                                        {{ version.library_entry?.approved_at ? formatDateTime(version.library_entry.approved_at) : 'No date' }}
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 flex flex-wrap gap-3 text-sm">
+                                    <span class="status-chip">Approved</span>
+                                    <span class="mono text-xs text-[var(--muted)]">{{ version.library_entry?.recommended_model || version.preferred_model || 'No override' }}</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="empty-state mt-5">
+                    No versions from this template have been approved for library reuse yet.
                 </div>
 
                 <div v-if="canManageLibrary && currentVersion" class="mt-5 grid gap-4 md:grid-cols-2">
