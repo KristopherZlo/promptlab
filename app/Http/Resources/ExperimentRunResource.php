@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Evaluation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -37,7 +36,7 @@ class ExperimentRunResource extends JsonResource
             ]),
             'test_case' => $this->whenLoaded('testCase'),
             'manual_average_score' => $scores->isNotEmpty() ? round($scores->avg(), 2) : null,
-            'evaluations' => $this->whenLoaded('evaluations'),
+            'evaluations' => EvaluationResource::collection($this->whenLoaded('evaluations')),
         ];
     }
 }
