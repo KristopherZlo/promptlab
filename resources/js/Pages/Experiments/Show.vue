@@ -54,6 +54,9 @@ const compareGridClasses = computed(() =>
         ? 'grid gap-4 xl:grid-cols-2 2xl:grid-cols-3'
         : 'grid gap-4 xl:grid-cols-2',
 );
+const problemRuns = computed(() =>
+    runs.value.filter((run) => ['failed', 'invalid_format'].includes(run.status) || run.format_valid === false),
+);
 const batchActiveRun = computed(() =>
     runs.value.find((run) => run.id === selectedRunId.value) ?? runs.value[0] ?? null,
 );
@@ -352,6 +355,27 @@ const promoteRun = async (run) => {
             </section>
 
             <div v-else-if="activeTab === 'results'" class="space-y-6">
+                <section v-if="problemRuns.length" class="panel p-5">
+                    <PanelHeader
+                        title="Problem queue"
+                        description="Jump straight into failed or invalid cases first."
+                        :icon="TriangleAlert"
+                        help="Surfaces the runs that need immediate review so batch experiments do not require scanning the full table for failures."
+                    />
+
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <button
+                            v-for="run in problemRuns"
+                            :key="`problem-${run.id}`"
+                            type="button"
+                            class="btn-secondary"
+                            @click="selectedRunId = run.id"
+                        >
+                            {{ run.test_case?.title || `Run #${run.id}` }}
+                        </button>
+                    </div>
+                </section>
+
                 <section class="panel overflow-hidden">
                     <div class="border-b border-[var(--line)] px-5 py-4">
                         <PanelHeader
@@ -375,6 +399,9 @@ const promoteRun = async (run) => {
                                 v-for="run in runs"
                                 :key="run.id"
                                 class="cursor-pointer"
+                                :class="{
+                                    'bg-[rgba(224,30,90,0.08)]': ['failed', 'invalid_format'].includes(run.status) || run.format_valid === false,
+                                }"
                                 @click="selectedRunId = run.id"
                             >
                                 <td>
@@ -398,6 +425,14 @@ const promoteRun = async (run) => {
                             help="Shows the currently selected batch result, including the input, output, compiled prompt, and evaluation tools for that case."
                         />
                         <span class="status-chip">{{ batchActiveRun.status }}</span>
+                    </div>
+
+                    <div
+                        v-if="batchActiveRun.error_message"
+                        class="mt-4 flex items-start gap-2 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]"
+                    >
+                        <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>{{ batchActiveRun.error_message }}</span>
                     </div>
 
                     <div class="mt-4">
