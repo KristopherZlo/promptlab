@@ -223,6 +223,37 @@ const promoteRun = async (run) => {
                         :icon="ClipboardList"
                         help="Compare mode keeps every candidate visible at once so you can inspect outputs, prompts, and evaluations without scrolling through separate pages."
                     />
+
+                    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        <div v-for="run in runs" :key="`summary-${run.id}`" class="guide-card">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <div class="font-bold">{{ run.prompt_version?.version_label || `Run #${run.id}` }}</div>
+                                    <div class="mt-1 text-sm text-[var(--muted)]">{{ run.prompt_version?.name || 'Unnamed prompt' }}</div>
+                                </div>
+                                <span class="status-chip">{{ run.status }}</span>
+                            </div>
+
+                            <div class="summary-list mt-4">
+                                <div class="summary-row">
+                                    <span>Model</span>
+                                    <span class="mono text-xs">{{ experimentState.model_name }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Score</span>
+                                    <span>{{ formatScore(run.manual_average_score) }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Format</span>
+                                    <span>{{ run.format_valid ? 'Valid' : 'Invalid' }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Latency</span>
+                                    <span>{{ run.latency_ms != null ? `${run.latency_ms} ms` : 'N/A' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <div :class="experimentState.mode === 'compare' ? compareGridClasses : 'space-y-4'">
