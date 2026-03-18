@@ -49,6 +49,11 @@ watch(
 const runs = computed(() => experimentState.value.runs ?? []);
 const summary = computed(() => experimentState.value.summary ?? {});
 const isRunning = computed(() => ['queued', 'running'].includes(experimentState.value.status));
+const compareGridClasses = computed(() =>
+    runs.value.length > 2
+        ? 'grid gap-4 xl:grid-cols-2 2xl:grid-cols-3'
+        : 'grid gap-4 xl:grid-cols-2',
+);
 const batchActiveRun = computed(() =>
     runs.value.find((run) => run.id === selectedRunId.value) ?? runs.value[0] ?? null,
 );
@@ -211,95 +216,106 @@ const promoteRun = async (run) => {
             </section>
 
             <section v-if="activeTab === 'results' && experimentState.mode !== 'batch'" class="space-y-4">
-                <div v-for="run in runs" :key="run.id" class="panel p-5">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="min-w-0">
-                            <div class="font-bold">{{ run.prompt_version?.name }} {{ run.prompt_version?.version_label }}</div>
-                            <div class="mt-1 text-sm text-[var(--muted)]">
-                                {{ run.prompt_version?.use_case || experimentState.use_case?.name || 'No task' }}
+                <section v-if="experimentState.mode === 'compare'" class="panel p-5">
+                    <PanelHeader
+                        title="Compare board"
+                        description="Review the candidate revisions side by side before deciding which one should move forward."
+                        :icon="ClipboardList"
+                        help="Compare mode keeps every candidate visible at once so you can inspect outputs, prompts, and evaluations without scrolling through separate pages."
+                    />
+                </section>
+
+                <div :class="experimentState.mode === 'compare' ? compareGridClasses : 'space-y-4'">
+                    <div v-for="run in runs" :key="run.id" class="panel p-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <div class="font-bold">{{ run.prompt_version?.name }} {{ run.prompt_version?.version_label }}</div>
+                                <div class="mt-1 text-sm text-[var(--muted)]">
+                                    {{ run.prompt_version?.use_case || experimentState.use_case?.name || 'No task' }}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <HelpHint
+                                    text="This run card contains one prompt version output, its compiled prompt, runtime metrics, and evaluation controls."
+                                    :label="`Help for run ${run.id}`"
+                                />
+                                <span class="status-chip">{{ run.status }}</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <HelpHint
-                                text="This run card contains one prompt version output, its compiled prompt, runtime metrics, and evaluation controls."
-                                :label="`Help for run ${run.id}`"
-                            />
-                            <span class="status-chip">{{ run.status }}</span>
-                        </div>
-                    </div>
 
-                    <div class="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
-                        <div class="guide-card">
-                            <div class="inline-meta-item text-xs text-[var(--muted)]">
-                                <Clock3 />
-                                <span>Latency</span>
+                        <div class="mt-4 grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
+                            <div class="guide-card">
+                                <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                    <Clock3 />
+                                    <span>Latency</span>
+                                </div>
+                                <div class="mt-1">{{ run.latency_ms != null ? `${run.latency_ms} ms` : 'N/A' }}</div>
                             </div>
-                            <div class="mt-1">{{ run.latency_ms != null ? `${run.latency_ms} ms` : 'N/A' }}</div>
-                        </div>
-                        <div class="guide-card">
-                            <div class="inline-meta-item text-xs text-[var(--muted)]">
-                                <Coins />
-                                <span>Tokens</span>
+                            <div class="guide-card">
+                                <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                    <Coins />
+                                    <span>Tokens</span>
+                                </div>
+                                <div class="mt-1">{{ run.token_input ?? 'N/A' }} in / {{ run.token_output ?? 'N/A' }} out</div>
                             </div>
-                            <div class="mt-1">{{ run.token_input ?? 'N/A' }} in / {{ run.token_output ?? 'N/A' }} out</div>
-                        </div>
-                        <div class="guide-card">
-                            <div class="inline-meta-item text-xs text-[var(--muted)]">
-                                <BadgeCheck />
-                                <span>Format</span>
+                            <div class="guide-card">
+                                <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                    <BadgeCheck />
+                                    <span>Format</span>
+                                </div>
+                                <div class="mt-1">{{ run.format_valid ? 'Valid' : 'Invalid' }}</div>
                             </div>
-                            <div class="mt-1">{{ run.format_valid ? 'Valid' : 'Invalid' }}</div>
-                        </div>
-                        <div class="guide-card">
-                            <div class="inline-meta-item text-xs text-[var(--muted)]">
-                                <Gauge />
-                                <span>Manual average</span>
+                            <div class="guide-card">
+                                <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                    <Gauge />
+                                    <span>Manual average</span>
+                                </div>
+                                <div class="mt-1">{{ formatScore(run.manual_average_score) }}</div>
                             </div>
-                            <div class="mt-1">{{ formatScore(run.manual_average_score) }}</div>
                         </div>
-                    </div>
 
-                    <div class="mt-4">
-                        <div class="label-with-icon">
-                            <FileText />
-                            <span>Input</span>
+                        <div class="mt-4">
+                            <div class="label-with-icon">
+                                <FileText />
+                                <span>Input</span>
+                            </div>
+                            <div class="guide-card mt-2 text-sm leading-6">{{ run.input_text }}</div>
                         </div>
-                        <div class="guide-card mt-2 text-sm leading-6">{{ run.input_text }}</div>
-                    </div>
 
-                    <div class="mt-4">
-                        <div class="label-with-icon">
-                            <Bot />
-                            <span>Output</span>
+                        <div class="mt-4">
+                            <div class="label-with-icon">
+                                <Bot />
+                                <span>Output</span>
+                            </div>
+                            <pre class="code-block mt-2">{{ run.output_text || run.error_message || 'No output yet.' }}</pre>
+                            <pre v-if="run.output_json" class="code-block mt-3">{{ safeJsonStringify(run.output_json, '{}') }}</pre>
                         </div>
-                        <pre class="code-block mt-2">{{ run.output_text || run.error_message || 'No output yet.' }}</pre>
-                        <pre v-if="run.output_json" class="code-block mt-3">{{ safeJsonStringify(run.output_json, '{}') }}</pre>
-                    </div>
 
-                    <div class="mt-4">
-                        <div class="label-with-icon">
-                            <FileCode2 />
-                            <span>Compiled prompt</span>
+                        <div class="mt-4">
+                            <div class="label-with-icon">
+                                <FileCode2 />
+                                <span>Compiled prompt</span>
+                            </div>
+                            <pre class="code-block mt-2">{{ run.compiled_prompt || 'Prompt compilation is not available yet.' }}</pre>
                         </div>
-                        <pre class="code-block mt-2">{{ run.compiled_prompt || 'Prompt compilation is not available yet.' }}</pre>
-                    </div>
 
-                    <div v-if="run.error_message" class="mt-4 flex items-start gap-2 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
-                        <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>{{ run.error_message }}</span>
-                    </div>
-
-                    <div class="mt-4">
-                        <EvaluationPanel :run="run" @saved="loadExperiment" />
-                    </div>
-
-                    <div v-if="canManageLibrary" class="mt-4 flex items-center justify-between gap-4">
-                        <div class="text-sm text-[var(--muted)]">
-                            {{ promotionMessages[run.id] || 'Promote this version only if the team would confidently reuse it.' }}
+                        <div v-if="run.error_message" class="mt-4 flex items-start gap-2 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
+                            <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+                            <span>{{ run.error_message }}</span>
                         </div>
-                        <button type="button" class="btn-secondary" @click="promoteRun(run)">
-                            Promote to library
-                        </button>
+
+                        <div class="mt-4">
+                            <EvaluationPanel :run="run" @saved="loadExperiment" />
+                        </div>
+
+                        <div v-if="canManageLibrary" class="mt-4 flex items-center justify-between gap-4">
+                            <div class="text-sm text-[var(--muted)]">
+                                {{ promotionMessages[run.id] || 'Promote this version only if the team would confidently reuse it.' }}
+                            </div>
+                            <button type="button" class="btn-secondary" @click="promoteRun(run)">
+                                Promote to library
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
