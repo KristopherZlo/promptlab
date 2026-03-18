@@ -1,6 +1,8 @@
 <script setup>
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import FilterDropdown from '@/Components/FilterDropdown.vue';
+import SearchFilterBar from '@/Components/SearchFilterBar.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import {
     CalendarClock,
@@ -75,8 +77,45 @@ const editingTestCase = computed(() =>
 );
 const canRunExperiments = computed(() => (page.props.auth.abilities ?? []).includes('run_experiments'));
 const selectedTestCaseIds = ref([]);
+const testCaseSearch = ref('');
+const testCaseStatusFilter = ref('');
 const selectedTestCases = computed(() =>
     props.useCase.test_cases.filter((testCase) => selectedTestCaseIds.value.includes(testCase.id)),
+);
+const testCaseStatusOptions = [
+    { label: 'Active', value: 'active' },
+    { label: 'Draft', value: 'draft' },
+    { label: 'Archived', value: 'archived' },
+];
+const filteredTestCases = computed(() => {
+    const query = testCaseSearch.value.trim().toLowerCase();
+
+    return props.useCase.test_cases.filter((testCase) => {
+        if (testCaseStatusFilter.value && testCase.status !== testCaseStatusFilter.value) {
+            return false;
+        }
+
+        if (!query) {
+            return true;
+        }
+
+        const haystack = [
+            testCase.title,
+            testCase.input_text,
+            testCase.expected_output,
+            safeJsonStringify(testCase.expected_json, ''),
+            safeJsonStringify(testCase.variables_json, ''),
+            safeJsonStringify(testCase.metadata_json, ''),
+        ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+        return haystack.includes(query);
+    });
+});
+const testCaseStatusLabel = computed(() =>
+    testCaseStatusOptions.find((option) => option.value === testCaseStatusFilter.value)?.label ?? '',
 );
 const batchRunHref = computed(() =>
     routeWithQuery('playground', {}, {
@@ -541,6 +580,23 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
 
                     <div class="surface-block-body space-y-6">
                         <div class="surface-muted">
+                            <SearchFilterBar
+                                :model-value="testCaseSearch"
+                                placeholder="Search test cases by title, input, expected output, or JSON..."
+                                @update:model-value="testCaseSearch = $event"
+                            >
+                                <FilterDropdown
+                                    label="Status"
+                                    :options="testCaseStatusOptions"
+                                    :selected="testCaseStatusFilter"
+                                    :selected-label="testCaseStatusLabel"
+                                    @select="testCaseStatusFilter = `${$event}`"
+                                    @clear="testCaseStatusFilter = ''"
+                                />
+                            </SearchFilterBar>
+                        </div>
+
+                        <div class="surface-muted">
                             <table class="data-table">
                                 <thead>
                                     <tr>
@@ -552,7 +608,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="testCase in useCase.test_cases" :key="testCase.id">
+                                    <tr v-for="testCase in filteredTestCases" :key="testCase.id">
                                         <td v-if="canRunExperiments">
                                             <input
                                                 type="checkbox"
@@ -613,8 +669,10 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr v-if="useCase.test_cases.length === 0">
-                                        <td :colspan="(canRunExperiments ? 1 : 0) + (canManage ? 4 : 3)" class="text-[var(--muted)]">No saved test cases yet.</td>
+                                    <tr v-if="filteredTestCases.length === 0">
+                                        <td :colspan="(canRunExperiments ? 1 : 0) + (canManage ? 4 : 3)" class="text-[var(--muted)]">
+                                            {{ useCase.test_cases.length === 0 ? 'No saved test cases yet.' : 'No test cases match the current search or filter.' }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
