@@ -60,7 +60,14 @@ const groupedCounts = computed(() => {
 const entryApprovalHref = (entry) =>
     entry.prompt_version?.prompt_template_id
         ? routeWithQuery('prompt-templates.show', entry.prompt_version.prompt_template_id, {
-            tab: 'approval',
+            tab: 'library',
+            prompt_version_id: entry.prompt_version?.id,
+        })
+        : route('prompt-templates.index');
+const entrySourceHref = (entry) =>
+    entry.prompt_version?.prompt_template_id
+        ? routeWithQuery('prompt-templates.show', entry.prompt_version.prompt_template_id, {
+            tab: 'versions',
             prompt_version_id: entry.prompt_version?.id,
         })
         : route('prompt-templates.index');
@@ -163,6 +170,7 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                                     {{ entry.usage_notes || 'No additional usage notes.' }}
                                 </div>
                                 <div class="mt-3 flex flex-wrap gap-3 text-sm">
+                                    <Link :href="entrySourceHref(entry)" class="app-inline-link">Open source version</Link>
                                     <Link :href="entryApprovalHref(entry)" class="app-inline-link">Review approval</Link>
                                     <Link :href="entryRunHref(entry)" class="app-inline-link">Run prompt</Link>
                                 </div>

@@ -1,11 +1,13 @@
 <script setup>
+import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import { BookCopy, ClipboardList, FileText } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
+import { routeWithQuery } from '@/lib/urlState';
 
-defineProps({
+const props = defineProps({
     entry: {
         type: Object,
         required: true,
@@ -15,6 +17,23 @@ defineProps({
         required: true,
     },
 });
+
+const sourceVersionHref = computed(() =>
+    props.entry.prompt_version?.prompt_template_id
+        ? routeWithQuery('prompt-templates.show', props.entry.prompt_version.prompt_template_id, {
+            tab: 'versions',
+            prompt_version_id: props.entry.prompt_version?.id,
+        })
+        : route('prompt-templates.index'),
+);
+const approvalHref = computed(() =>
+    props.entry.prompt_version?.prompt_template_id
+        ? routeWithQuery('prompt-templates.show', props.entry.prompt_version.prompt_template_id, {
+            tab: 'library',
+            prompt_version_id: props.entry.prompt_version?.id,
+        })
+        : route('prompt-templates.index'),
+);
 </script>
 
 <template>
@@ -34,6 +53,8 @@ defineProps({
                 </div>
 
                 <div class="flex flex-wrap gap-3">
+                    <Link :href="sourceVersionHref" class="btn-secondary">Open source version</Link>
+                    <Link :href="approvalHref" class="btn-secondary">Review approval</Link>
                     <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
                 </div>
             </div>
@@ -142,6 +163,11 @@ defineProps({
                             {{ entry.prompt_version?.notes || 'No revision notes recorded.' }}
                         </div>
                     </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-3 text-sm">
+                    <Link :href="sourceVersionHref" class="app-inline-link">Open source version</Link>
+                    <Link :href="approvalHref" class="app-inline-link">Review approval</Link>
                 </div>
             </section>
         </div>
