@@ -34,6 +34,15 @@ const approvalHref = computed(() =>
         })
         : route('prompt-templates.index'),
 );
+const runHref = computed(() =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: props.entry.prompt_version?.use_case_id,
+        prompt_template_id: props.entry.prompt_version?.prompt_template_id,
+        prompt_version_id: props.entry.prompt_version?.id,
+        model_name: props.entry.recommended_model || props.entry.prompt_version?.preferred_model || '',
+    }),
+);
 </script>
 
 <template>
@@ -53,6 +62,7 @@ const approvalHref = computed(() =>
                 </div>
 
                 <div class="flex flex-wrap gap-3">
+                    <Link :href="runHref" class="btn-primary">Run from library</Link>
                     <Link :href="sourceVersionHref" class="btn-secondary">Open source version</Link>
                     <Link :href="approvalHref" class="btn-secondary">Review approval</Link>
                     <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
@@ -166,6 +176,7 @@ const approvalHref = computed(() =>
                 </div>
 
                 <div class="mt-4 flex flex-wrap gap-3 text-sm">
+                    <Link :href="runHref" class="app-inline-link">Run from library</Link>
                     <Link :href="sourceVersionHref" class="app-inline-link">Open source version</Link>
                     <Link :href="approvalHref" class="app-inline-link">Review approval</Link>
                 </div>

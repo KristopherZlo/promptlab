@@ -78,6 +78,7 @@ const entryRunHref = (entry) =>
         use_case_id: entry.prompt_version?.use_case_id,
         prompt_template_id: entry.prompt_version?.prompt_template_id,
         prompt_version_id: entry.prompt_version?.id,
+        model_name: entry.recommended_model || entry.prompt_version?.preferred_model || '',
     });
 
 const entryDetailHref = (entry) => route('library.show', entry.id);

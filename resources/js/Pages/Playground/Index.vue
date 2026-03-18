@@ -47,6 +47,7 @@ const props = defineProps({
 const requestedMode = readQueryParam('mode');
 const requestedUseCaseId = Number.parseInt(readQueryParam('use_case_id'), 10);
 const requestedTemplateId = Number.parseInt(readQueryParam('prompt_template_id'), 10);
+const requestedModelName = readQueryParam('model_name');
 const requestedVersionIds = readQueryList('prompt_version_id')
     .map((value) => Number.parseInt(value, 10))
     .filter((value) => Number.isInteger(value) && value > 0);
@@ -88,7 +89,9 @@ const defaultUseCaseId = props.useCases.some((useCase) => useCase.id === request
         ?? requestedTemplate?.use_case_id
         ?? requestedSingleTestCase?.use_case_id
         ?? '';
-const defaultModel = '';
+const defaultModel = availableModels.value.some((model) => model.value === requestedModelName)
+    ? requestedModelName
+    : '';
 const defaultMode = ['single', 'compare', 'batch'].includes(requestedMode) ? requestedMode : 'single';
 const defaultPromptVersionIds = requestedVersionIds.length > 0
     ? requestedVersionIds
