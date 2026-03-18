@@ -21,7 +21,6 @@ const page = usePage();
 const canManageLibrary = computed(() => (page.props.auth.abilities ?? []).includes('manage_library'));
 
 const experimentState = ref(props.experiment);
-const selectedRunId = ref(props.experiment.runs?.[0]?.id ?? null);
 const promotionMessages = reactive({});
 let pollHandle = null;
 const tabItems = [
@@ -33,15 +32,35 @@ const activeTab = useUrlState({
     defaultValue: 'results',
     allowedValues: tabItems.map((item) => item.id),
 });
+const selectedRunId = useUrlState({
+    key: 'run',
+    defaultValue: '',
+    omitIf: '',
+});
+
+const syncSelectedRunId = (value = experimentState.value) => {
+    const nextRuns = value?.runs ?? [];
+
+    if (value?.mode !== 'batch' || nextRuns.length === 0) {
+        if (selectedRunId.value) {
+            selectedRunId.value = '';
+        }
+
+        return;
+    }
+
+    const hasSelectedRun = nextRuns.some((run) => `${run.id}` === selectedRunId.value);
+
+    if (!hasSelectedRun) {
+        selectedRunId.value = `${nextRuns[0].id}`;
+    }
+};
 
 watch(
     () => props.experiment,
     (value) => {
         experimentState.value = value;
-
-        if (!selectedRunId.value && value.runs?.length) {
-            selectedRunId.value = value.runs[0].id;
-        }
+        syncSelectedRunId(value);
     },
     { deep: true },
 );
@@ -58,16 +77,13 @@ const problemRuns = computed(() =>
     runs.value.filter((run) => ['failed', 'invalid_format'].includes(run.status) || run.format_valid === false),
 );
 const batchActiveRun = computed(() =>
-    runs.value.find((run) => run.id === selectedRunId.value) ?? runs.value[0] ?? null,
+    runs.value.find((run) => `${run.id}` === selectedRunId.value) ?? runs.value[0] ?? null,
 );
 
 const loadExperiment = async () => {
     const response = await axios.get(route('api.experiments.show', experimentState.value.id));
     experimentState.value = response.data.data;
-
-    if (!selectedRunId.value && experimentState.value.runs?.length) {
-        selectedRunId.value = experimentState.value.runs[0].id;
-    }
+    syncSelectedRunId(experimentState.value);
 };
 
 const startPolling = () => {
@@ -116,6 +132,14 @@ onBeforeUnmount(() => {
         window.Echo.leave(`private-experiments.${experimentState.value.id}`);
     }
 });
+
+watch(
+    () => [experimentState.value.mode, runs.value.map((run) => run.id).join(',')],
+    () => {
+        syncSelectedRunId();
+    },
+    { immediate: true },
+);
 
 const promoteRun = async (run) => {
     if (!canManageLibrary.value) {
@@ -369,7 +393,7 @@ const promoteRun = async (run) => {
                             :key="`problem-${run.id}`"
                             type="button"
                             class="btn-secondary"
-                            @click="selectedRunId = run.id"
+                            @click="selectedRunId = `${run.id}`"
                         >
                             {{ run.test_case?.title || `Run #${run.id}` }}
                         </button>
@@ -400,9 +424,10 @@ const promoteRun = async (run) => {
                                 :key="run.id"
                                 class="cursor-pointer"
                                 :class="{
+                                    'bg-[rgba(255,255,255,0.04)]': `${run.id}` === selectedRunId,
                                     'bg-[rgba(224,30,90,0.08)]': ['failed', 'invalid_format'].includes(run.status) || run.format_valid === false,
                                 }"
-                                @click="selectedRunId = run.id"
+                                @click="selectedRunId = `${run.id}`"
                             >
                                 <td>
                                     <div class="font-bold">{{ run.test_case?.title || `Run #${run.id}` }}</div>
