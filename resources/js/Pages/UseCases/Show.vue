@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import {
     CalendarClock,
     FileStack,
@@ -11,7 +11,7 @@ import {
     Settings2,
     UserRound,
 } from 'lucide-vue-next';
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, parseJsonInput, safeJsonStringify, truncateText } from '@/lib/formatters';
 import { routeWithQuery, useUrlState } from '@/lib/urlState';
@@ -34,6 +34,7 @@ const props = defineProps({
         required: true,
     },
 });
+const page = usePage();
 
 const editForm = useForm({
     name: props.useCase.name,
@@ -71,6 +72,25 @@ const uiState = reactive({
 
 const editingTestCase = computed(() =>
     props.useCase.test_cases.find((testCase) => testCase.id === uiState.editingTestCaseId) ?? null,
+);
+const canRunExperiments = computed(() => (page.props.auth.abilities ?? []).includes('run_experiments'));
+const selectedTestCaseIds = ref([]);
+const selectedTestCases = computed(() =>
+    props.useCase.test_cases.filter((testCase) => selectedTestCaseIds.value.includes(testCase.id)),
+);
+const batchRunHref = computed(() =>
+    routeWithQuery('playground', {}, {
+        mode: 'batch',
+        use_case_id: props.useCase.id,
+        test_case_id: selectedTestCases.value.map((testCase) => testCase.id).join(','),
+    }),
+);
+const singleRunHref = computed(() =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: props.useCase.id,
+        test_case_id: selectedTestCases.value[0]?.id ?? '',
+    }),
 );
 
 const applyTestCaseState = (testCase = null) => {
@@ -122,6 +142,15 @@ const duplicateTestCase = (testCase) => {
         status: 'draft',
     });
     testCaseForm.clearErrors();
+};
+
+const toggleSelectedTestCase = (id) => {
+    if (selectedTestCaseIds.value.includes(id)) {
+        selectedTestCaseIds.value = selectedTestCaseIds.value.filter((value) => value !== id);
+        return;
+    }
+
+    selectedTestCaseIds.value = [...selectedTestCaseIds.value, id];
 };
 
 const saveUseCase = async () => {
@@ -490,6 +519,24 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                             <h2 class="section-title">Saved test cases</h2>
                             <p class="text-sm text-[var(--muted)]">Keep reusable inputs and the form for adding new cases in their own layer.</p>
                         </div>
+                        <div v-if="canRunExperiments" class="console-page-actions">
+                            <Link
+                                v-if="selectedTestCases.length"
+                                :href="batchRunHref"
+                                class="btn-secondary"
+                            >
+                                Run batch with selected
+                            </Link>
+                            <button v-else type="button" class="btn-secondary" disabled>Run batch with selected</button>
+                            <Link
+                                v-if="selectedTestCases.length === 1"
+                                :href="singleRunHref"
+                                class="btn-primary"
+                            >
+                                Use in single run
+                            </Link>
+                            <button v-else type="button" class="btn-primary" disabled>Use in single run</button>
+                        </div>
                     </div>
 
                     <div class="surface-block-body space-y-6">
@@ -497,6 +544,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                             <table class="data-table">
                                 <thead>
                                     <tr>
+                                        <th v-if="canRunExperiments"></th>
                                         <th>Title</th>
                                         <th>Input</th>
                                         <th>Status</th>
@@ -505,6 +553,13 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                 </thead>
                                 <tbody>
                                     <tr v-for="testCase in useCase.test_cases" :key="testCase.id">
+                                        <td v-if="canRunExperiments">
+                                            <input
+                                                type="checkbox"
+                                                :checked="selectedTestCaseIds.includes(testCase.id)"
+                                                @change="toggleSelectedTestCase(testCase.id)"
+                                            >
+                                        </td>
                                         <td>
                                             <div class="font-bold">{{ testCase.title }}</div>
                                             <div class="mt-2 inline-meta text-xs text-[var(--muted)]">
@@ -559,7 +614,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                         </td>
                                     </tr>
                                     <tr v-if="useCase.test_cases.length === 0">
-                                        <td :colspan="canManage ? 4 : 3" class="text-[var(--muted)]">No saved test cases yet.</td>
+                                        <td :colspan="(canRunExperiments ? 1 : 0) + (canManage ? 4 : 3)" class="text-[var(--muted)]">No saved test cases yet.</td>
                                     </tr>
                                 </tbody>
                             </table>

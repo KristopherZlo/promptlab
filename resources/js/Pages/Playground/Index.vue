@@ -50,9 +50,18 @@ const requestedTemplateId = Number.parseInt(readQueryParam('prompt_template_id')
 const requestedVersionIds = readQueryList('prompt_version_id')
     .map((value) => Number.parseInt(value, 10))
     .filter((value) => Number.isInteger(value) && value > 0);
+const requestedTestCaseIds = readQueryList('test_case_id')
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isInteger(value) && value > 0);
 const allPromptTemplates = props.useCases.flatMap((useCase) =>
     (useCase.prompt_templates ?? []).map((template) => ({
         ...template,
+        use_case_id: useCase.id,
+    })),
+);
+const allTestCases = props.useCases.flatMap((useCase) =>
+    (useCase.test_cases ?? []).map((testCase) => ({
+        ...testCase,
         use_case_id: useCase.id,
     })),
 );
@@ -65,6 +74,10 @@ const requestedVersion = requestedVersionIds.length > 0
         })))
         .find((version) => version.id === requestedVersionIds[0]) ?? null
     : null;
+const requestedTestCases = requestedTestCaseIds.length > 0
+    ? allTestCases.filter((testCase) => requestedTestCaseIds.includes(testCase.id))
+    : [];
+const requestedSingleTestCase = requestedTestCases[0] ?? null;
 const availableModels = computed(() =>
     props.models.filter((model) => model.available || model.value.startsWith('mock:')),
 );
@@ -73,20 +86,24 @@ const defaultUseCaseId = props.useCases.some((useCase) => useCase.id === request
     ? requestedUseCaseId
     : requestedVersion?.use_case_id
         ?? requestedTemplate?.use_case_id
+        ?? requestedSingleTestCase?.use_case_id
         ?? '';
 const defaultModel = '';
 const defaultMode = ['single', 'compare', 'batch'].includes(requestedMode) ? requestedMode : 'single';
 const defaultPromptVersionIds = requestedVersionIds.length > 0
     ? requestedVersionIds
     : [];
+const defaultTestCaseIds = defaultMode === 'batch' ? requestedTestCaseIds : [];
+const defaultInputText = defaultMode === 'batch' ? '' : requestedSingleTestCase?.input_text ?? '';
+const defaultVariables = defaultMode === 'batch' ? {} : { ...(requestedSingleTestCase?.variables_json ?? {}) };
 
 const form = reactive({
     use_case_id: defaultUseCaseId,
     mode: defaultMode,
     prompt_version_ids: defaultPromptVersionIds,
-    input_text: '',
-    variables: {},
-    test_case_ids: [],
+    input_text: defaultInputText,
+    variables: defaultVariables,
+    test_case_ids: defaultTestCaseIds,
     model_name: defaultModel,
     temperature: 0.2,
     max_tokens: 700,
