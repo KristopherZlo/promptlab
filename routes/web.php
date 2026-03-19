@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PromptTemplateController;
 use App\Http\Controllers\PromptVersionController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TeamMembershipController;
 use App\Http\Controllers\TeamWorkspaceController;
 use App\Http\Controllers\TestCaseController;
@@ -23,10 +24,13 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+Route::get('/join/{token}', [TeamInvitationController::class, 'show'])->name('team-invitations.show');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/join/{token}/accept', [TeamInvitationController::class, 'accept'])->name('team-invitations.accept');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

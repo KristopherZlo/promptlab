@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\TeamInvitationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,11 +17,14 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): Response
+    public function create(Request $request, TeamInvitationService $invitations): Response
     {
+        $invitation = $invitations->findByToken($request->string('invitation')->toString());
+
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
+            'invitation' => $invitation ? (new \App\Http\Resources\TeamInvitationResource($invitation))->resolve() : null,
         ]);
     }
 
@@ -32,6 +36,10 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        if ($request->filled('invitation_token')) {
+            return redirect()->route('team-invitations.show', $request->string('invitation_token')->toString());
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

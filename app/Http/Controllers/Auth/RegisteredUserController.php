@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TeamInvitationResource;
 use App\Models\User;
+use App\Services\TeamInvitationService;
 use App\Services\TeamProvisioningService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -20,9 +22,13 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create(Request $request, TeamInvitationService $invitations): Response
     {
-        return Inertia::render('Auth/Register');
+        $invitation = $invitations->findByToken($request->string('invitation')->toString());
+
+        return Inertia::render('Auth/Register', [
+            'invitation' => $invitation ? (new TeamInvitationResource($invitation))->resolve() : null,
+        ]);
     }
 
     /**
@@ -52,6 +58,10 @@ class RegisteredUserController extends Controller
         $provisioning->ensurePersonalWorkspace($user);
 
         Auth::login($user);
+
+        if ($request->filled('invitation_token')) {
+            return redirect()->route('team-invitations.show', $request->string('invitation_token')->toString());
+        }
 
         return redirect(route('dashboard', absolute: false));
     }

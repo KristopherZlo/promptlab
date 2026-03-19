@@ -2,12 +2,20 @@
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
+const props = defineProps({
+    invitation: {
+        type: Object,
+        default: null,
+    },
+});
+
 const form = useForm({
     first_name: '',
     last_name: '',
-    email: '',
+    email: props.invitation?.email ?? '',
     password: '',
     password_confirmation: '',
+    invitation_token: props.invitation?.token ?? '',
 });
 
 const submit = () => {
@@ -28,6 +36,11 @@ const submit = () => {
             </p>
         </div>
 
+        <div v-if="invitation" class="mt-4 rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
+            You were invited to <span class="text-[var(--ink)]">{{ invitation.team?.name || 'a workspace' }}</span>
+            as <span class="text-[var(--ink)]">{{ invitation.role }}</span>.
+        </div>
+
         <form class="mt-6 space-y-4" @submit.prevent="submit">
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
@@ -45,7 +58,7 @@ const submit = () => {
 
             <div>
                 <label class="field-label" for="email">Email</label>
-                <input id="email" v-model="form.email" type="email" class="field-input" autocomplete="username" required>
+                <input id="email" v-model="form.email" type="email" class="field-input" autocomplete="username" :readonly="!!invitation" required>
                 <div v-if="form.errors.email" class="field-error">{{ form.errors.email }}</div>
             </div>
 
@@ -62,7 +75,7 @@ const submit = () => {
             </div>
 
             <div class="flex items-center justify-between gap-4">
-                <Link :href="route('login')" class="text-sm text-[var(--muted)] hover:text-[var(--ink)]">
+                <Link :href="invitation ? route('login', { invitation: invitation.token }) : route('login')" class="text-sm text-[var(--muted)] hover:text-[var(--ink)]">
                     Already have an account?
                 </Link>
                 <button type="submit" class="btn-primary" :disabled="form.processing">

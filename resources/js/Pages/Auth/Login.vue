@@ -2,7 +2,7 @@
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
-defineProps({
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
     },
@@ -10,12 +10,17 @@ defineProps({
         type: String,
         default: '',
     },
+    invitation: {
+        type: Object,
+        default: null,
+    },
 });
 
 const form = useForm({
-    email: '',
+    email: props.invitation?.email ?? '',
     password: '',
     remember: false,
+    invitation_token: props.invitation?.token ?? '',
 });
 
 const submit = () => {
@@ -40,6 +45,11 @@ const submit = () => {
             {{ status }}
         </div>
 
+        <div v-if="invitation" class="mt-4 rounded-[8px] border border-[var(--line)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
+            Invitation for <span class="text-[var(--ink)]">{{ invitation.team?.name || 'workspace' }}</span>.
+            Sign in as <span class="text-[var(--ink)]">{{ invitation.email }}</span> to accept the {{ invitation.role }} role.
+        </div>
+
         <form class="mt-6 space-y-4" @submit.prevent="submit">
             <div>
                 <label class="field-label" for="email">Email</label>
@@ -50,6 +60,7 @@ const submit = () => {
                     class="field-input"
                     autocomplete="username"
                     autofocus
+                    :readonly="!!invitation"
                     required
                 >
                 <div v-if="form.errors.email" class="field-error">{{ form.errors.email }}</div>
@@ -83,6 +94,11 @@ const submit = () => {
                 <button type="submit" class="btn-primary" :disabled="form.processing">
                     {{ form.processing ? 'Logging in...' : 'Log in' }}
                 </button>
+            </div>
+
+            <div v-if="invitation" class="text-sm text-[var(--muted)]">
+                Need a new account?
+                <Link :href="route('register', { invitation: invitation.token })" class="app-inline-link">Create one for this invitation</Link>
             </div>
         </form>
     </GuestLayout>
