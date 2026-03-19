@@ -22,15 +22,17 @@ const evaluations = computed(() => props.run.evaluations ?? []);
 const currentEvaluation = computed(() =>
     evaluations.value.find((evaluation) => evaluation.evaluator_id === page.props.auth.user?.id) ?? null,
 );
+const sortedEvaluations = computed(() =>
+    [...evaluations.value].sort((left, right) =>
+        new Date(right.updated_at ?? right.created_at ?? 0).getTime() - new Date(left.updated_at ?? left.created_at ?? 0).getTime(),
+    ),
+);
 const teamReviewSummary = computed(() => {
     const scoreValues = evaluations.value
         .map((evaluation) => evaluation.average_score)
         .filter((score) => score != null);
     const formatVotes = evaluations.value.filter((evaluation) => evaluation.format_valid_manual === true).length;
-    const sortedEvaluations = [...evaluations.value].sort((left, right) =>
-        new Date(right.updated_at ?? right.created_at ?? 0).getTime() - new Date(left.updated_at ?? left.created_at ?? 0).getTime(),
-    );
-    const latestEvaluation = sortedEvaluations[0] ?? null;
+    const latestEvaluation = sortedEvaluations.value[0] ?? null;
 
     return {
         count: evaluations.value.length,
@@ -128,6 +130,59 @@ const submit = async () => {
         </div>
         <div v-else class="mt-4 text-sm text-[var(--muted)]">
             No team reviews saved for this run yet.
+        </div>
+
+        <div v-if="sortedEvaluations.length" class="mt-4 space-y-3">
+            <div class="text-sm font-medium">Team review history</div>
+
+            <div
+                v-for="evaluation in sortedEvaluations"
+                :key="evaluation.id"
+                class="guide-card"
+            >
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="font-medium">
+                            {{ evaluation.evaluator_name || 'Unknown reviewer' }}
+                            <span v-if="evaluation.evaluator_id === page.props.auth.user?.id" class="text-[var(--muted)]">(You)</span>
+                        </div>
+                        <div class="mt-1 text-xs text-[var(--muted)]">
+                            {{ evaluation.updated_at ? formatDateTime(evaluation.updated_at) : 'No review date' }}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium">{{ formatScore(evaluation.average_score) }}</div>
+                        <div class="mt-1 text-xs text-[var(--muted)]">{{ evaluation.hallucination_risk || 'Risk not set' }}</div>
+                    </div>
+                </div>
+
+                <div class="summary-list mt-4">
+                    <div class="summary-row">
+                        <span>Clarity</span>
+                        <span>{{ evaluation.clarity_score ?? 'Not scored' }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Correctness</span>
+                        <span>{{ evaluation.correctness_score ?? 'Not scored' }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Completeness</span>
+                        <span>{{ evaluation.completeness_score ?? 'Not scored' }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tone</span>
+                        <span>{{ evaluation.tone_score ?? 'Not scored' }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Format</span>
+                        <span>{{ evaluation.format_valid_manual ? 'Valid' : 'Invalid' }}</span>
+                    </div>
+                </div>
+
+                <div v-if="evaluation.notes" class="mt-4 text-sm leading-6 text-[var(--muted)]">
+                    {{ evaluation.notes }}
+                </div>
+            </div>
         </div>
 
         <div class="mt-4 grid gap-3 sm:grid-cols-2">
