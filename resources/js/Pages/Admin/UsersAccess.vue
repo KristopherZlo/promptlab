@@ -14,6 +14,7 @@ import {
     formatPlatformRoleLabel,
     formatRoleLabel,
 } from '@/lib/forms';
+import { formatDateTime } from '@/lib/formatters';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { useUrlState } from '@/lib/urlState';
 
@@ -23,6 +24,10 @@ const props = defineProps({
         required: true,
     },
     memberships: {
+        type: Array,
+        required: true,
+    },
+    invitations: {
         type: Array,
         required: true,
     },
@@ -38,11 +43,13 @@ const search = ref('');
 const selectedMembershipId = ref(null);
 const notices = reactive({
     member: '',
+    invitation: '',
 });
 const memberRemoval = useUndoableAction();
 
 const tabs = [
     { id: 'members', label: 'Members' },
+    { id: 'invitations', label: 'Invitations' },
     { id: 'roles', label: 'Roles' },
 ];
 const activeTab = useUrlState({
@@ -63,6 +70,10 @@ const memberForm = useForm({
     email: '',
     role: props.roleOptions.includes('editor') ? 'editor' : props.roleOptions[0],
 });
+const invitationForm = useForm({
+    email: '',
+    role: props.roleOptions.includes('reviewer') ? 'reviewer' : props.roleOptions[0],
+});
 
 const currentUserId = computed(() => page.props.auth?.user?.id ?? null);
 const roleSummary = computed(() =>
@@ -71,6 +82,12 @@ const roleSummary = computed(() =>
         count: props.memberships.filter((membership) => membership.team_role === role).length,
     })),
 );
+const invitationSummary = computed(() => ({
+    total: props.invitations.length,
+    pending: props.invitations.filter((invitation) => invitation.status === 'pending').length,
+    accepted: props.invitations.filter((invitation) => invitation.status === 'accepted').length,
+    revoked: props.invitations.filter((invitation) => invitation.status === 'revoked').length,
+}));
 
 const sortedMemberships = computed(() => {
     const roleOrder = props.roleOptions.reduce((map, role, index) => {
@@ -148,6 +165,27 @@ const closeInviteModal = () => {
 const openInviteModal = () => {
     notices.member = '';
     inviteOpen.value = true;
+};
+const createInvitation = async () => {
+    invitationForm.processing = true;
+    notices.invitation = '';
+
+    try {
+        await axios.post(route('api.team-invitations.store'), {
+            email: invitationForm.email,
+            role: invitationForm.role,
+        });
+
+        invitationForm.reset();
+        invitationForm.role = props.roleOptions.includes('reviewer') ? 'reviewer' : props.roleOptions[0];
+        notices.invitation = 'Invitation created for this workspace.';
+        router.reload({ only: ['invitations', 'team'] });
+    } catch (error) {
+        applyServerErrors(invitationForm, error);
+        notices.invitation = extractServerMessage(error, 'Invitation could not be created.');
+    } finally {
+        invitationForm.processing = false;
+    }
 };
 
 const memberName = (membership) =>
@@ -287,6 +325,9 @@ const exportMembers = () => {
 
             <div v-if="notices.member" class="notice-banner">
                 {{ notices.member }}
+            </div>
+            <div v-if="notices.invitation" class="notice-banner">
+                {{ notices.invitation }}
             </div>
 
             <UndoBanner
@@ -434,6 +475,78 @@ const exportMembers = () => {
                         <div v-else class="people-access-detail-empty">
                             Select a member to view details.
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section v-else-if="activeTab === 'invitations'" class="panel p-5">
+                <div class="flex flex-col gap-6">
+                    <div class="summary-strip">
+                        <div class="summary-item">
+                            <div class="summary-item-label">Total invitations</div>
+                            <div class="summary-item-value">{{ invitationSummary.total }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Pending</div>
+                            <div class="summary-item-value">{{ invitationSummary.pending }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Accepted</div>
+                            <div class="summary-item-value">{{ invitationSummary.accepted }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Revoked</div>
+                            <div class="summary-item-value">{{ invitationSummary.revoked }}</div>
+                        </div>
+                    </div>
+
+                    <form class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto]" @submit.prevent="createInvitation">
+                        <div>
+                            <label class="field-label">Invite by email</label>
+                            <input v-model="invitationForm.email" type="email" class="field-input" placeholder="new-teammate@company.com">
+                            <div v-if="invitationForm.errors.email" class="field-error">{{ invitationForm.errors.email }}</div>
+                        </div>
+                        <div>
+                            <label class="field-label">Workspace role</label>
+                            <select v-model="invitationForm.role" class="field-select">
+                                <option v-for="role in roleOptions" :key="role" :value="role">
+                                    {{ formatRoleLabel(role) }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="btn-primary w-full" :disabled="invitationForm.processing">
+                                {{ invitationForm.processing ? 'Creating...' : 'Create invitation' }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="surface-muted">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Invited by</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="invitation in invitations" :key="invitation.id">
+                                    <td class="font-semibold">{{ invitation.email }}</td>
+                                    <td>{{ formatRoleLabel(invitation.role) }}</td>
+                                    <td><span class="status-chip capitalize">{{ invitation.status }}</span></td>
+                                    <td>{{ invitation.invited_by || 'Unknown sender' }}</td>
+                                    <td class="text-sm text-[var(--muted)]">{{ invitation.created_at ? formatDateTime(invitation.created_at) : 'No date' }}</td>
+                                    <td class="text-sm text-[var(--muted)]">{{ invitation.expires_at ? formatDateTime(invitation.expires_at) : 'No expiry' }}</td>
+                                </tr>
+                                <tr v-if="invitations.length === 0">
+                                    <td colspan="6" class="text-[var(--muted)]">No invitations created for this workspace yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
