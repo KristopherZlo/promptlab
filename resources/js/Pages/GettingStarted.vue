@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InteractiveOnboarding from '@/Components/InteractiveOnboarding.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { BookCopy, FileStack, FlaskConical, FolderKanban, Shield } from 'lucide-vue-next';
+import { routeWithQuery } from '@/lib/urlState';
 
 const props = defineProps({
     overview: {
@@ -14,6 +15,36 @@ const props = defineProps({
 });
 
 const onboardingOpen = ref(false);
+const recentExperiment = computed(() => props.overview.recent_experiments?.[0] ?? null);
+const recommendedPrompt = computed(() =>
+    props.overview.top_performing_prompts?.[0]
+    ?? props.overview.most_used_prompts?.[0]
+    ?? null,
+);
+const tasksHref = computed(() =>
+    recentExperiment.value?.use_case_id
+        ? routeWithQuery('use-cases.show', recentExperiment.value.use_case_id, { tab: 'overview' })
+        : route('use-cases.index'),
+);
+const promptTemplatesHref = computed(() =>
+    recommendedPrompt.value?.prompt_template_id
+        ? routeWithQuery('prompt-templates.show', recommendedPrompt.value.prompt_template_id, {
+            tab: 'versions',
+            prompt_version_id: recommendedPrompt.value.id,
+        })
+        : route('prompt-templates.index'),
+);
+const playgroundHref = computed(() =>
+    routeWithQuery('playground', {}, {
+        step: 'setup',
+        mode: 'single',
+        use_case_id: recentExperiment.value?.use_case_id ?? '',
+    }),
+);
+const libraryHref = computed(() => route('library.index'));
+const usersAccessHref = computed(() =>
+    routeWithQuery('admin.users-access', {}, { tab: 'members' }),
+);
 
 const tourSteps = [
     {
@@ -43,11 +74,11 @@ const tourSteps = [
     },
 ];
 
-const primaryPaths = [
+const primaryPaths = computed(() => [
     {
         title: 'Start with a task',
         body: 'Begin from the business task and saved examples. This is the best first step for almost everyone.',
-        route: 'use-cases.index',
+        href: tasksHref.value,
         action: 'Open tasks',
         icon: FolderKanban,
         featured: true,
@@ -56,7 +87,7 @@ const primaryPaths = [
     {
         title: 'Work on prompt versions',
         body: 'Open Prompt Templates when you need to create, edit, or compare prompt versions.',
-        route: 'prompt-templates.index',
+        href: promptTemplatesHref.value,
         action: 'Open prompt templates',
         icon: FileStack,
         tour: 'path-prompt-templates',
@@ -64,29 +95,29 @@ const primaryPaths = [
     {
         title: 'Run an experiment',
         body: 'Use Experiments to test one version, compare several, or review recent runs.',
-        route: 'playground',
+        href: playgroundHref.value,
         action: 'Open experiments',
         icon: FlaskConical,
         tour: 'path-playground',
     },
-];
+]);
 
-const supportLinks = [
+const supportLinks = computed(() => [
     {
         title: 'Approved Library',
         body: 'Use this when you need prompts that are already team-ready.',
-        route: 'library.index',
+        href: libraryHref.value,
         icon: BookCopy,
         tour: 'path-library',
     },
     {
         title: 'Users & Access',
         body: 'Roles, workspace administration, and AI connections live in the Administration area.',
-        route: 'admin.users-access',
+        href: usersAccessHref.value,
         icon: Shield,
         tour: 'path-team-access',
     },
-];
+]);
 </script>
 
 <template>
@@ -150,8 +181,8 @@ const supportLinks = [
                     </div>
 
                     <div class="flex flex-wrap gap-3 self-start">
-                        <Link :href="route('use-cases.index')" class="btn-primary" data-tour="start-use-cases">Open tasks</Link>
-                        <Link :href="route('prompt-templates.index')" class="btn-secondary">Open prompt templates</Link>
+                        <Link :href="tasksHref" class="btn-primary" data-tour="start-use-cases">Open tasks</Link>
+                        <Link :href="promptTemplatesHref" class="btn-secondary">Open prompt templates</Link>
                         <button type="button" class="btn-ghost" @click="onboardingOpen = true">Show quick tour</button>
                     </div>
                 </div>
@@ -168,7 +199,7 @@ const supportLinks = [
                     <Link
                         v-for="item in primaryPaths"
                         :key="item.title"
-                        :href="route(item.route)"
+                        :href="item.href"
                         :data-tour="item.tour"
                         class="quick-link-card block"
                     >
@@ -190,7 +221,7 @@ const supportLinks = [
                     <Link
                         v-for="item in supportLinks"
                         :key="item.title"
-                        :href="route(item.route)"
+                        :href="item.href"
                         :data-tour="item.tour"
                         class="quick-link-card block"
                     >
