@@ -139,6 +139,15 @@ const validateConnection = async () => {
     }
 };
 
+const importDiscoveredModels = () => {
+    if (!validationState.models.length) {
+        return;
+    }
+
+    connectionForm.models_text = validationState.models.join(', ');
+    notices.connection = `Imported ${validationState.models.length} discovered model${validationState.models.length === 1 ? '' : 's'} into the form.`;
+};
+
 const saveConnection = async () => {
     connectionForm.processing = true;
     notices.connection = '';
@@ -432,6 +441,19 @@ const scheduleConnectionRemoval = (connection) => {
                                         <span v-if="validationState.models.length > 12" class="status-chip">
                                             +{{ validationState.models.length - 12 }} more
                                         </span>
+                                    </div>
+
+                                    <div v-if="validationState.models.length" class="flex flex-wrap gap-3">
+                                        <button
+                                            type="button"
+                                            class="btn-secondary"
+                                            @click="importDiscoveredModels"
+                                        >
+                                            Import discovered models
+                                        </button>
+                                        <div class="text-sm text-[var(--muted)]">
+                                            Replaces the models field with the provider response from the latest successful test.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
