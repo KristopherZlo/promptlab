@@ -27,7 +27,7 @@ class TeamInvitationResource extends JsonResource
                 'slug' => $this->team?->slug,
                 'description' => $this->team?->description,
             ]),
-            'invite_url' => route('team-invitations.show', $this->token, false),
+            'invite_url' => route('team-invitations.show', $this->token),
             'created_at' => optional($this->created_at)->toIso8601String(),
             'accepted_at' => optional($this->accepted_at)->toIso8601String(),
             'revoked_at' => optional($this->revoked_at)->toIso8601String(),

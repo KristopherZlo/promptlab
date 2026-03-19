@@ -48,6 +48,7 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
     Route::put('/team-memberships/{teamMembership}', [TeamMembershipController::class, 'update'])->name('team-memberships.update');
     Route::delete('/team-memberships/{teamMembership}', [TeamMembershipController::class, 'destroy'])->name('team-memberships.destroy');
     Route::post('/team-invitations', [TeamInvitationController::class, 'store'])->name('team-invitations.store');
+    Route::delete('/team-invitations/{teamInvitation}', [TeamInvitationController::class, 'destroy'])->name('team-invitations.destroy');
     Route::post('/llm-connections', [LlmConnectionController::class, 'store'])->name('llm-connections.store');
     Route::put('/llm-connections/{llmConnection}', [LlmConnectionController::class, 'update'])->name('llm-connections.update');
     Route::delete('/llm-connections/{llmConnection}', [LlmConnectionController::class, 'destroy'])->name('llm-connections.destroy');

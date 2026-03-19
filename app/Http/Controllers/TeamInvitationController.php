@@ -15,6 +15,8 @@ class TeamInvitationController extends Controller
 {
     public function store(TeamInvitationStoreRequest $request, TeamInvitationService $invitations): JsonResponse
     {
+        $this->authorizeTeamAbility($request, 'manage_members');
+
         $invitation = $invitations->createInvitation(
             $this->currentTeam($request),
             $request->user(),
@@ -48,5 +50,19 @@ class TeamInvitationController extends Controller
         $invitations->acceptInvitation($invitation, $request->user());
 
         return to_route('dashboard')->with('success', 'Workspace invitation accepted.');
+    }
+
+    public function destroy(Request $request, \App\Models\TeamInvitation $teamInvitation, TeamInvitationService $invitations): JsonResponse
+    {
+        $this->authorizeTeamAbility($request, 'manage_members');
+        abort_unless($teamInvitation->team_id === $this->currentTeam($request)->id, 404);
+
+        $invitation = $invitations->revokeInvitation(
+            $this->currentTeam($request),
+            $request->user(),
+            $teamInvitation->loadMissing(['team', 'inviter']),
+        );
+
+        return response()->json(['data' => new TeamInvitationResource($invitation)]);
     }
 }

@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
-import { Download, UserPlus } from 'lucide-vue-next';
+import { Copy, Download, Slash, UserPlus } from 'lucide-vue-next';
 import {
     applyServerErrors,
     extractServerMessage,
@@ -85,6 +85,7 @@ const roleSummary = computed(() =>
 const invitationSummary = computed(() => ({
     total: props.invitations.length,
     pending: props.invitations.filter((invitation) => invitation.status === 'pending').length,
+    expired: props.invitations.filter((invitation) => invitation.status === 'expired').length,
     accepted: props.invitations.filter((invitation) => invitation.status === 'accepted').length,
     revoked: props.invitations.filter((invitation) => invitation.status === 'revoked').length,
 }));
@@ -185,6 +186,55 @@ const createInvitation = async () => {
         notices.invitation = extractServerMessage(error, 'Invitation could not be created.');
     } finally {
         invitationForm.processing = false;
+    }
+};
+
+const invitationLink = (invitation) => invitation?.invite_url || route('team-invitations.show', invitation.token);
+
+const copyText = async (value) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return;
+    }
+
+    if (typeof document === 'undefined') {
+        throw new Error('Clipboard is not available.');
+    }
+
+    const field = document.createElement('textarea');
+    field.value = value;
+    field.setAttribute('readonly', 'readonly');
+    field.style.position = 'absolute';
+    field.style.left = '-9999px';
+    document.body.appendChild(field);
+    field.select();
+    document.execCommand('copy');
+    document.body.removeChild(field);
+};
+
+const copyInvitationLink = async (invitation) => {
+    notices.invitation = '';
+
+    try {
+        await copyText(invitationLink(invitation));
+        notices.invitation = `Invitation link copied for ${invitation.email}.`;
+    } catch (error) {
+        notices.invitation = extractServerMessage(error, 'Invitation link could not be copied.');
+    }
+};
+
+const canRevokeInvitation = (invitation) => ['pending', 'expired'].includes(invitation.status);
+
+const revokeInvitation = async (invitation) => {
+    notices.invitation = '';
+
+    try {
+        await axios.delete(route('api.team-invitations.destroy', invitation.id));
+        notices.invitation = `Invitation revoked for ${invitation.email}.`;
+        router.reload({ only: ['invitations'] });
+    } catch (error) {
+        notices.invitation = extractServerMessage(error, 'Invitation could not be revoked.');
+        router.reload({ only: ['invitations'] });
     }
 };
 
@@ -495,6 +545,10 @@ const exportMembers = () => {
                             <div class="summary-item-value">{{ invitationSummary.accepted }}</div>
                         </div>
                         <div class="summary-item">
+                            <div class="summary-item-label">Expired</div>
+                            <div class="summary-item-value">{{ invitationSummary.expired }}</div>
+                        </div>
+                        <div class="summary-item">
                             <div class="summary-item-label">Revoked</div>
                             <div class="summary-item-value">{{ invitationSummary.revoked }}</div>
                         </div>
@@ -531,6 +585,7 @@ const exportMembers = () => {
                                     <th>Invited by</th>
                                     <th>Created</th>
                                     <th>Expires</th>
+                                    <th class="text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -541,9 +596,32 @@ const exportMembers = () => {
                                     <td>{{ invitation.invited_by || 'Unknown sender' }}</td>
                                     <td class="text-sm text-[var(--muted)]">{{ invitation.created_at ? formatDateTime(invitation.created_at) : 'No date' }}</td>
                                     <td class="text-sm text-[var(--muted)]">{{ invitation.expires_at ? formatDateTime(invitation.expires_at) : 'No expiry' }}</td>
+                                    <td>
+                                        <div class="flex justify-end gap-2">
+                                            <button
+                                                v-if="canRevokeInvitation(invitation)"
+                                                type="button"
+                                                class="btn-secondary people-access-mini"
+                                                @click="copyInvitationLink(invitation)"
+                                            >
+                                                <Copy class="h-4 w-4" />
+                                                <span>Copy link</span>
+                                            </button>
+                                            <button
+                                                v-if="canRevokeInvitation(invitation)"
+                                                type="button"
+                                                class="btn-ghost people-access-mini text-[var(--danger)]"
+                                                @click="revokeInvitation(invitation)"
+                                            >
+                                                <Slash class="h-4 w-4" />
+                                                <span>Revoke</span>
+                                            </button>
+                                            <span v-else class="text-sm text-[var(--muted)]">No actions</span>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr v-if="invitations.length === 0">
-                                    <td colspan="6" class="text-[var(--muted)]">No invitations created for this workspace yet.</td>
+                                    <td colspan="7" class="text-[var(--muted)]">No invitations created for this workspace yet.</td>
                                 </tr>
                             </tbody>
                         </table>

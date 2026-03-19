@@ -118,4 +118,30 @@ class TeamInvitationService
 
         return $membership->fresh(['user']);
     }
+
+    public function revokeInvitation(Team $team, User $actor, TeamInvitation $invitation): TeamInvitation
+    {
+        $status = $this->statusFor($invitation);
+
+        if ($status === 'accepted') {
+            throw ValidationException::withMessages([
+                'invitation' => 'Accepted invitations cannot be revoked.',
+            ]);
+        }
+
+        if ($status !== 'revoked') {
+            $invitation->forceFill([
+                'status' => 'revoked',
+                'revoked_at' => now(),
+            ])->save();
+
+            $this->activity->record('team.invitation_revoked', $invitation, [
+                'member_email' => $invitation->email,
+                'role' => $invitation->role,
+                'team_name' => $team->name,
+            ], $actor, $team->id);
+        }
+
+        return $invitation->fresh(['team', 'inviter']);
+    }
 }

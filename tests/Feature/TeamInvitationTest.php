@@ -83,4 +83,37 @@ class TeamInvitationTest extends TestCase
         $this->assertNotNull(TeamMembership::query()->where('team_id', $team->id)->where('user_id', $invitee->id)->first());
         $this->assertSame($team->id, $invitee->fresh()->current_team_id);
     }
+
+    public function test_team_admin_can_revoke_pending_invitation(): void
+    {
+        $owner = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $team = app(TeamProvisioningService::class)->createTeam($owner, [
+            'name' => 'Revocation Team',
+            'description' => 'Workspace for revoking invitations.',
+        ]);
+
+        $invitation = TeamInvitation::create([
+            'team_id' => $team->id,
+            'email' => 'invitee@example.com',
+            'role' => 'reviewer',
+            'token' => 'revoke-token',
+            'status' => 'pending',
+            'invited_by' => $owner->id,
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('api.team-invitations.destroy', $invitation->id))
+            ->assertOk()
+            ->assertJsonPath('data.status', 'revoked');
+
+        $this->assertDatabaseHas('team_invitations', [
+            'id' => $invitation->id,
+            'status' => 'revoked',
+        ]);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
+    }
 }
