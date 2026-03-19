@@ -3,19 +3,16 @@
 namespace App\Services\ModelProviders;
 
 use App\Services\ModelProviders\Contracts\LLMProvider;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class OpenAIProvider implements LLMProvider
 {
     public function runPrompt(string $compiledPrompt, array $options = []): array
     {
-        $apiKey = $options['api_key'] ?? config('services.openai.api_key');
-        $baseUrl = rtrim((string) ($options['base_url'] ?? config('services.openai.base_url')), '/');
-
-        if (! $apiKey) {
-            throw new RuntimeException('OPENAI_API_KEY is not configured.');
-        }
+        [$apiKey, $baseUrl] = $this->connectionConfig($options);
 
         $messages = array_values(array_filter([
             filled($options['system_prompt'] ?? null)
@@ -61,8 +58,71 @@ class OpenAIProvider implements LLMProvider
         ];
     }
 
+    public function validateConnection(array $options = []): array
+    {
+        $models = $this->discoverModels($options);
+
+        return [
+            'reachable' => true,
+            'message' => count($models) > 0
+                ? 'Connection verified and available models were discovered.'
+                : 'Connection verified, but the provider did not return any models.',
+            'models' => $models,
+        ];
+    }
+
+    public function discoverModels(array $options = []): array
+    {
+        [$apiKey, $baseUrl] = $this->connectionConfig($options);
+
+        $response = Http::timeout(30)
+            ->withToken($apiKey)
+            ->acceptJson()
+            ->get($baseUrl.'/models');
+
+        if (! $response->successful()) {
+            throw new RuntimeException('OpenAI validation failed: '.$this->errorMessage($response));
+        }
+
+        return collect($response->json('data', []))
+            ->map(fn ($item) => data_get($item, 'id'))
+            ->filter(fn ($model) => filled($model) && is_string($model))
+            ->map(fn (string $model) => trim($model))
+            ->filter()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
     private function resolvedModelName(string $model): string
     {
         return str_contains($model, ':') ? explode(':', $model, 2)[1] : $model;
+    }
+
+    private function connectionConfig(array $options): array
+    {
+        $apiKey = $options['api_key'] ?? config('services.openai.api_key');
+        $baseUrl = rtrim((string) ($options['base_url'] ?? config('services.openai.base_url')), '/');
+
+        if (! $apiKey) {
+            throw new RuntimeException('An API key is required to validate this connection.');
+        }
+
+        if (blank($baseUrl)) {
+            throw new RuntimeException('A base URL is required to validate this connection.');
+        }
+
+        return [$apiKey, $baseUrl];
+    }
+
+    private function errorMessage(Response $response): string
+    {
+        $jsonMessage = data_get($response->json(), 'error.message');
+
+        if (filled($jsonMessage) && is_string($jsonMessage)) {
+            return $jsonMessage;
+        }
+
+        return Str::limit(trim($response->body()), 220, '...');
     }
 }

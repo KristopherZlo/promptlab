@@ -49,6 +49,16 @@ class LLMProviderManager
         return $provider->runPrompt($compiledPrompt, $resolved['options']);
     }
 
+    public function validateConnection(string $driver, array $options = []): array
+    {
+        return $this->provider($driver)->validateConnection($options);
+    }
+
+    public function discoverModels(string $driver, array $options = []): array
+    {
+        return $this->provider($driver)->discoverModels($options);
+    }
+
     private function provider(string $driver): LLMProvider
     {
         return match ($driver) {

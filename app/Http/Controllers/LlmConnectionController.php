@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LlmConnectionRequest;
+use App\Http\Requests\LlmConnectionValidationRequest;
 use App\Models\LlmConnection;
 use App\Services\LlmConnectionService;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,21 @@ use Illuminate\Http\Request;
 
 class LlmConnectionController extends Controller
 {
+    public function validateConnection(LlmConnectionValidationRequest $request, LlmConnectionService $connections): JsonResponse
+    {
+        $connection = $request->filled('connection_id')
+            ? LlmConnection::query()->findOrFail($request->integer('connection_id'))
+            : null;
+
+        return response()->json([
+            'data' => $connections->validate(
+                $this->currentTeam($request),
+                $request->validated(),
+                $connection,
+            ),
+        ]);
+    }
+
     public function store(LlmConnectionRequest $request, LlmConnectionService $connections): JsonResponse
     {
         $connection = $connections->save(

@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\LlmConnection;
 use App\Models\Team;
 use App\Models\User;
+use RuntimeException;
 
 class LlmConnectionService
 {
     public function __construct(
         private readonly ActivityLogService $activity,
+        private readonly LLMProviderManager $providers,
     ) {
     }
 
@@ -70,5 +72,35 @@ class LlmConnectionService
         ], $actor, $team->id);
 
         $connection->delete();
+    }
+
+    public function validate(Team $team, array $data, ?LlmConnection $connection = null): array
+    {
+        if ($connection && $connection->team_id !== $team->id) {
+            throw new RuntimeException('This AI connection does not belong to the current workspace.');
+        }
+
+        try {
+            $result = $this->providers->validateConnection($data['driver'], [
+                'base_url' => $data['base_url'] ?? null,
+                'api_key' => filled($data['api_key'] ?? null)
+                    ? $data['api_key']
+                    : $connection?->api_key,
+            ]);
+
+            return [
+                'ok' => true,
+                'reachable' => (bool) ($result['reachable'] ?? true),
+                'message' => $result['message'] ?? 'Connection verified.',
+                'models' => array_values($result['models'] ?? []),
+            ];
+        } catch (\Throwable $error) {
+            return [
+                'ok' => false,
+                'reachable' => false,
+                'message' => $error->getMessage(),
+                'models' => [],
+            ];
+        }
     }
 }

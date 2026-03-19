@@ -27,6 +27,25 @@ class MockProvider implements LLMProvider
         ];
     }
 
+    public function validateConnection(array $options = []): array
+    {
+        $models = $this->discoverModels($options);
+
+        return [
+            'reachable' => true,
+            'message' => 'Mock provider is available for local development.',
+            'models' => $models,
+        ];
+    }
+
+    public function discoverModels(array $options = []): array
+    {
+        return [
+            'mock:team-lab-v1',
+            'mock:team-lab-v2',
+        ];
+    }
+
     private function generateOutput(string $compiledPrompt, array $options): string
     {
         $useCaseSlug = (string) ($options['use_case_slug'] ?? '');

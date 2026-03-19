@@ -1,10 +1,10 @@
 <script setup>
 import axios from 'axios';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
-import { Bot, KeyRound, ListChecks, Settings2 } from 'lucide-vue-next';
+import { KeyRound, ListChecks, Settings2 } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { useUrlState } from '@/lib/urlState';
@@ -30,6 +30,14 @@ const notices = reactive({
     connection: '',
 });
 const connectionRemoval = useUndoableAction();
+const validationState = reactive({
+    checked: false,
+    testing: false,
+    ok: false,
+    reachable: false,
+    message: '',
+    models: [],
+});
 
 const connectionForm = useForm({
     name: '',
@@ -46,6 +54,15 @@ const totalModels = computed(() =>
     props.connections.reduce((count, connection) => count + (connection.models_json?.length || 0), 0),
 );
 
+const resetValidationState = () => {
+    validationState.checked = false;
+    validationState.testing = false;
+    validationState.ok = false;
+    validationState.reachable = false;
+    validationState.message = '';
+    validationState.models = [];
+};
+
 const resetConnectionForm = () => {
     editingConnectionId.value = null;
     connectionForm.reset();
@@ -55,6 +72,7 @@ const resetConnectionForm = () => {
     connectionForm.is_active = true;
     connectionForm.is_default = props.connections.length === 0;
     connectionForm.clearErrors();
+    resetValidationState();
 };
 
 const closeEditor = () => {
@@ -73,6 +91,7 @@ const editConnection = (connection) => {
     connectionForm.is_default = connection.is_default;
     connectionForm.clearErrors();
     notices.connection = '';
+    resetValidationState();
     activeTab.value = 'editor';
 };
 
@@ -81,6 +100,44 @@ const parseModels = () =>
         .split(/[\n,]+/)
         .map((item) => item.trim())
         .filter(Boolean);
+
+watch(
+    () => [connectionForm.driver, connectionForm.base_url, connectionForm.api_key, editingConnectionId.value],
+    () => {
+        if (validationState.checked) {
+            resetValidationState();
+        }
+    },
+);
+
+const validateConnection = async () => {
+    validationState.testing = true;
+    notices.connection = '';
+
+    try {
+        const response = await axios.post(route('api.llm-connections.validate'), {
+            connection_id: editingConnectionId.value,
+            driver: connectionForm.driver,
+            base_url: connectionForm.base_url || null,
+            api_key: connectionForm.api_key || null,
+        });
+
+        const result = response.data?.data ?? {};
+        validationState.checked = true;
+        validationState.ok = !!result.ok;
+        validationState.reachable = !!result.reachable;
+        validationState.message = result.message || 'Connection test finished.';
+        validationState.models = Array.isArray(result.models) ? result.models : [];
+    } catch (error) {
+        validationState.checked = true;
+        validationState.ok = false;
+        validationState.reachable = false;
+        validationState.message = extractServerMessage(error, 'Connection test failed.');
+        validationState.models = [];
+    } finally {
+        validationState.testing = false;
+    }
+};
 
 const saveConnection = async () => {
     connectionForm.processing = true;
@@ -291,7 +348,7 @@ const scheduleConnectionRemoval = (connection) => {
 
                             <div>
                                 <label class="field-label">API key</label>
-                                <input v-model="connectionForm.api_key" type="password" class="field-input" placeholder="Leave empty to keep the stored key on update">
+                                <input v-model="connectionForm.api_key" type="password" class="field-input" placeholder="Leave empty to keep the stored key on update and during tests">
                             </div>
 
                             <div class="grid gap-4 md:grid-cols-2">
@@ -299,7 +356,6 @@ const scheduleConnectionRemoval = (connection) => {
                                     <label class="field-label">Driver</label>
                                     <select v-model="connectionForm.driver" class="field-select">
                                         <option value="openai">openai</option>
-                                        <option value="mock">mock</option>
                                     </select>
                                 </div>
                                 <div>
@@ -324,6 +380,60 @@ const scheduleConnectionRemoval = (connection) => {
                                         <div class="mt-1 text-xs text-[var(--muted)]">Use this connection as the default workspace provider.</div>
                                     </div>
                                 </label>
+                            </div>
+
+                            <div class="panel-muted p-4">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <div class="section-title text-base">Connection check</div>
+                                        <p class="mt-1 text-sm text-[var(--muted)]">
+                                            Validate the credentials and base URL before saving this connection.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="btn-secondary"
+                                        :disabled="validationState.testing"
+                                        @click="validateConnection"
+                                    >
+                                        {{ validationState.testing ? 'Testing...' : 'Test connection' }}
+                                    </button>
+                                </div>
+
+                                <div v-if="validationState.checked" class="mt-4 space-y-3">
+                                    <div class="summary-strip">
+                                        <div class="summary-item">
+                                            <div class="summary-item-label">Result</div>
+                                            <div class="summary-item-value">{{ validationState.ok ? 'Verified' : 'Failed' }}</div>
+                                        </div>
+                                        <div class="summary-item">
+                                            <div class="summary-item-label">Reachable</div>
+                                            <div class="summary-item-value">{{ validationState.reachable ? 'Yes' : 'No' }}</div>
+                                        </div>
+                                        <div class="summary-item">
+                                            <div class="summary-item-label">Models returned</div>
+                                            <div class="summary-item-value">{{ validationState.models.length }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-sm text-[var(--muted)]">
+                                        {{ validationState.message }}
+                                    </div>
+
+                                    <div v-if="validationState.models.length" class="flex flex-wrap gap-2">
+                                        <span
+                                            v-for="model in validationState.models.slice(0, 12)"
+                                            :key="model"
+                                            class="status-chip"
+                                        >
+                                            {{ model }}
+                                        </span>
+                                        <span v-if="validationState.models.length > 12" class="status-chip">
+                                            +{{ validationState.models.length - 12 }} more
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="flex flex-wrap gap-3 border-t border-[var(--line)] pt-4">
