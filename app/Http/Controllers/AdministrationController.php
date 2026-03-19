@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Team;
+use App\Models\TeamInvitation;
+use App\Http\Resources\TeamInvitationResource;
 use App\Services\TeamPermissionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,11 +20,13 @@ class AdministrationController extends Controller
         $team = $this->currentTeam($request)->loadMissing([
             'creator',
             'memberships.user',
+            'invitations.inviter',
         ]);
 
         return Inertia::render('Admin/UsersAccess', [
             'team' => $this->teamPayload($team),
             'memberships' => $this->membershipsPayload($team),
+            'invitations' => TeamInvitationResource::collection($team->invitations)->resolve(),
             'roleOptions' => app(TeamPermissionService::class)->validRoles(),
         ]);
     }

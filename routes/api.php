@@ -8,6 +8,7 @@ use App\Http\Controllers\LlmConnectionController;
 use App\Http\Controllers\PromptTemplateController;
 use App\Http\Controllers\PromptVersionController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamInvitationController;
 use App\Http\Controllers\TeamMembershipController;
 use App\Http\Controllers\UseCaseController;
 use App\Http\Controllers\TestCaseController;
@@ -46,6 +47,7 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
     Route::post('/team-memberships', [TeamMembershipController::class, 'store'])->name('team-memberships.store');
     Route::put('/team-memberships/{teamMembership}', [TeamMembershipController::class, 'update'])->name('team-memberships.update');
     Route::delete('/team-memberships/{teamMembership}', [TeamMembershipController::class, 'destroy'])->name('team-memberships.destroy');
+    Route::post('/team-invitations', [TeamInvitationController::class, 'store'])->name('team-invitations.store');
     Route::post('/llm-connections', [LlmConnectionController::class, 'store'])->name('llm-connections.store');
     Route::put('/llm-connections/{llmConnection}', [LlmConnectionController::class, 'update'])->name('llm-connections.update');
     Route::delete('/llm-connections/{llmConnection}', [LlmConnectionController::class, 'destroy'])->name('llm-connections.destroy');

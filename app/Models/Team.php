@@ -41,6 +41,11 @@ class Team extends Model
         return $this->hasMany(LlmConnection::class)->orderByDesc('is_default')->orderBy('name');
     }
 
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(TeamInvitation::class)->latest();
+    }
+
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class)->latest();
