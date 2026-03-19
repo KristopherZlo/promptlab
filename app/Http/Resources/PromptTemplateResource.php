@@ -12,6 +12,17 @@ class PromptTemplateResource extends JsonResource
     {
         $versions = $this->whenLoaded('versions', fn () => PromptVersionResource::collection($this->versions)->resolve(), []);
         $averageScore = collect($versions)->pluck('average_score')->filter()->avg();
+        $reviewedRuns = collect($versions)->sum(fn ($version) => $version['reviewed_runs'] ?? 0);
+        $reviewers = collect($versions)
+            ->flatMap(fn ($version) => $version['reviewers'] ?? [])
+            ->filter()
+            ->unique()
+            ->values();
+        $lastReviewedAt = collect($versions)
+            ->pluck('last_reviewed_at')
+            ->filter()
+            ->sortDesc()
+            ->first();
         $approvedVersion = $this->relationLoaded('versions')
             ? $this->versions
                 ->sortByDesc('id')
@@ -38,6 +49,10 @@ class PromptTemplateResource extends JsonResource
             'versions_count' => is_array($versions) ? count($versions) : 0,
             'latest_version_label' => is_array($versions) && count($versions) > 0 ? $versions[array_key_last($versions)]['version_label'] : null,
             'average_score' => $averageScore ? round($averageScore, 2) : null,
+            'reviewed_runs' => $reviewedRuns,
+            'reviewer_count' => $reviewers->count(),
+            'reviewers' => $reviewers->all(),
+            'last_reviewed_at' => $lastReviewedAt,
             'versions' => $this->whenLoaded('versions', fn () => $versions),
         ];
     }

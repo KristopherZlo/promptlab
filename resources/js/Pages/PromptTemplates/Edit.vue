@@ -397,6 +397,18 @@ const promoteToLibrary = async () => {
                         <div class="summary-item-label">Approved</div>
                         <div class="summary-item-value">{{ currentVersion?.library_entry ? 'Yes' : 'No' }}</div>
                     </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Reviewed runs</div>
+                        <div class="summary-item-value">{{ promptTemplate.reviewed_runs ?? 0 }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Last review</div>
+                        <div class="summary-item-value">{{ promptTemplate.last_reviewed_at ? formatDateTime(promptTemplate.last_reviewed_at) : 'Not reviewed yet' }}</div>
+                    </div>
+                </div>
+
+                <div v-if="promptTemplate.reviewer_count" class="mt-4 text-sm text-[var(--muted)]">
+                    Reviewers involved: {{ promptTemplate.reviewers.join(', ') }}
                 </div>
             </section>
 
@@ -578,6 +590,10 @@ const promoteToLibrary = async () => {
                                                 <Gauge />
                                                 {{ formatScore(version.average_score) }} score
                                             </span>
+                                            <span v-if="version.reviewer_count" class="inline-meta-item">
+                                                <MessageSquareText />
+                                                {{ version.reviewer_count }} reviewers
+                                            </span>
                                         </div>
                                     </div>
                                 </button>
@@ -749,9 +765,25 @@ const promoteToLibrary = async () => {
                                     <div class="summary-item-value">{{ currentVersion?.evaluation_count ?? 0 }}</div>
                                 </div>
                                 <div class="summary-item">
+                                    <div class="summary-item-label">Reviewed runs</div>
+                                    <div class="summary-item-value">{{ currentVersion?.reviewed_runs ?? 0 }}</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-item-label">Reviewers</div>
+                                    <div class="summary-item-value">{{ currentVersion?.reviewer_count ?? 0 }}</div>
+                                </div>
+                                <div class="summary-item">
                                     <div class="summary-item-label">Format pass rate</div>
                                     <div class="summary-item-value">{{ currentVersion?.format_pass_rate != null ? `${currentVersion.format_pass_rate}%` : 'N/A' }}</div>
                                 </div>
+                                <div class="summary-item">
+                                    <div class="summary-item-label">Last review</div>
+                                    <div class="summary-item-value">{{ currentVersion?.last_reviewed_at ? formatDateTime(currentVersion.last_reviewed_at) : 'Not reviewed yet' }}</div>
+                                </div>
+                            </div>
+
+                            <div v-if="currentVersion?.reviewer_count" class="text-sm text-[var(--muted)]">
+                                Reviewers involved: {{ currentVersion.reviewers.join(', ') }}
                             </div>
                         </div>
                     </div>

@@ -26,7 +26,7 @@ class PromptTemplateController extends Controller
                 'creator',
                 'versions.creator',
                 'versions.libraryEntry.approver',
-                'versions.experimentRuns.evaluations',
+                'versions.experimentRuns.evaluations.evaluator',
             ]);
 
         foreach (['use_case_id', 'task_type', 'status', 'preferred_model'] as $filter) {
@@ -82,7 +82,7 @@ class PromptTemplateController extends Controller
             'creator',
             'versions.creator',
             'versions.libraryEntry.approver',
-            'versions.experimentRuns.evaluations',
+            'versions.experimentRuns.evaluations.evaluator',
         ]);
 
         $payload = [

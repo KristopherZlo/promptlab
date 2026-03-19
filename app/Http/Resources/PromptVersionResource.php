@@ -11,12 +11,25 @@ class PromptVersionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $evaluations = $this->whenLoaded('experimentRuns', function () {
+            return $this->experimentRuns->flatMap->evaluations;
+        }, collect());
         $scores = $this->whenLoaded('experimentRuns', function () {
             return $this->experimentRuns
                 ->flatMap->evaluations
                 ->map(fn (Evaluation $evaluation) => $evaluation->averageScore())
                 ->filter();
         }, collect());
+        $reviewers = $evaluations
+            ->map(fn (Evaluation $evaluation) => $evaluation->evaluator?->display_name)
+            ->filter()
+            ->unique()
+            ->values();
+        $lastReviewedAt = $evaluations
+            ->map(fn (Evaluation $evaluation) => $evaluation->updated_at ?? $evaluation->created_at)
+            ->filter()
+            ->sortDesc()
+            ->first();
 
         $formatPassRate = $this->whenLoaded('experimentRuns', function () {
             return $this->experimentRuns->count() > 0
@@ -39,9 +52,13 @@ class PromptVersionResource extends JsonResource
             'preferred_model' => $this->preferred_model,
             'is_library_approved' => $this->is_library_approved,
             'run_count' => $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->count()),
+            'reviewed_runs' => $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->filter(fn ($run) => $run->evaluations->isNotEmpty())->count()),
             'evaluation_count' => $scores->count(),
             'average_score' => $scores->isNotEmpty() ? round($scores->avg(), 2) : null,
             'format_pass_rate' => $formatPassRate,
+            'reviewer_count' => $reviewers->count(),
+            'reviewers' => $reviewers->all(),
+            'last_reviewed_at' => optional($lastReviewedAt)->toIso8601String(),
             'library_entry' => $this->whenLoaded('libraryEntry', fn () => [
                 'id' => $this->libraryEntry?->id,
                 'approved_at' => optional($this->libraryEntry?->approved_at)->toIso8601String(),
