@@ -13,10 +13,10 @@ import {
     Settings2,
     UserRound,
 } from 'lucide-vue-next';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, parseJsonInput, safeJsonStringify, truncateText } from '@/lib/formatters';
-import { routeWithQuery, useUrlState } from '@/lib/urlState';
+import { readQueryList, routeWithQuery, useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
     useCase: {
@@ -76,7 +76,11 @@ const editingTestCase = computed(() =>
     props.useCase.test_cases.find((testCase) => testCase.id === uiState.editingTestCaseId) ?? null,
 );
 const canRunExperiments = computed(() => (page.props.auth.abilities ?? []).includes('run_experiments'));
-const selectedTestCaseIds = ref([]);
+const selectedTestCaseIds = ref(
+    props.useCase.test_cases
+        .filter((testCase) => readQueryList('test_case_id').includes(`${testCase.id}`))
+        .map((testCase) => testCase.id),
+);
 const testCaseSearch = ref('');
 const testCaseStatusFilter = ref('');
 const selectedTestCases = computed(() =>
@@ -191,6 +195,30 @@ const toggleSelectedTestCase = (id) => {
 
     selectedTestCaseIds.value = [...selectedTestCaseIds.value, id];
 };
+
+watch(selectedTestCaseIds, (ids) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (ids.length) {
+        url.searchParams.set('test_case_id', ids.join(','));
+    } else {
+        url.searchParams.delete('test_case_id');
+    }
+
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+}, { deep: true });
+
+watch(
+    () => props.useCase.test_cases.map((testCase) => testCase.id).join(','),
+    () => {
+        const validIds = new Set(props.useCase.test_cases.map((testCase) => testCase.id));
+        selectedTestCaseIds.value = selectedTestCaseIds.value.filter((id) => validIds.has(id));
+    },
+);
 
 const saveUseCase = async () => {
     editForm.processing = true;

@@ -49,13 +49,34 @@ const promptRunHref = (prompt) =>
 
 const problemCaseHref = (item) =>
     item.use_case_id
-        ? routeWithQuery('use-cases.show', item.use_case_id, { tab: 'test-cases' })
+        ? routeWithQuery('use-cases.show', item.use_case_id, {
+            tab: 'test-cases',
+            test_case_id: item.id,
+        })
         : route('use-cases.index');
+
+const problemCaseRunHref = (item) =>
+    routeWithQuery('playground', {}, {
+        mode: 'single',
+        use_case_id: item.use_case_id,
+        test_case_id: item.id,
+    });
 
 const failedRunHref = (item) =>
     item.experiment_id
-        ? routeWithQuery('experiments.show', item.experiment_id, { tab: 'results' })
+        ? routeWithQuery('experiments.show', item.experiment_id, {
+            tab: 'results',
+            run: item.id,
+        })
         : route('playground');
+
+const failedRunTaskHref = (item) =>
+    item.use_case_id
+        ? routeWithQuery('use-cases.show', item.use_case_id, { tab: 'experiments' })
+        : route('use-cases.index');
+
+const recentExperimentHref = (experiment) =>
+    routeWithQuery('experiments.show', experiment.id, { tab: 'results' });
 </script>
 
 <template>
@@ -137,7 +158,7 @@ const failedRunHref = (item) =>
                                 <tbody>
                                     <tr v-for="experiment in overview.recent_experiments" :key="experiment.id">
                                         <td>
-                                            <Link :href="route('experiments.show', experiment.id)" class="font-semibold hover:underline">
+                                            <Link :href="recentExperimentHref(experiment)" class="font-semibold hover:underline">
                                                 {{ experiment.use_case || 'Ad hoc' }}
                                             </Link>
                                         </td>
@@ -278,8 +299,9 @@ const failedRunHref = (item) =>
                                     </Link>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ item.use_case }}</div>
                                     <div class="mt-2 text-sm">{{ item.failed_count }} failed or invalid runs</div>
-                                    <div class="mt-3">
+                                    <div class="mt-3 flex flex-wrap gap-3 text-sm">
                                         <Link :href="problemCaseHref(item)" class="app-inline-link">Open test cases</Link>
+                                        <Link :href="problemCaseRunHref(item)" class="app-inline-link">Run this case</Link>
                                     </div>
                                 </div>
                                 <div v-if="overview.problem_cases.length === 0" class="record-list-item text-sm text-[var(--muted)]">
@@ -299,6 +321,7 @@ const failedRunHref = (item) =>
                                     <div class="mt-2 text-sm">{{ item.error }}</div>
                                     <div class="mt-3 flex flex-wrap gap-3 text-sm">
                                         <Link :href="failedRunHref(item)" class="app-inline-link">Review experiment</Link>
+                                        <Link :href="failedRunTaskHref(item)" class="app-inline-link">Open task</Link>
                                         <Link
                                             v-if="item.prompt_template_id"
                                             :href="promptEditorHref({ id: item.prompt_version_id, prompt_template_id: item.prompt_template_id })"
