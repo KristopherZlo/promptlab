@@ -106,7 +106,7 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                 />
 
                 <div class="toolbar mt-4">
-                    <div class="summary-strip">
+                    <div class="summary-strip library-snapshot-strip">
                         <div class="summary-item">
                             <div class="summary-item-label">Approved entries</div>
                             <div class="summary-item-value">{{ entries.length }}</div>
@@ -126,8 +126,8 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                     </div>
 
                     <div class="toolbar-actions">
-                        <Link :href="route('prompt-templates.index')" class="btn-secondary">Review templates</Link>
-                        <Link :href="route('playground')" class="btn-primary">Open experiments</Link>
+                        <Link :href="route('prompt-templates.index')" class="btn-secondary">Open prompts</Link>
+                        <Link :href="route('playground')" class="btn-primary">Start test</Link>
                     </div>
                 </div>
             </section>
@@ -171,9 +171,9 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                                     {{ entry.usage_notes || 'No additional usage notes.' }}
                                 </div>
                                 <div class="mt-3 flex flex-wrap gap-3 text-sm">
-                                    <Link :href="entrySourceHref(entry)" class="app-inline-link">Open source version</Link>
-                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Review approval</Link>
-                                    <Link :href="entryRunHref(entry)" class="app-inline-link">Run prompt</Link>
+                                    <Link :href="entrySourceHref(entry)" class="app-inline-link">View prompt version</Link>
+                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Open prompt settings</Link>
+                                    <Link :href="entryRunHref(entry)" class="app-inline-link">Test saved prompt</Link>
                                 </div>
                             </td>
                             <td>{{ entry.prompt_version?.use_case || 'No task' }}</td>

@@ -96,7 +96,7 @@ const acceptInvitation = () => {
 
                     <div v-else-if="canAccept" class="flex flex-wrap gap-3">
                         <button type="button" class="btn-primary" @click="acceptInvitation">Accept invitation</button>
-                        <Link :href="route('dashboard')" class="btn-secondary">Back to workspace</Link>
+                        <Link :href="route('dashboard')" class="btn-secondary">Back to dashboard</Link>
                     </div>
 
                     <div v-else class="text-sm text-[var(--muted)]">

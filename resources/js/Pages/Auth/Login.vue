@@ -98,7 +98,7 @@ const submit = () => {
 
             <div v-if="invitation" class="text-sm text-[var(--muted)]">
                 Need a new account?
-                <Link :href="route('register', { invitation: invitation.token })" class="app-inline-link">Create one for this invitation</Link>
+                <Link :href="route('register', { invitation: invitation.token })" class="app-inline-link">Create an account for this invite</Link>
             </div>
         </form>
     </GuestLayout>

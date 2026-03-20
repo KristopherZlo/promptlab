@@ -175,7 +175,7 @@ const tabs = computed(() => {
     ];
 
     if (props.canManage) {
-        items.push({ id: 'create', label: 'Create task', icon: Plus });
+        items.push({ id: 'create', label: 'Add task', icon: Plus });
     }
 
     return items;
@@ -201,19 +201,19 @@ const activeTab = useUrlState({
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     v-for="tab in tabs"
                     :key="tab.id"
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === tab.id }"
                     @click="activeTab = tab.id"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ tab.label }}</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
                 <section v-if="activeTab === 'directory'" class="surface-block">
@@ -223,7 +223,7 @@ const activeTab = useUrlState({
                             <p class="text-sm text-[var(--muted)]">Browse tasks on the left and inspect the selected task on the right.</p>
                         </div>
                         <div class="console-page-actions">
-                            <Link v-if="canManage" :href="selectedTemplateCreateHref" class="btn-secondary">New prompt template</Link>
+                            <Link v-if="canManage" :href="selectedTemplateCreateHref" class="btn-secondary">Add prompt</Link>
                         </div>
                     </div>
 
@@ -330,8 +330,8 @@ const activeTab = useUrlState({
                                             </div>
 
                                             <div class="console-page-actions">
-                                                <Link :href="route('use-cases.show', selectedUseCase.id)" class="btn-primary">Open task</Link>
-                                                <Link v-if="canManage" :href="selectedUseCaseRunHref" class="btn-secondary">Run experiment</Link>
+                                                <Link :href="route('use-cases.show', selectedUseCase.id)" class="btn-primary">View task</Link>
+                                                <Link v-if="canManage" :href="selectedUseCaseRunHref" class="btn-secondary">Start test</Link>
                                             </div>
                                         </div>
 
@@ -408,7 +408,7 @@ const activeTab = useUrlState({
                 <section v-else class="surface-block">
                     <div class="surface-block-header">
                         <div>
-                            <h2 class="section-title">Create task</h2>
+                            <h2 class="section-title">Add task</h2>
                             <p class="text-sm text-[var(--muted)]">Add a new business task without mixing the form into the main directory.</p>
                         </div>
                     </div>
@@ -458,9 +458,9 @@ const activeTab = useUrlState({
                                     The creator and timestamps will be recorded automatically.
                                 </div>
                                 <div class="flex gap-3">
-                                    <button type="button" class="btn-secondary" @click="activeTab = 'directory'">Back to directory</button>
+                                    <button type="button" class="btn-secondary" @click="activeTab = 'directory'">Back to list</button>
                                     <button class="btn-primary" :disabled="createForm.processing">
-                                        {{ createForm.processing ? 'Creating...' : 'Create task' }}
+                                        {{ createForm.processing ? 'Saving...' : 'Add task' }}
                                     </button>
                                 </div>
                             </div>

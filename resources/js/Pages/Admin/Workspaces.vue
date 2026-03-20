@@ -84,11 +84,11 @@ const switchWorkspace = async (workspace) => {
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'directory' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'directory' }"
                     @click="activeTab = 'directory'"
                 >
                     <Building2 class="h-4 w-4 shrink-0" />
@@ -96,8 +96,8 @@ const switchWorkspace = async (workspace) => {
                 </button>
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'current' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'current' }"
                     @click="activeTab = 'current'"
                 >
                     <Shield class="h-4 w-4 shrink-0" />
@@ -105,14 +105,14 @@ const switchWorkspace = async (workspace) => {
                 </button>
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'create' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'create' }"
                     @click="activeTab = 'create'"
                 >
                     <Plus class="h-4 w-4 shrink-0" />
-                    <span>Create</span>
+                    <span>Add workspace</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
                 <section class="surface-block">
@@ -188,8 +188,8 @@ const switchWorkspace = async (workspace) => {
                 <section v-else-if="activeTab === 'create'" class="surface-block">
                     <div class="surface-block-header">
                         <div>
-                            <h2 class="section-title">Create workspace</h2>
-                            <p class="text-sm text-[var(--muted)]">Create a separate workspace for another business stream or team.</p>
+                            <h2 class="section-title">Add workspace</h2>
+                            <p class="text-sm text-[var(--muted)]">Add a separate workspace for another business stream or team.</p>
                         </div>
                     </div>
 
@@ -206,9 +206,9 @@ const switchWorkspace = async (workspace) => {
                             </div>
 
                             <div class="flex flex-wrap gap-3 border-t border-[var(--line)] pt-4">
-                                <button type="button" class="btn-secondary" @click="activeTab = 'directory'">Back to directory</button>
+                                <button type="button" class="btn-secondary" @click="activeTab = 'directory'">Back to list</button>
                                 <button type="submit" class="btn-primary" :disabled="workspaceForm.processing">
-                                    {{ workspaceForm.processing ? 'Creating...' : 'Create workspace' }}
+                                    {{ workspaceForm.processing ? 'Adding...' : 'Add workspace' }}
                                 </button>
                             </div>
                         </form>
@@ -253,7 +253,7 @@ const switchWorkspace = async (workspace) => {
                                         @click="switchWorkspace(workspace)"
                                     >
                                         <RefreshCcw class="mr-2 h-4 w-4" />
-                                        {{ workspace.is_current ? 'Selected' : switchingWorkspaceId === workspace.id ? 'Switching...' : 'Switch' }}
+                                        {{ workspace.is_current ? 'Current' : switchingWorkspaceId === workspace.id ? 'Opening...' : 'Open' }}
                                     </button>
                                 </td>
                             </tr>

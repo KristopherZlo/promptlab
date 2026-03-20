@@ -78,13 +78,13 @@ const revokeEntry = () => {
                 </div>
 
                 <div class="flex flex-wrap gap-3">
-                    <Link :href="runHref" class="btn-primary">Run from library</Link>
-                    <Link :href="sourceVersionHref" class="btn-secondary">Open source version</Link>
-                    <Link :href="approvalHref" class="btn-secondary">Review approval</Link>
+                    <Link :href="runHref" class="btn-primary">Test saved prompt</Link>
+                    <Link :href="sourceVersionHref" class="btn-secondary">View prompt version</Link>
+                    <Link :href="approvalHref" class="btn-secondary">Open prompt settings</Link>
                     <button v-if="canManage" type="button" class="btn-ghost text-[var(--danger)]" @click="revokeEntry">
-                        Revoke approval
+                        Remove from shared library
                     </button>
-                    <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
+                    <Link :href="route('library.index')" class="btn-secondary">Back to saved prompts</Link>
                 </div>
             </div>
         </template>
@@ -195,9 +195,9 @@ const revokeEntry = () => {
                 </div>
 
                 <div class="mt-4 flex flex-wrap gap-3 text-sm">
-                    <Link :href="runHref" class="app-inline-link">Run from library</Link>
-                    <Link :href="sourceVersionHref" class="app-inline-link">Open source version</Link>
-                    <Link :href="approvalHref" class="app-inline-link">Review approval</Link>
+                    <Link :href="runHref" class="app-inline-link">Test saved prompt</Link>
+                    <Link :href="sourceVersionHref" class="app-inline-link">View prompt version</Link>
+                    <Link :href="approvalHref" class="app-inline-link">Open prompt settings</Link>
                 </div>
             </section>
         </div>

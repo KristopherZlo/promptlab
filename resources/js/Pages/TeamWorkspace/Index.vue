@@ -63,7 +63,7 @@ const connectionRemoval = useUndoableAction();
 const tabs = computed(() => {
     const items = [
         { id: 'members', label: 'Members', icon: Users },
-        { id: 'roles', label: 'Roles', icon: Shield },
+        { id: 'roles', label: 'Access Levels', icon: Shield },
     ];
 
     if (canManageConnections.value) {
@@ -262,19 +262,19 @@ const scheduleConnectionRemoval = (connection) => {
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     v-for="tab in tabs"
                     :key="tab.id"
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === tab.id }"
                     @click="activeTab = tab.id"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ tab.label }}</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
             <section class="panel p-5">
@@ -299,8 +299,8 @@ const scheduleConnectionRemoval = (connection) => {
                     </div>
 
                     <div class="flex flex-wrap gap-3">
-                        <Link :href="route('dashboard')" class="btn-secondary">Back to workspace</Link>
-                        <Link :href="route('playground')" class="btn-primary">Run experiment</Link>
+                        <Link :href="route('dashboard')" class="btn-secondary">Back to dashboard</Link>
+                        <Link :href="route('playground')" class="btn-primary">Start test</Link>
                     </div>
                 </div>
             </section>
@@ -421,7 +421,7 @@ const scheduleConnectionRemoval = (connection) => {
                     </div>
                     <div class="flex items-end">
                         <button type="submit" class="btn-primary w-full" :disabled="memberForm.processing">
-                            {{ memberForm.processing ? 'Adding...' : 'Add member' }}
+                            {{ memberForm.processing ? 'Adding...' : 'Add person' }}
                         </button>
                     </div>
                 </form>
@@ -564,7 +564,7 @@ const scheduleConnectionRemoval = (connection) => {
 
                     <div class="flex gap-3">
                         <button type="submit" class="btn-primary" :disabled="connectionForm.processing">
-                            {{ connectionForm.processing ? 'Saving...' : editingConnectionId ? 'Update connection' : 'Create connection' }}
+                            {{ connectionForm.processing ? 'Saving...' : editingConnectionId ? 'Save changes' : 'Add connection' }}
                         </button>
                         <button type="button" class="btn-secondary" @click="resetConnectionForm">Clear</button>
                     </div>
@@ -632,7 +632,7 @@ const scheduleConnectionRemoval = (connection) => {
                         <textarea v-model="teamForm.description" class="field-textarea" placeholder="Explain what this team owns and why it needs a separate workspace."></textarea>
                     </div>
                     <button type="submit" class="btn-primary" :disabled="teamForm.processing">
-                        {{ teamForm.processing ? 'Creating...' : 'Create team' }}
+                        {{ teamForm.processing ? 'Adding...' : 'Add workspace' }}
                     </button>
                 </form>
             </section>

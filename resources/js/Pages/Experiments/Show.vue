@@ -38,8 +38,20 @@ const selectedRunId = useUrlState({
     omitIf: '',
 });
 
+const normalizeRuns = (value) => {
+    if (Array.isArray(value?.runs)) {
+        return value.runs;
+    }
+
+    if (Array.isArray(value?.runs?.data)) {
+        return value.runs.data;
+    }
+
+    return [];
+};
+
 const syncSelectedRunId = (value = experimentState.value) => {
-    const nextRuns = value?.runs ?? [];
+    const nextRuns = normalizeRuns(value);
 
     if (value?.mode !== 'batch' || nextRuns.length === 0) {
         if (selectedRunId.value) {
@@ -65,7 +77,7 @@ watch(
     { deep: true },
 );
 
-const runs = computed(() => experimentState.value.runs ?? []);
+const runs = computed(() => normalizeRuns(experimentState.value));
 const summary = computed(() => experimentState.value.summary ?? {});
 const isRunning = computed(() => ['queued', 'running'].includes(experimentState.value.status));
 const compareGridClasses = computed(() =>
@@ -189,26 +201,26 @@ const promoteRun = async (run) => {
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <button type="button" class="btn-secondary" @click="loadExperiment">Refresh</button>
-                    <Link :href="route('playground')" class="btn-primary">New run</Link>
+                    <button type="button" class="btn-secondary" @click="loadExperiment">Update results</button>
+                    <Link :href="route('playground')" class="btn-primary">Start new test</Link>
                 </div>
             </div>
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     v-for="tab in tabItems"
                     :key="tab.id"
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === tab.id }"
                     @click="activeTab = tab.id"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ tab.label }}</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
             <section class="panel p-5">
@@ -371,7 +383,7 @@ const promoteRun = async (run) => {
                                 {{ promotionMessages[run.id] || 'Promote this version only if the team would confidently reuse it.' }}
                             </div>
                             <button type="button" class="btn-secondary" @click="promoteRun(run)">
-                                Promote to library
+                                Save to shared library
                             </button>
                         </div>
                     </div>

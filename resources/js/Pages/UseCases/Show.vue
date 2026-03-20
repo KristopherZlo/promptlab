@@ -404,19 +404,19 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     v-for="tab in tabs.filter((item) => !item.manageOnly || canManage)"
                     :key="tab.id"
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === tab.id }"
                     @click="activeTab = tab.id"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ tab.label }}</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
                 <section class="surface-block">
@@ -431,9 +431,9 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                 :href="createTemplateHref"
                                 class="btn-secondary"
                             >
-                                New prompt template
+                                Add prompt
                             </Link>
-                            <Link :href="runUseCaseHref" class="btn-primary">Run task</Link>
+                            <Link :href="runUseCaseHref" class="btn-primary">Start test</Link>
                         </div>
                     </div>
 
@@ -510,7 +510,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                             <h2 class="section-title">Prompt templates</h2>
                             <p class="text-sm text-[var(--muted)]">Keep all prompt families for this task in their own view.</p>
                         </div>
-                        <Link v-if="canManage" :href="createTemplateHref" class="btn-primary">New template</Link>
+                        <Link v-if="canManage" :href="createTemplateHref" class="btn-primary">Add prompt</Link>
                     </div>
 
                     <table class="data-table">
@@ -592,17 +592,17 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                 :href="batchRunHref"
                                 class="btn-secondary"
                             >
-                                Run batch with selected
+                                Test selected cases
                             </Link>
-                            <button v-else type="button" class="btn-secondary" disabled>Run batch with selected</button>
+                            <button v-else type="button" class="btn-secondary" disabled>Test selected cases</button>
                             <Link
                                 v-if="selectedTestCases.length === 1"
                                 :href="singleRunHref"
                                 class="btn-primary"
                             >
-                                Use in single run
+                                Test selected case
                             </Link>
-                            <button v-else type="button" class="btn-primary" disabled>Use in single run</button>
+                            <button v-else type="button" class="btn-primary" disabled>Test selected case</button>
                         </div>
                     </div>
 
@@ -675,7 +675,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                                     :disabled="uiState.testCaseActionId === testCase.id"
                                                     @click="duplicateTestCase(testCase)"
                                                 >
-                                                    Duplicate
+                                                    Copy
                                                 </button>
                                                 <button
                                                     v-if="testCase.status !== 'archived'"
@@ -762,7 +762,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                 </div>
                                 <div class="flex flex-wrap gap-3">
                                     <button class="btn-primary self-start" :disabled="testCaseForm.processing">
-                                        {{ testCaseForm.processing ? 'Saving...' : editingTestCase ? 'Save changes' : 'Create test case' }}
+                                        {{ testCaseForm.processing ? 'Saving...' : editingTestCase ? 'Save changes' : 'Add test case' }}
                                     </button>
                                     <button
                                         v-if="editingTestCase"

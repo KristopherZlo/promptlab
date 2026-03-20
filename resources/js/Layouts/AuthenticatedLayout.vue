@@ -6,6 +6,7 @@ import {
     BookCopy,
     Bot,
     Building2,
+    ChevronDown,
     ChevronRight,
     Compass,
     FileStack,
@@ -57,13 +58,13 @@ const navigationSections = computed(() => page.props.navigation?.sections ?? [])
 const workspaceTools = computed(() => [
     {
         id: 'team-workspace',
-        label: 'Workspace Settings',
+        label: 'Workspace Setup',
         route: 'team-workspace.index',
         current: ['team-workspace.index'],
     },
     {
         id: 'guide',
-        label: 'Start Here',
+        label: 'How to Start',
         route: 'getting-started',
         current: ['getting-started'],
     },
@@ -179,17 +180,20 @@ const closeMobileMenu = () => {
 
                 <div class="app-sidebar-block">
                     <label class="field-label mb-2">Workspace</label>
-                    <select
-                        data-tour="team-switcher"
-                        class="field-select"
-                        :value="currentTeam?.id || ''"
-                        :disabled="switchingTeam || teamOptions.length <= 1"
-                        @change="switchTeam"
-                    >
-                        <option v-for="team in teamOptions" :key="team.id" :value="team.id">
-                            {{ team.name }}
-                        </option>
-                    </select>
+                    <div class="shell-select-wrap">
+                        <select
+                            data-tour="team-switcher"
+                            class="field-select shell-select shell-select-sidebar"
+                            :value="currentTeam?.id || ''"
+                            :disabled="switchingTeam"
+                            @change="switchTeam"
+                        >
+                            <option v-for="team in teamOptions" :key="team.id" :value="team.id">
+                                {{ team.name }}
+                            </option>
+                        </select>
+                        <ChevronDown class="shell-select-icon" />
+                    </div>
                 </div>
 
                 <nav class="app-sidebar-nav">

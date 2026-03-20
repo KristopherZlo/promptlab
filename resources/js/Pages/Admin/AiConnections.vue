@@ -215,11 +215,11 @@ const scheduleConnectionRemoval = (connection) => {
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'connections' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'connections' }"
                     @click="activeTab = 'connections'"
                 >
                     <ListChecks class="h-4 w-4 shrink-0" />
@@ -227,14 +227,14 @@ const scheduleConnectionRemoval = (connection) => {
                 </button>
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'editor' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'editor' }"
                     @click="activeTab = 'editor'"
                 >
                     <Settings2 class="h-4 w-4 shrink-0" />
-                    <span>{{ editingConnectionId ? 'Edit connection' : 'New connection' }}</span>
+                    <span>{{ editingConnectionId ? 'Edit connection' : 'Add connection' }}</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
                 <section v-if="activeTab === 'connections'" class="surface-block">
@@ -331,7 +331,7 @@ const scheduleConnectionRemoval = (connection) => {
                 <section v-else class="surface-block">
                     <div class="surface-block-header">
                         <div>
-                            <h2 class="section-title">{{ editingConnectionId ? 'Edit AI connection' : 'Create AI connection' }}</h2>
+                            <h2 class="section-title">{{ editingConnectionId ? 'Edit AI connection' : 'Add AI connection' }}</h2>
                             <p class="text-sm text-[var(--muted)]">Store provider settings once for the current workspace and keep them out of operational screens.</p>
                         </div>
                         <button type="button" class="btn-secondary" @click="closeEditor">Back to list</button>
@@ -449,7 +449,7 @@ const scheduleConnectionRemoval = (connection) => {
                                             class="btn-secondary"
                                             @click="importDiscoveredModels"
                                         >
-                                            Import discovered models
+                                            Use found models
                                         </button>
                                         <div class="text-sm text-[var(--muted)]">
                                             Replaces the models field with the provider response from the latest successful test.
@@ -461,7 +461,7 @@ const scheduleConnectionRemoval = (connection) => {
                             <div class="flex flex-wrap gap-3 border-t border-[var(--line)] pt-4">
                                 <button type="button" class="btn-secondary" @click="closeEditor">Cancel</button>
                                 <button type="submit" class="btn-primary" :disabled="connectionForm.processing">
-                                    {{ connectionForm.processing ? 'Saving...' : editingConnectionId ? 'Save connection' : 'Create connection' }}
+                                    {{ connectionForm.processing ? 'Saving...' : editingConnectionId ? 'Save changes' : 'Add connection' }}
                                 </button>
                             </div>
                         </form>

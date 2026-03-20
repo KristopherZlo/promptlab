@@ -88,7 +88,7 @@ const primaryPaths = computed(() => [
         title: 'Work on prompt versions',
         body: 'Open Prompt Templates when you need to create, edit, or compare prompt versions.',
         href: promptTemplatesHref.value,
-        action: 'Open prompt templates',
+        action: 'Open prompts',
         icon: FileStack,
         tour: 'path-prompt-templates',
     },
@@ -96,7 +96,7 @@ const primaryPaths = computed(() => [
         title: 'Run an experiment',
         body: 'Use Experiments to test one version, compare several, or review recent runs.',
         href: playgroundHref.value,
-        action: 'Open experiments',
+        action: 'Open tests',
         icon: FlaskConical,
         tour: 'path-playground',
     },
@@ -121,12 +121,12 @@ const supportLinks = computed(() => [
 </script>
 
 <template>
-    <Head title="Start Here" />
+    <Head title="How to Start" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-black tracking-tight">Start Here</h1>
+                <h1 class="text-2xl font-black tracking-tight">How to Start</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">
                     Start from the task, then move to prompts, then run experiments.
                 </p>
@@ -159,7 +159,7 @@ const supportLinks = computed(() => [
                                 <div class="flex items-start gap-3">
                                     <FileStack class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
                                     <div>
-                                        <div class="font-bold">2. Open Prompt Templates</div>
+                                        <div class="font-bold">2. Open Prompts</div>
                                         <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
                                             Edit the wording, variables, and versions for that task.
                                         </div>
@@ -170,7 +170,7 @@ const supportLinks = computed(() => [
                                 <div class="flex items-start gap-3">
                                     <FlaskConical class="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" />
                                     <div>
-                                        <div class="font-bold">3. Open Experiments</div>
+                                        <div class="font-bold">3. Open Tests</div>
                                         <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
                                             Run the prompt on real input, compare outputs, and review the result.
                                         </div>
@@ -182,8 +182,8 @@ const supportLinks = computed(() => [
 
                     <div class="flex flex-wrap gap-3 self-start">
                         <Link :href="tasksHref" class="btn-primary" data-tour="start-use-cases">Open tasks</Link>
-                        <Link :href="promptTemplatesHref" class="btn-secondary">Open prompt templates</Link>
-                        <button type="button" class="btn-ghost" @click="onboardingOpen = true">Show quick tour</button>
+                        <Link :href="promptTemplatesHref" class="btn-secondary">Open prompts</Link>
+                        <button type="button" class="btn-ghost" @click="onboardingOpen = true">Show quick guide</button>
                     </div>
                 </div>
             </section>

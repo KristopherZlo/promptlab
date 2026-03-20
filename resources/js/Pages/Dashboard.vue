@@ -114,9 +114,9 @@ const recentExperimentHref = (experiment) =>
                             <p class="text-sm text-[var(--muted)]">Current volume across tasks, templates, experiments, and approved prompts.</p>
                         </div>
                         <div class="console-page-actions">
-                            <Link :href="route('use-cases.index')" class="btn-secondary">Tasks</Link>
-                            <Link :href="route('prompt-templates.index')" class="btn-secondary">Templates</Link>
-                            <Link :href="route('playground')" class="btn-primary">New run</Link>
+                            <Link :href="route('use-cases.index')" class="btn-secondary">Open tasks</Link>
+                            <Link :href="route('prompt-templates.index')" class="btn-secondary">Open prompts</Link>
+                            <Link :href="route('playground')" class="btn-primary">Start test</Link>
                         </div>
                     </div>
 
@@ -143,7 +143,7 @@ const recentExperimentHref = (experiment) =>
                         <div class="surface-muted">
                             <div class="flex items-center justify-between gap-3">
                                 <h3 class="section-title">Recent experiments</h3>
-                                <Link :href="route('playground')" class="app-inline-link">Open experiments</Link>
+                                <Link :href="route('playground')" class="app-inline-link">Open tests</Link>
                             </div>
 
                             <table class="data-table mt-4">
@@ -198,8 +198,8 @@ const recentExperimentHref = (experiment) =>
                                             </Link>
                                             <div class="mt-1 text-sm text-[var(--muted)]">{{ prompt.use_case }}</div>
                                             <div class="mt-3 flex flex-wrap gap-3 text-sm">
-                                                <Link :href="promptEditorHref(prompt)" class="app-inline-link">Open version</Link>
-                                                <Link :href="promptRunHref(prompt)" class="app-inline-link">Run version</Link>
+                                                <Link :href="promptEditorHref(prompt)" class="app-inline-link">View version</Link>
+                                                <Link :href="promptRunHref(prompt)" class="app-inline-link">Test version</Link>
                                             </div>
                                         </div>
                                         <div class="text-sm font-semibold">{{ prompt.average_score?.toFixed(1) ?? 'Not scored' }}</div>
@@ -225,8 +225,8 @@ const recentExperimentHref = (experiment) =>
                                             </Link>
                                             <div class="mt-1 text-sm text-[var(--muted)]">{{ prompt.use_case }}</div>
                                             <div class="mt-3 flex flex-wrap gap-3 text-sm">
-                                                <Link :href="promptEditorHref(prompt)" class="app-inline-link">Open version</Link>
-                                                <Link :href="promptRunHref(prompt)" class="app-inline-link">Run version</Link>
+                                                <Link :href="promptEditorHref(prompt)" class="app-inline-link">View version</Link>
+                                                <Link :href="promptRunHref(prompt)" class="app-inline-link">Test version</Link>
                                             </div>
                                         </div>
                                         <div class="text-sm">{{ prompt.runs }} runs</div>
@@ -300,8 +300,8 @@ const recentExperimentHref = (experiment) =>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ item.use_case }}</div>
                                     <div class="mt-2 text-sm">{{ item.failed_count }} failed or invalid runs</div>
                                     <div class="mt-3 flex flex-wrap gap-3 text-sm">
-                                        <Link :href="problemCaseHref(item)" class="app-inline-link">Open test cases</Link>
-                                        <Link :href="problemCaseRunHref(item)" class="app-inline-link">Run this case</Link>
+                                        <Link :href="problemCaseHref(item)" class="app-inline-link">View test cases</Link>
+                                        <Link :href="problemCaseRunHref(item)" class="app-inline-link">Test this case</Link>
                                     </div>
                                 </div>
                                 <div v-if="overview.problem_cases.length === 0" class="record-list-item text-sm text-[var(--muted)]">
@@ -320,14 +320,14 @@ const recentExperimentHref = (experiment) =>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ item.use_case }}</div>
                                     <div class="mt-2 text-sm">{{ item.error }}</div>
                                     <div class="mt-3 flex flex-wrap gap-3 text-sm">
-                                        <Link :href="failedRunHref(item)" class="app-inline-link">Review experiment</Link>
+                                        <Link :href="failedRunHref(item)" class="app-inline-link">View result</Link>
                                         <Link :href="failedRunTaskHref(item)" class="app-inline-link">Open task</Link>
                                         <Link
                                             v-if="item.prompt_template_id"
                                             :href="promptEditorHref({ id: item.prompt_version_id, prompt_template_id: item.prompt_template_id })"
                                             class="app-inline-link"
                                         >
-                                            Open version
+                                            View version
                                         </Link>
                                     </div>
                                 </div>

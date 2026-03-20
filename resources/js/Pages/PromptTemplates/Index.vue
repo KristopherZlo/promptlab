@@ -239,7 +239,7 @@ onBeforeUnmount(() => {
                             <p class="text-sm text-[var(--muted)]">Browse families on the left and inspect the selected template on the right.</p>
                         </div>
                         <div class="console-page-actions">
-                            <Link v-if="canManageTemplates" :href="route('prompt-templates.create')" class="btn-primary">New template</Link>
+                            <Link v-if="canManageTemplates" :href="route('prompt-templates.create')" class="btn-primary">Add prompt</Link>
                         </div>
                     </div>
 
@@ -390,8 +390,8 @@ onBeforeUnmount(() => {
                                             </div>
 
                                             <div class="console-page-actions">
-                                                <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Open editor</Link>
-                                                <Link :href="selectedTemplateRunHref" class="btn-secondary">Run template</Link>
+                                                <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Edit prompt</Link>
+                                                <Link :href="selectedTemplateRunHref" class="btn-secondary">Test prompt</Link>
                                             </div>
                                         </div>
 

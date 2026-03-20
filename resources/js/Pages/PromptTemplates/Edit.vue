@@ -89,9 +89,9 @@ const notices = reactive({
     version: '',
 });
 const tabItems = computed(() => [
-    { id: 'template', label: 'Template', icon: FileStack, disabled: false },
+    { id: 'template', label: 'Details', icon: FileStack, disabled: false },
     { id: 'versions', label: 'Versions', icon: Workflow, disabled: !props.promptTemplate },
-    { id: 'library', label: 'Approval', icon: BookCopy, disabled: !props.promptTemplate },
+    { id: 'library', label: 'Shared Library', icon: BookCopy, disabled: !props.promptTemplate },
 ]);
 const activeTab = useUrlState({
     key: 'tab',
@@ -134,10 +134,10 @@ const versionPanelSummary = computed(() =>
 );
 const libraryButtonLabel = computed(() => {
     if (libraryState.processing) {
-        return 'Saving approval...';
+        return 'Saving to shared library...';
     }
 
-    return currentVersion.value?.library_entry ? 'Update approval' : 'Approve for library';
+    return currentVersion.value?.library_entry ? 'Update shared version' : 'Save to shared library';
 });
 const experimentsHref = computed(() =>
     routeWithQuery('playground', {}, {
@@ -147,7 +147,7 @@ const experimentsHref = computed(() =>
         prompt_version_id: currentVersion.value?.id ?? '',
     }),
 );
-const experimentsButtonLabel = computed(() => (currentVersion.value ? 'Run current version' : 'Open experiments'));
+const experimentsButtonLabel = computed(() => (currentVersion.value ? 'Test this version' : 'Open tests'));
 const versionLibraryHref = (version) =>
     version?.library_entry?.id
         ? route('library.show', version.library_entry.id)
@@ -350,27 +350,27 @@ const promoteToLibrary = async () => {
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompts</Link>
+                    <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompt list</Link>
                     <Link :href="experimentsHref" class="btn-ghost">{{ experimentsButtonLabel }}</Link>
                 </div>
             </div>
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     v-for="tab in tabItems"
                     :key="tab.id"
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === tab.id }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === tab.id }"
                     :disabled="tab.disabled"
                     @click="activeTab = tab.id"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ tab.label }}</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
             <section v-if="activeTab === 'template' && promptTemplate" class="panel p-5">
@@ -421,7 +421,7 @@ const promoteToLibrary = async () => {
                         help="Edits the stable metadata shared by all revisions in this prompt family, including task mapping and default model."
                     />
                     <button type="button" class="btn-primary" :disabled="templateForm.processing" @click="saveTemplate">
-                        {{ templateForm.processing ? 'Saving...' : 'Save template' }}
+                        {{ templateForm.processing ? 'Saving...' : 'Save details' }}
                     </button>
                 </div>
 
@@ -517,9 +517,9 @@ const promoteToLibrary = async () => {
                             />
 
                             <div class="flex flex-wrap gap-3">
-                                <button type="button" class="btn-secondary" @click="beginNewVersion(false)">New revision</button>
+                                <button type="button" class="btn-secondary" @click="beginNewVersion(false)">New version</button>
                                 <button type="button" class="btn-secondary" :disabled="!currentVersion" @click="beginNewVersion(true)">
-                                    Duplicate selected
+                                    Copy selected version
                                 </button>
                             </div>
 
@@ -613,9 +613,9 @@ const promoteToLibrary = async () => {
                                     help="Edits one specific revision, including prompt text, variables, output validation, and revision notes."
                                 />
                                 <div class="flex flex-wrap gap-3">
-                                    <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Run current version</Link>
+                                    <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Test this version</Link>
                                     <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
-                                        {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save revision' : 'Create revision' }}
+                                        {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save version' : 'Save as new version' }}
                                     </button>
                                 </div>
                             </div>
@@ -875,8 +875,8 @@ const promoteToLibrary = async () => {
                             >
                                 Select approved version
                             </button>
-                            <Link :href="versionLibraryHref(currentApprovedVersion)" class="app-inline-link">Open library entry</Link>
-                            <Link :href="versionRunHref(currentApprovedVersion)" class="app-inline-link">Run approved version</Link>
+                            <Link :href="versionLibraryHref(currentApprovedVersion)" class="app-inline-link">Open saved version</Link>
+                            <Link :href="versionRunHref(currentApprovedVersion)" class="app-inline-link">Test saved version</Link>
                         </div>
                     </div>
 

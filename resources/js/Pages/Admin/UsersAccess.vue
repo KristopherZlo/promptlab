@@ -50,7 +50,7 @@ const memberRemoval = useUndoableAction();
 const tabs = [
     { id: 'members', label: 'Members' },
     { id: 'invitations', label: 'Invitations' },
-    { id: 'roles', label: 'Roles' },
+    { id: 'roles', label: 'Access Levels' },
 ];
 const activeTab = useUrlState({
     key: 'tab',
@@ -402,11 +402,11 @@ const exportMembers = () => {
                     <div class="people-access-toolbar-actions">
                         <button type="button" class="btn-secondary people-access-action" @click="exportMembers">
                             <Download class="h-4 w-4" />
-                            <span>Export</span>
+                            <span>Download list</span>
                         </button>
                         <button type="button" class="btn-primary people-access-action" @click="openInviteModal">
                             <UserPlus class="h-4 w-4" />
-                            <span>Add member</span>
+                            <span>Add person</span>
                         </button>
                     </div>
                 </div>
@@ -450,7 +450,7 @@ const exportMembers = () => {
                                     class="btn-primary people-access-mini"
                                     @click.stop="selectMembership(membership.id)"
                                 >
-                                    Roles
+                                    Edit access
                                 </button>
                             </div>
                         </div>
@@ -570,7 +570,7 @@ const exportMembers = () => {
                         </div>
                         <div class="flex items-end">
                             <button type="submit" class="btn-primary w-full" :disabled="invitationForm.processing">
-                                {{ invitationForm.processing ? 'Creating...' : 'Create invitation' }}
+                                {{ invitationForm.processing ? 'Creating...' : 'Create invite link' }}
                             </button>
                         </div>
                     </form>
@@ -646,7 +646,7 @@ const exportMembers = () => {
             <div class="panel p-6">
                 <div class="flex items-start justify-between gap-4">
                     <div>
-                        <h2 class="section-title">Add member</h2>
+                        <h2 class="section-title">Add person</h2>
                         <p class="mt-2 text-sm text-[var(--muted)]">
                             Invite an existing user and assign a workspace role immediately.
                         </p>
@@ -673,7 +673,7 @@ const exportMembers = () => {
                     <div class="modal-actions">
                         <button type="button" class="btn-secondary" @click="closeInviteModal">Cancel</button>
                         <button type="submit" class="btn-primary" :disabled="memberForm.processing">
-                            {{ memberForm.processing ? 'Adding...' : 'Add member' }}
+                            {{ memberForm.processing ? 'Adding...' : 'Add person' }}
                         </button>
                     </div>
                 </form>

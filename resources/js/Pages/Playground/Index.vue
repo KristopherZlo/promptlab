@@ -167,14 +167,14 @@ const runButtonLabel = computed(() => {
     }
 
     if (form.mode === 'batch') {
-        return 'Start batch run';
+        return 'Start batch test';
     }
 
     if (form.mode === 'compare') {
-        return 'Run compare';
+        return 'Start comparison';
     }
 
-    return 'Run prompt';
+    return 'Start test';
 });
 
 const modeGuide = computed(() => {
@@ -477,28 +477,28 @@ const submit = async () => {
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     v-for="(tab, index) in stepTabs"
                     :key="tab.id"
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeStep === tab.id }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeStep === tab.id }"
                     @click="goToStep(tab.id)"
                 >
                     <component :is="tab.icon" class="h-4 w-4 shrink-0" />
                     <span>{{ index + 1 }}. {{ tab.label }}</span>
                 </button>
 
-                <Link :href="route('admin.ai-connections')" class="page-frame-tab">
+                <Link :href="route('admin.ai-connections')" class="page-tab">
                     <Bot class="h-4 w-4 shrink-0" />
                     <span>AI connections</span>
                 </Link>
-                <Link :href="route('prompt-templates.index')" class="page-frame-tab">
+                <Link :href="route('prompt-templates.index')" class="page-tab">
                     <FileCode2 class="h-4 w-4 shrink-0" />
                     <span>Prompt templates</span>
                 </Link>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
 
