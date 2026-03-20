@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Experiment;
+use App\Services\TeamPermissionService;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -7,5 +9,15 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('experiments.{experimentId}', function ($user, $experimentId) {
-    return $user !== null;
+    if (! $user) {
+        return false;
+    }
+
+    $experiment = Experiment::withoutGlobalScopes()->find($experimentId);
+
+    if (! $experiment) {
+        return false;
+    }
+
+    return app(TeamPermissionService::class)->can($user, 'view_workspace', $experiment->team_id);
 });
