@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\TerminalOperationException;
 use App\Models\LlmConnection;
 use App\Services\ModelProviders\Contracts\LLMProvider;
 use App\Services\ModelProviders\AnthropicProvider;
@@ -19,10 +20,10 @@ class LLMProviderManager
     ) {
     }
 
-    public function availableModels(): array
+    public function availableModels(?int $teamId = null): array
     {
         $configured = collect(config('llm.models', []));
-        $teamModels = $this->teamConnectionModels();
+        $teamModels = $this->teamConnectionModels($teamId);
 
         return $configured
             ->concat($teamModels)
@@ -31,16 +32,16 @@ class LLMProviderManager
             ->all();
     }
 
-    public function driverForModel(string $model): string
+    public function driverForModel(string $model, ?int $teamId = null): string
     {
-        $configured = collect(config('llm.models', []))
+        $configured = collect($this->availableModels($teamId))
             ->firstWhere('value', $model);
 
         if ($configured) {
-            return $configured['driver'];
+            return (string) $configured['driver'];
         }
 
-        return str_contains($model, ':') ? explode(':', $model, 2)[0] : 'mock';
+        throw new TerminalOperationException('The selected model is not available in this workspace.');
     }
 
     public function runPrompt(string $compiledPrompt, array $options): array
@@ -71,9 +72,13 @@ class LLMProviderManager
         };
     }
 
-    private function teamConnectionModels(): Collection
+    private function teamConnectionModels(?int $teamId = null): Collection
     {
-        return LlmConnection::query()
+        $query = $teamId !== null
+            ? LlmConnection::withoutGlobalScopes()->where('team_id', $teamId)
+            : LlmConnection::query();
+
+        return $query
             ->where('is_active', true)
             ->orderByDesc('is_default')
             ->orderBy('name')
@@ -87,6 +92,7 @@ class LLMProviderManager
                     'driver' => $connection->driver,
                     'available' => filled($connection->api_key),
                     'connection_id' => $connection->id,
+                    'team_id' => $connection->team_id,
                     'source' => 'team',
                 ])->all();
             });
@@ -95,14 +101,27 @@ class LLMProviderManager
     private function resolveRuntimeOptions(string $model, array $options): array
     {
         if (preg_match('/^([a-z0-9_-]+):team:(\d+):(.+)$/', $model, $matches) === 1) {
-            $connection = LlmConnection::query()->find((int) $matches[2]);
+            $connection = LlmConnection::withoutGlobalScopes()->find((int) $matches[2]);
+            $teamId = isset($options['team_id']) ? (int) $options['team_id'] : null;
 
             if (! $connection || ! $connection->is_active) {
-                throw new RuntimeException('The selected AI connection is not available for this team.');
+                throw new TerminalOperationException('The selected AI connection is not available for this workspace.');
             }
 
             if (! filled($connection->api_key)) {
-                throw new RuntimeException('The selected AI connection has no API key.');
+                throw new TerminalOperationException('The selected AI connection has no API key.');
+            }
+
+            if ($teamId !== null && $teamId > 0 && $connection->team_id !== $teamId) {
+                throw new TerminalOperationException('The selected AI connection does not belong to this workspace.');
+            }
+
+            if ($connection->driver !== $matches[1]) {
+                throw new TerminalOperationException('The selected AI connection is not compatible with this provider.');
+            }
+
+            if (! collect($connection->models_json ?? [])->contains($matches[3])) {
+                throw new TerminalOperationException('The selected AI connection no longer exposes this model.');
             }
 
             return [
@@ -119,7 +138,7 @@ class LLMProviderManager
         }
 
         return [
-            'driver' => $this->driverForModel($model),
+            'driver' => $this->driverForModel($model, isset($options['team_id']) ? (int) $options['team_id'] : null),
             'options' => $options,
         ];
     }

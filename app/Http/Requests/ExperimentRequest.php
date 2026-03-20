@@ -22,7 +22,7 @@ class ExperimentRequest extends TeamAwareRequest
             'variables' => ['nullable', 'array'],
             'test_case_ids' => ['nullable', 'array', 'max:50'],
             'test_case_ids.*' => ['integer', $this->teamScopedExists('test_cases')],
-            'model_name' => ['required', 'string', 'max:255'],
+            'model_name' => ['required', 'string', 'max:255', $this->allowedWorkspaceModel()],
             'temperature' => ['required', 'numeric', 'min:0', 'max:2'],
             'max_tokens' => ['required', 'integer', 'min:64', 'max:4096'],
         ];

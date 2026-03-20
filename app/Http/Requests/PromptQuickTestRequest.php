@@ -16,7 +16,7 @@ class PromptQuickTestRequest extends TeamAwareRequest
         return [
             'use_case_id' => ['nullable', $this->teamScopedExists('use_cases')],
             'task_type' => ['required', Rule::in(['summarization', 'classification', 'rewrite', 'extraction', 'generation'])],
-            'model_name' => ['required', 'string', 'max:255'],
+            'model_name' => ['required', 'string', 'max:255', $this->allowedWorkspaceModel()],
             'temperature' => ['required', 'numeric', 'min:0', 'max:2'],
             'max_tokens' => ['required', 'integer', 'min:64', 'max:4096'],
             'system_prompt' => ['nullable', 'string'],

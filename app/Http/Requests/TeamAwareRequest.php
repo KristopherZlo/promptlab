@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\AllowedWorkspaceModel;
+use App\Services\AllowedModelService;
 use App\Services\CurrentTeamResolver;
 use App\Services\TeamPermissionService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,5 +31,13 @@ abstract class TeamAwareRequest extends FormRequest
         }
 
         return $rule;
+    }
+
+    protected function allowedWorkspaceModel(): AllowedWorkspaceModel
+    {
+        return new AllowedWorkspaceModel(
+            app(AllowedModelService::class),
+            $this->currentTeamId(),
+        );
     }
 }
