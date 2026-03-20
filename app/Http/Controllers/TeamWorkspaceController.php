@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class TeamWorkspaceController extends Controller
 {
@@ -11,12 +11,12 @@ class TeamWorkspaceController extends Controller
     {
         $this->authorizeTeamAbility($request, 'view_workspace');
 
-        if ($request->user()->canInTeam('manage_members')) {
-            return to_route('admin.users-access');
-        }
-
         if ($request->user()->canInTeam('manage_team')) {
             return to_route('admin.workspaces');
+        }
+
+        if ($request->user()->canInTeam('manage_members')) {
+            return to_route('admin.users-access');
         }
 
         if ($request->user()->canInTeam('manage_connections')) {

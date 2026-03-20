@@ -59,8 +59,8 @@ const workspaceTools = computed(() => [
     {
         id: 'team-workspace',
         label: 'Workspace Setup',
-        route: 'team-workspace.index',
-        current: ['team-workspace.index'],
+        route: 'admin.workspaces',
+        current: ['admin.workspaces', 'team-workspace.index'],
     },
     {
         id: 'guide',

@@ -33,7 +33,7 @@ class TeamController extends Controller
         $team = Team::query()->findOrFail($request->integer('team_id'));
         $user = $request->user();
 
-        if (! $user->isAdmin() && ! $user->memberships()->where('team_id', $team->id)->exists()) {
+        if (! $user->memberships()->where('team_id', $team->id)->exists()) {
             throw ValidationException::withMessages([
                 'team_id' => 'You are not a member of the selected team.',
             ]);

@@ -23,10 +23,7 @@ class CurrentTeamResolver
         }
 
         if ($user->current_team_id) {
-            if (
-                ! $user->isAdmin()
-                && ! $user->memberships()->where('team_id', $user->current_team_id)->exists()
-            ) {
+            if (! $user->memberships()->where('team_id', $user->current_team_id)->exists()) {
                 $user->forceFill(['current_team_id' => null])->saveQuietly();
 
                 return $this->ensureFor($user);

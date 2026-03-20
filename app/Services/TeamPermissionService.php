@@ -73,10 +73,6 @@ class TeamPermissionService
             return false;
         }
 
-        if ($user->isAdmin()) {
-            return true;
-        }
-
         $role = $this->roleFor($user, $teamId);
 
         if (! $role) {
@@ -90,10 +86,6 @@ class TeamPermissionService
     {
         if (! $user) {
             return [];
-        }
-
-        if ($user->isAdmin()) {
-            return self::ABILITY_MATRIX[self::ROLE_OWNER];
         }
 
         $role = $this->roleFor($user, $teamId);

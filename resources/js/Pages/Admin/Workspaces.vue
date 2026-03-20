@@ -1,10 +1,10 @@
 <script setup>
 import axios from 'axios';
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import RoleBadge from '@/Components/RoleBadge.vue';
-import { Building2, Plus, RefreshCcw, Shield } from 'lucide-vue-next';
+import { Plus, Shield } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { routeWithQuery, useUrlState } from '@/lib/urlState';
 
@@ -21,10 +21,9 @@ const props = defineProps({
 
 const activeTab = useUrlState({
     key: 'tab',
-    defaultValue: 'directory',
-    allowedValues: ['directory', 'current', 'create'],
+    defaultValue: 'current',
+    allowedValues: ['current', 'create'],
 });
-const switchingWorkspaceId = ref(null);
 const notices = reactive({
     workspace: '',
 });
@@ -45,8 +44,8 @@ const createWorkspace = async () => {
         });
 
         workspaceForm.reset();
-        activeTab.value = 'directory';
-        router.visit(routeWithQuery('admin.workspaces', {}, { tab: 'directory' }));
+        activeTab.value = 'current';
+        router.visit(routeWithQuery('admin.workspaces', {}, { tab: 'current' }));
     } catch (error) {
         applyServerErrors(workspaceForm, error);
         notices.workspace = extractServerMessage(error, 'Workspace could not be created.');
@@ -54,46 +53,23 @@ const createWorkspace = async () => {
         workspaceForm.processing = false;
     }
 };
-
-const switchWorkspace = async (workspace) => {
-    switchingWorkspaceId.value = workspace.id;
-    notices.workspace = '';
-
-    try {
-        await axios.post(route('api.teams.switch'), { team_id: workspace.id });
-        router.visit(routeWithQuery('admin.workspaces', {}, { tab: activeTab.value }));
-    } catch (error) {
-        notices.workspace = extractServerMessage(error, 'Workspace switch failed.');
-    } finally {
-        switchingWorkspaceId.value = null;
-    }
-};
 </script>
 
 <template>
-    <Head title="Workspaces" />
+    <Head title="Workspace Setup" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1>Workspaces</h1>
+                <h1>Workspace Setup</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    Separate the current workspace view, workspace directory, and workspace creation into distinct screens.
+                    Manage the current workspace here. Use the left sidebar when you need to switch to a different one.
                 </p>
             </div>
         </template>
 
         <div class="page-frame">
             <div class="page-tabs">
-                <button
-                    type="button"
-                    class="page-tab"
-                    :class="{ 'page-tab-active': activeTab === 'directory' }"
-                    @click="activeTab = 'directory'"
-                >
-                    <Building2 class="h-4 w-4 shrink-0" />
-                    <span>Directory</span>
-                </button>
                 <button
                     type="button"
                     class="page-tab"
@@ -130,7 +106,7 @@ const switchWorkspace = async (workspace) => {
                                 <div class="summary-item-value">{{ currentWorkspace.name }}</div>
                             </div>
                             <div class="summary-item">
-                                <div class="summary-item-label">Visible workspaces</div>
+                                <div class="summary-item-label">Available in sidebar</div>
                                 <div class="summary-item-value">{{ workspaces.length }}</div>
                             </div>
                             <div class="summary-item">
@@ -157,7 +133,14 @@ const switchWorkspace = async (workspace) => {
                         </div>
                     </div>
 
-                    <div class="surface-block-body grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                    <div class="surface-block-body space-y-4">
+                        <div class="surface-muted">
+                            <div class="text-sm text-[var(--muted)]">
+                                Switching between workspaces now happens only in the left sidebar. This page is kept for setup and creation, not for changing context.
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
                         <div class="surface-muted">
                             <div class="font-semibold">{{ currentWorkspace.name }}</div>
                             <div class="mt-2 mono text-xs text-[var(--muted)]">{{ currentWorkspace.slug }}</div>
@@ -182,10 +165,11 @@ const switchWorkspace = async (workspace) => {
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
                 </section>
 
-                <section v-else-if="activeTab === 'create'" class="surface-block">
+                <section v-else class="surface-block">
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">Add workspace</h2>
@@ -206,59 +190,13 @@ const switchWorkspace = async (workspace) => {
                             </div>
 
                             <div class="flex flex-wrap gap-3 border-t border-[var(--line)] pt-4">
-                                <button type="button" class="btn-secondary" @click="activeTab = 'directory'">Back to list</button>
+                                <button type="button" class="btn-secondary" @click="activeTab = 'current'">Back to current workspace</button>
                                 <button type="submit" class="btn-primary" :disabled="workspaceForm.processing">
                                     {{ workspaceForm.processing ? 'Adding...' : 'Add workspace' }}
                                 </button>
                             </div>
                         </form>
                     </div>
-                </section>
-
-                <section v-else class="surface-block">
-                    <div class="surface-block-header">
-                        <div>
-                            <h2 class="section-title">Accessible workspaces</h2>
-                            <p class="text-sm text-[var(--muted)]">Switch operating context without leaving the administrative area.</p>
-                        </div>
-                    </div>
-
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Workspace</th>
-                                <th>Owner</th>
-                                <th>Members</th>
-                                <th>Status</th>
-                                <th class="w-[140px]">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="workspace in workspaces" :key="workspace.id">
-                                <td>
-                                    <div class="font-semibold">{{ workspace.name }}</div>
-                                    <div class="mt-1 text-sm text-[var(--muted)]">{{ workspace.description || 'No description' }}</div>
-                                </td>
-                                <td>{{ workspace.creator || 'Unknown' }}</td>
-                                <td>{{ workspace.members_count }}</td>
-                                <td>
-                                    <span v-if="workspace.is_current" class="status-chip">Current</span>
-                                    <span v-else class="status-chip">Available</span>
-                                </td>
-                                <td>
-                                    <button
-                                        type="button"
-                                        class="btn-secondary"
-                                        :disabled="workspace.is_current || switchingWorkspaceId === workspace.id"
-                                        @click="switchWorkspace(workspace)"
-                                    >
-                                        <RefreshCcw class="mr-2 h-4 w-4" />
-                                        {{ workspace.is_current ? 'Current' : switchingWorkspaceId === workspace.id ? 'Opening...' : 'Open' }}
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
                 </section>
             </div>
         </div>

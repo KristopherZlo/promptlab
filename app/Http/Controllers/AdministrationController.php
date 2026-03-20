@@ -40,13 +40,7 @@ class AdministrationController extends Controller
         $workspaces = Team::query()
             ->with('creator')
             ->withCount('memberships')
-            ->when(
-                ! $request->user()->isAdmin(),
-                fn ($query) => $query->whereIn(
-                    'id',
-                    $request->user()->memberships()->select('team_id')
-                ),
-            )
+            ->whereIn('id', $request->user()->memberships()->select('team_id'))
             ->orderBy('name')
             ->get();
 

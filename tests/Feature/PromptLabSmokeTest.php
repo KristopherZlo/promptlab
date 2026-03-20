@@ -162,7 +162,7 @@ class PromptLabSmokeTest extends TestCase
 
         $this->actingAs($user)
             ->get('/team-workspace')
-            ->assertRedirect(route('admin.users-access', absolute: false));
+            ->assertRedirect(route('admin.workspaces', absolute: false));
 
         $this->actingAs($user)
             ->get("/experiments/{$experiment->id}")
