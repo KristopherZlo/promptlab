@@ -94,4 +94,49 @@ class OpenAIProviderTest extends TestCase
         $this->assertSame(111, $requests[1]['max_tokens'] ?? null);
         $this->assertArrayNotHasKey('max_completion_tokens', $requests[1]);
     }
+
+    public function test_openai_provider_can_validate_with_selected_model_when_model_listing_is_unavailable(): void
+    {
+        Http::fake([
+            'https://api.example.com/v1/models' => Http::response([
+                'error' => [
+                    'message' => 'This provider does not expose /models.',
+                ],
+            ], 404),
+            'https://api.example.com/v1/chat/completions' => Http::response([
+                'model' => 'grok-code-fast-1',
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => 'pong',
+                        ],
+                    ],
+                ],
+                'usage' => [
+                    'prompt_tokens' => 2,
+                    'completion_tokens' => 1,
+                ],
+            ]),
+        ]);
+
+        $result = app(OpenAIProvider::class)->validateConnection([
+            'api_key' => 'sk-openai-compatible',
+            'base_url' => 'https://api.example.com/v1',
+            'models_json' => ['grok-code-fast-1'],
+        ]);
+
+        $this->assertTrue($result['reachable']);
+        $this->assertSame(['grok-code-fast-1'], $result['models']);
+        $this->assertStringContainsString('selected model', $result['message']);
+
+        Http::assertSent(fn (ClientRequest $request) =>
+            $request->url() === 'https://api.example.com/v1/models'
+            && $request->hasHeader('Authorization', 'Bearer sk-openai-compatible')
+        );
+
+        Http::assertSent(fn (ClientRequest $request) =>
+            $request->url() === 'https://api.example.com/v1/chat/completions'
+            && ($request->data()['model'] ?? null) === 'grok-code-fast-1'
+        );
+    }
 }

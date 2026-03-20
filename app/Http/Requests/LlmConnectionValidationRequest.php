@@ -15,9 +15,11 @@ class LlmConnectionValidationRequest extends TeamAwareRequest
     {
         return [
             'connection_id' => ['nullable', 'integer', $this->teamScopedExists('llm_connections')],
-            'driver' => ['required', Rule::in(['openai'])],
+            'driver' => ['required', Rule::in(['openai', 'anthropic'])],
             'base_url' => ['nullable', 'url', 'max:255'],
             'api_key' => ['nullable', 'string'],
+            'models_json' => ['nullable', 'array'],
+            'models_json.*' => ['string', 'max:255'],
         ];
     }
 }

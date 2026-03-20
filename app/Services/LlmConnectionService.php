@@ -81,11 +81,19 @@ class LlmConnectionService
         }
 
         try {
+            $models = collect($data['models_json'] ?? $connection?->models_json ?? [])
+                ->filter(fn ($model) => is_string($model) && filled($model))
+                ->map(fn (string $model) => trim($model))
+                ->filter()
+                ->values()
+                ->all();
+
             $result = $this->providers->validateConnection($data['driver'], [
                 'base_url' => $data['base_url'] ?? null,
                 'api_key' => filled($data['api_key'] ?? null)
                     ? $data['api_key']
                     : $connection?->api_key,
+                'models_json' => $models,
             ]);
 
             return [

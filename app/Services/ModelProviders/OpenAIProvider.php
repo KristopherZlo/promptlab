@@ -64,15 +64,36 @@ class OpenAIProvider implements LLMProvider
 
     public function validateConnection(array $options = []): array
     {
-        $models = $this->discoverModels($options);
+        try {
+            $models = $this->discoverModels($options);
 
-        return [
-            'reachable' => true,
-            'message' => count($models) > 0
-                ? 'Connection verified and available models were discovered.'
-                : 'Connection verified, but the provider did not return any models.',
-            'models' => $models,
-        ];
+            return [
+                'reachable' => true,
+                'message' => count($models) > 0
+                    ? 'Connection verified and available models were discovered.'
+                    : 'Connection verified, but the provider did not return any models.',
+                'models' => $models,
+            ];
+        } catch (\Throwable $error) {
+            $providedModels = collect($options['models_json'] ?? [])
+                ->filter(fn ($model) => is_string($model) && filled($model))
+                ->map(fn (string $model) => trim($model))
+                ->filter()
+                ->values()
+                ->all();
+
+            if (count($providedModels) === 0) {
+                throw $error;
+            }
+
+            $this->probeModel($providedModels[0], $options);
+
+            return [
+                'reachable' => true,
+                'message' => 'Connection verified with the selected model. This provider does not expose model listing through /models.',
+                'models' => $providedModels,
+            ];
+        }
     }
 
     public function discoverModels(array $options = []): array
@@ -136,6 +157,36 @@ class OpenAIProvider implements LLMProvider
             ->withToken($apiKey)
             ->acceptJson()
             ->post($baseUrl.'/chat/completions', $payload);
+    }
+
+    private function probeModel(string $model, array $options): void
+    {
+        [$apiKey, $baseUrl] = $this->connectionConfig($options);
+
+        $payload = [
+            'model' => $this->resolvedModelName($model),
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => 'ping',
+                ],
+            ],
+            'temperature' => 0,
+        ];
+        $maxTokens = 16;
+        $payload['max_completion_tokens'] = $maxTokens;
+
+        $response = $this->sendChatCompletionRequest($baseUrl, $apiKey, $payload);
+
+        if ($this->shouldRetryWithLegacyMaxTokens($response)) {
+            unset($payload['max_completion_tokens']);
+            $payload['max_tokens'] = $maxTokens;
+            $response = $this->sendChatCompletionRequest($baseUrl, $apiKey, $payload);
+        }
+
+        if (! $response->successful()) {
+            throw new RuntimeException('OpenAI validation failed: '.$this->errorMessage($response));
+        }
     }
 
     private function shouldRetryWithLegacyMaxTokens(Response $response): bool

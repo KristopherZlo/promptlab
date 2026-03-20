@@ -43,3 +43,47 @@
 .select-with-icon > .field-select:focus + .select-with-icon-caret {
     color: var(--ink);
 }
+
+.connection-preset-panel {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #303030;
+    border-radius: 0.75rem;
+    background: transparent;
+}
+
+.connection-preset-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.connection-preset-links {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.connection-preset-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.connection-preset-note,
+.field-hint {
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .connection-preset-header,
+    .connection-preset-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+}

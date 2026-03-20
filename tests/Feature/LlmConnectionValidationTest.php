@@ -99,4 +99,43 @@ class LlmConnectionValidationTest extends TestCase
             && $request->hasHeader('Authorization', 'Bearer stored-secret-key')
         );
     }
+
+    public function test_team_admin_can_validate_anthropic_connection_before_saving(): void
+    {
+        Http::fake([
+            'https://api.anthropic.com/v1/models' => Http::response([
+                'data' => [
+                    ['id' => 'claude-sonnet-4-5'],
+                    ['id' => 'claude-haiku-4-5'],
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        app(TeamProvisioningService::class)->createTeam($user, [
+            'name' => 'Anthropic Validation Team',
+            'description' => 'Workspace for Claude validation.',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('api.llm-connections.validate'), [
+                'driver' => 'anthropic',
+                'base_url' => 'https://api.anthropic.com/v1',
+                'api_key' => 'claude-key-123',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.ok', true)
+            ->assertJsonPath('data.reachable', true)
+            ->assertJsonPath('data.models.0', 'claude-haiku-4-5')
+            ->assertJsonPath('data.models.1', 'claude-sonnet-4-5');
+
+        Http::assertSent(fn (ClientRequest $request) =>
+            $request->url() === 'https://api.anthropic.com/v1/models'
+            && $request->hasHeader('x-api-key', 'claude-key-123')
+            && $request->hasHeader('anthropic-version', '2023-06-01')
+        );
+    }
 }

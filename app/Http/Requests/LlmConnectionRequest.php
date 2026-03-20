@@ -15,7 +15,7 @@ class LlmConnectionRequest extends TeamAwareRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'driver' => ['required', Rule::in(['openai'])],
+            'driver' => ['required', Rule::in(['openai', 'anthropic'])],
             'base_url' => ['nullable', 'url', 'max:255'],
             'api_key' => ['nullable', 'string'],
             'models_json' => ['required', 'array', 'min:1'],

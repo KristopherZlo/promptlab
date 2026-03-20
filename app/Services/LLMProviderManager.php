@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\LlmConnection;
 use App\Services\ModelProviders\Contracts\LLMProvider;
+use App\Services\ModelProviders\AnthropicProvider;
 use App\Services\ModelProviders\MockProvider;
 use App\Services\ModelProviders\OpenAIProvider;
 use Illuminate\Support\Collection;
@@ -14,6 +15,7 @@ class LLMProviderManager
     public function __construct(
         private readonly MockProvider $mockProvider,
         private readonly OpenAIProvider $openAiProvider,
+        private readonly AnthropicProvider $anthropicProvider,
     ) {
     }
 
@@ -64,6 +66,7 @@ class LLMProviderManager
         return match ($driver) {
             'mock' => $this->mockProvider,
             'openai' => $this->openAiProvider,
+            'anthropic' => $this->anthropicProvider,
             default => throw new RuntimeException("Unsupported provider driver [{$driver}]."),
         };
     }
@@ -79,7 +82,7 @@ class LLMProviderManager
                 $models = collect($connection->models_json ?? [])->filter()->values();
 
                 return $models->map(fn (string $model) => [
-                    'value' => "openai:team:{$connection->id}:{$model}",
+                    'value' => "{$connection->driver}:team:{$connection->id}:{$model}",
                     'label' => "{$connection->name} / {$model}",
                     'driver' => $connection->driver,
                     'available' => filled($connection->api_key),
@@ -91,8 +94,8 @@ class LLMProviderManager
 
     private function resolveRuntimeOptions(string $model, array $options): array
     {
-        if (preg_match('/^openai:team:(\d+):(.+)$/', $model, $matches) === 1) {
-            $connection = LlmConnection::query()->find((int) $matches[1]);
+        if (preg_match('/^([a-z0-9_-]+):team:(\d+):(.+)$/', $model, $matches) === 1) {
+            $connection = LlmConnection::query()->find((int) $matches[2]);
 
             if (! $connection || ! $connection->is_active) {
                 throw new RuntimeException('The selected AI connection is not available for this team.');
@@ -103,12 +106,12 @@ class LLMProviderManager
             }
 
             return [
-                'driver' => 'openai',
+                'driver' => $connection->driver,
                 'options' => [
                     ...$options,
-                    'model' => $matches[2],
+                    'model' => $matches[3],
                     'api_key' => $connection->api_key,
-                    'base_url' => $connection->base_url ?: config('services.openai.base_url'),
+                    'base_url' => $connection->base_url ?: $this->defaultBaseUrl($connection->driver),
                     'connection_id' => $connection->id,
                     'connection_name' => $connection->name,
                 ],
@@ -119,5 +122,14 @@ class LLMProviderManager
             'driver' => $this->driverForModel($model),
             'options' => $options,
         ];
+    }
+
+    private function defaultBaseUrl(string $driver): ?string
+    {
+        return match ($driver) {
+            'openai' => config('services.openai.base_url'),
+            'anthropic' => config('services.anthropic.base_url'),
+            default => null,
+        };
     }
 }

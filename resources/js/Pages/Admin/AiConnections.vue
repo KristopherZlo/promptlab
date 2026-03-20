@@ -4,8 +4,9 @@ import { computed, reactive, ref, watch } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
-import { KeyRound, ListChecks, Settings2 } from 'lucide-vue-next';
+import { ChevronDown, KeyRound, ListChecks, Settings2 } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
+import { AI_CONNECTION_PRESETS, DEFAULT_AI_CONNECTION_PRESET_ID, findAiConnectionPresetById } from '@/lib/aiConnectionPresets';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { useUrlState } from '@/lib/urlState';
 
@@ -38,13 +39,29 @@ const validationState = reactive({
     message: '',
     models: [],
 });
+const providerPresetId = ref(DEFAULT_AI_CONNECTION_PRESET_ID);
+const selectedPrimaryModel = ref(findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.defaultModel ?? '');
+const driverLabels = {
+    openai: 'OpenAI-compatible',
+    anthropic: 'Anthropic Claude',
+};
+const presetSelectOptions = [
+    ...AI_CONNECTION_PRESETS.map((preset) => ({
+        value: preset.id,
+        label: preset.label,
+    })),
+    {
+        value: 'custom',
+        label: 'Custom connection',
+    },
+];
 
 const connectionForm = useForm({
-    name: '',
-    driver: 'openai',
-    base_url: 'https://api.openai.com/v1',
+    name: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.connectionName ?? '',
+    driver: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.driver ?? 'openai',
+    base_url: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.baseUrl ?? 'https://api.openai.com/v1',
     api_key: '',
-    models_text: 'gpt-4.1-mini',
+    models_text: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.defaultModel ?? 'gpt-4.1-mini',
     is_active: true,
     is_default: props.connections.length === 0,
 });
@@ -53,6 +70,7 @@ const activeConnections = computed(() => props.connections.filter((connection) =
 const totalModels = computed(() =>
     props.connections.reduce((count, connection) => count + (connection.models_json?.length || 0), 0),
 );
+const activePreset = computed(() => findAiConnectionPresetById(providerPresetId.value));
 
 const resetValidationState = () => {
     validationState.checked = false;
@@ -63,15 +81,80 @@ const resetValidationState = () => {
     validationState.models = [];
 };
 
+const normalizeBaseUrl = (value) => `${value ?? ''}`.trim().replace(/\/+$/, '');
+
+const parseModels = () =>
+    `${connectionForm.models_text ?? ''}`
+        .split(/[\n,]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+const inferPreset = (connectionLike) => AI_CONNECTION_PRESETS.find((preset) =>
+    preset.driver === connectionLike.driver
+    && normalizeBaseUrl(preset.baseUrl) === normalizeBaseUrl(connectionLike.base_url),
+) ?? null;
+
+const syncPresetState = (connection = null) => {
+    const matchedPreset = connection
+        ? inferPreset(connection)
+        : inferPreset({
+            driver: connectionForm.driver,
+            base_url: connectionForm.base_url,
+        });
+    const currentModels = connection ? (connection.models_json ?? []) : parseModels();
+
+    providerPresetId.value = matchedPreset?.id ?? 'custom';
+    selectedPrimaryModel.value = currentModels.find((model) => matchedPreset?.models.includes(model))
+        ?? matchedPreset?.defaultModel
+        ?? currentModels[0]
+        ?? '';
+};
+
+const applyPresetToForm = (presetId, options = {}) => {
+    const preset = findAiConnectionPresetById(presetId);
+
+    providerPresetId.value = preset?.id ?? 'custom';
+
+    if (!preset) {
+        selectedPrimaryModel.value = parseModels()[0] ?? '';
+        resetValidationState();
+        return;
+    }
+
+    const currentName = `${connectionForm.name ?? ''}`.trim();
+    const knownPresetNames = AI_CONNECTION_PRESETS.map(({ connectionName }) => connectionName);
+    const shouldReplaceName = options.forceName === true
+        || currentName === ''
+        || knownPresetNames.includes(currentName);
+
+    selectedPrimaryModel.value = options.selectedModel ?? preset.defaultModel;
+    connectionForm.driver = preset.driver;
+    connectionForm.base_url = preset.baseUrl;
+
+    if (shouldReplaceName) {
+        connectionForm.name = preset.connectionName;
+    }
+
+    if (options.replaceModels !== false) {
+        connectionForm.models_text = options.useAllModels === true
+            ? preset.models.join(', ')
+            : selectedPrimaryModel.value;
+    }
+
+    resetValidationState();
+};
+
 const resetConnectionForm = () => {
     editingConnectionId.value = null;
     connectionForm.reset();
-    connectionForm.driver = 'openai';
-    connectionForm.base_url = 'https://api.openai.com/v1';
-    connectionForm.models_text = 'gpt-4.1-mini';
+    applyPresetToForm(DEFAULT_AI_CONNECTION_PRESET_ID, {
+        forceName: true,
+        replaceModels: true,
+    });
     connectionForm.is_active = true;
     connectionForm.is_default = props.connections.length === 0;
     connectionForm.clearErrors();
+    notices.connection = '';
     resetValidationState();
 };
 
@@ -84,31 +167,77 @@ const editConnection = (connection) => {
     editingConnectionId.value = connection.id;
     connectionForm.name = connection.name;
     connectionForm.driver = connection.driver;
-    connectionForm.base_url = connection.base_url || 'https://api.openai.com/v1';
+    connectionForm.base_url = connection.base_url || findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.baseUrl || 'https://api.openai.com/v1';
     connectionForm.api_key = '';
     connectionForm.models_text = (connection.models_json ?? []).join(', ');
     connectionForm.is_active = connection.is_active;
     connectionForm.is_default = connection.is_default;
     connectionForm.clearErrors();
     notices.connection = '';
+    syncPresetState(connection);
     resetValidationState();
     activeTab.value = 'editor';
 };
 
-const parseModels = () =>
-    `${connectionForm.models_text ?? ''}`
-        .split(/[\n,]+/)
-        .map((item) => item.trim())
-        .filter(Boolean);
-
 watch(
-    () => [connectionForm.driver, connectionForm.base_url, connectionForm.api_key, editingConnectionId.value],
+    () => [connectionForm.driver, connectionForm.base_url, connectionForm.api_key, connectionForm.models_text, editingConnectionId.value],
     () => {
         if (validationState.checked) {
             resetValidationState();
         }
     },
 );
+
+const applySelectedPreset = () => {
+    if (providerPresetId.value === 'custom') {
+        selectedPrimaryModel.value = parseModels()[0] ?? '';
+        resetValidationState();
+        return;
+    }
+
+    applyPresetToForm(providerPresetId.value, {
+        replaceModels: true,
+    });
+};
+
+const applySelectedPresetModel = () => {
+    if (!selectedPrimaryModel.value) {
+        return;
+    }
+
+    connectionForm.models_text = selectedPrimaryModel.value;
+    resetValidationState();
+};
+
+const useAllPresetModels = () => {
+    if (!activePreset.value) {
+        return;
+    }
+
+    connectionForm.models_text = activePreset.value.models.join(', ');
+    notices.connection = `Loaded ${activePreset.value.models.length} suggested model${activePreset.value.models.length === 1 ? '' : 's'} from ${activePreset.value.label}.`;
+    resetValidationState();
+};
+
+const driverLabel = (driver) => driverLabels[driver] ?? driver;
+
+const markPresetAsCustom = () => {
+    if (!activePreset.value) {
+        syncPresetState();
+        resetValidationState();
+        return;
+    }
+
+    const stillMatchesPreset = connectionForm.driver === activePreset.value.driver
+        && normalizeBaseUrl(connectionForm.base_url) === normalizeBaseUrl(activePreset.value.baseUrl);
+
+    if (!stillMatchesPreset) {
+        providerPresetId.value = 'custom';
+        selectedPrimaryModel.value = parseModels()[0] ?? selectedPrimaryModel.value;
+    }
+
+    resetValidationState();
+};
 
 const validateConnection = async () => {
     validationState.testing = true;
@@ -120,6 +249,7 @@ const validateConnection = async () => {
             driver: connectionForm.driver,
             base_url: connectionForm.base_url || null,
             api_key: connectionForm.api_key || null,
+            models_json: parseModels(),
         });
 
         const result = response.data?.data ?? {};
@@ -145,6 +275,7 @@ const importDiscoveredModels = () => {
     }
 
     connectionForm.models_text = validationState.models.join(', ');
+    selectedPrimaryModel.value = validationState.models[0] ?? selectedPrimaryModel.value;
     notices.connection = `Imported ${validationState.models.length} discovered model${validationState.models.length === 1 ? '' : 's'} into the form.`;
 };
 
@@ -209,7 +340,7 @@ const scheduleConnectionRemoval = (connection) => {
             <div>
                 <h1>AI Connections</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    Separate the connection registry from the editor so provider configuration is easier to scan and safer to change.
+                    Choose a provider preset, paste the API key, keep the suggested model or replace it, and save the connection once for the whole workspace.
                 </p>
             </div>
         </template>
@@ -311,7 +442,7 @@ const scheduleConnectionRemoval = (connection) => {
                                         <td class="text-sm text-[var(--muted)]">
                                             {{ (connection.models_json ?? []).join(', ') || 'No models listed' }}
                                         </td>
-                                        <td>{{ connection.driver }}</td>
+                                        <td>{{ driverLabel(connection.driver) }}</td>
                                         <td>
                                             <div class="flex flex-wrap gap-2">
                                                 <button type="button" class="btn-secondary" @click="editConnection(connection)">Edit</button>
@@ -332,7 +463,7 @@ const scheduleConnectionRemoval = (connection) => {
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">{{ editingConnectionId ? 'Edit AI connection' : 'Add AI connection' }}</h2>
-                            <p class="text-sm text-[var(--muted)]">Store provider settings once for the current workspace and keep them out of operational screens.</p>
+                            <p class="text-sm text-[var(--muted)]">Use a provider preset for the common setup, then keep only the model names your workspace should see.</p>
                         </div>
                         <button type="button" class="btn-secondary" @click="closeEditor">Back to list</button>
                     </div>
@@ -343,6 +474,77 @@ const scheduleConnectionRemoval = (connection) => {
                         </div>
 
                         <form class="grid gap-4" @submit.prevent="saveConnection">
+                            <div class="connection-preset-panel">
+                                <div class="connection-preset-header">
+                                    <div>
+                                        <div class="section-title text-base">Provider preset</div>
+                                        <p class="mt-1 text-sm text-[var(--muted)]">
+                                            Pick a modern provider, paste the key, and start with a suggested model instead of filling every field by hand.
+                                        </p>
+                                    </div>
+                                    <div v-if="activePreset" class="connection-preset-links">
+                                        <a
+                                            :href="activePreset.docsUrl"
+                                            target="_blank"
+                                            rel="noreferrer noopener"
+                                            class="text-sm"
+                                        >
+                                            Official docs
+                                        </a>
+                                        <button type="button" class="btn-secondary" @click="useAllPresetModels">
+                                            Use all suggested models
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="connection-preset-grid">
+                                    <div>
+                                        <label class="field-label">Provider</label>
+                                        <div class="select-with-icon">
+                                            <select
+                                                v-model="providerPresetId"
+                                                class="field-select"
+                                                @change="applySelectedPreset"
+                                            >
+                                                <option
+                                                    v-for="option in presetSelectOptions"
+                                                    :key="option.value"
+                                                    :value="option.value"
+                                                >
+                                                    {{ option.label }}
+                                                </option>
+                                            </select>
+                                            <ChevronDown class="select-with-icon-caret" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="field-label">Quick model</label>
+                                        <div class="select-with-icon">
+                                            <select
+                                                v-model="selectedPrimaryModel"
+                                                class="field-select"
+                                                :disabled="!activePreset"
+                                                @change="applySelectedPresetModel"
+                                            >
+                                                <option value="" disabled>Select a model</option>
+                                                <option
+                                                    v-for="model in activePreset?.models ?? []"
+                                                    :key="model"
+                                                    :value="model"
+                                                >
+                                                    {{ model }}
+                                                </option>
+                                            </select>
+                                            <ChevronDown class="select-with-icon-caret" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="connection-preset-note text-sm text-[var(--muted)]">
+                                    {{ activePreset ? activePreset.note : 'Use a custom base URL and choose the runtime manually for a non-standard provider.' }}
+                                </div>
+                            </div>
+
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="field-label">Connection name</label>
@@ -351,7 +553,13 @@ const scheduleConnectionRemoval = (connection) => {
                                 </div>
                                 <div>
                                     <label class="field-label">Base URL</label>
-                                    <input v-model="connectionForm.base_url" type="url" class="field-input" placeholder="https://api.openai.com/v1">
+                                    <input
+                                        v-model="connectionForm.base_url"
+                                        type="url"
+                                        class="field-input"
+                                        :placeholder="activePreset?.baseUrl || 'https://api.openai.com/v1'"
+                                        @input="markPresetAsCustom"
+                                    >
                                 </div>
                             </div>
 
@@ -362,14 +570,25 @@ const scheduleConnectionRemoval = (connection) => {
 
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <label class="field-label">Driver</label>
-                                    <select v-model="connectionForm.driver" class="field-select">
-                                        <option value="openai">openai</option>
-                                    </select>
+                                    <label class="field-label">Runtime</label>
+                                    <div class="select-with-icon">
+                                        <select v-model="connectionForm.driver" class="field-select" @change="markPresetAsCustom">
+                                            <option value="openai">OpenAI-compatible</option>
+                                            <option value="anthropic">Anthropic Claude</option>
+                                        </select>
+                                        <ChevronDown class="select-with-icon-caret" />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label class="field-label">Models</label>
-                                    <input v-model="connectionForm.models_text" type="text" class="field-input" placeholder="gpt-4.1-mini, gpt-4.1">
+                                    <label class="field-label">Models shown in the workspace</label>
+                                    <input
+                                        v-model="connectionForm.models_text"
+                                        type="text"
+                                        class="field-input"
+                                        :placeholder="activePreset?.models.join(', ') || 'gpt-4.1-mini, gpt-4.1'"
+                                    >
+                                    <div class="field-hint">Use one model for the simple path, or list several models separated by commas.</div>
+                                    <div v-if="connectionForm.errors.models_json" class="field-error">{{ connectionForm.errors.models_json }}</div>
                                 </div>
                             </div>
 
