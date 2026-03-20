@@ -28,8 +28,9 @@ class OpenAIProvider implements LLMProvider
             'model' => $this->resolvedModelName((string) ($options['model'] ?? 'openai:gpt-4.1-mini')),
             'messages' => $messages,
             'temperature' => (float) ($options['temperature'] ?? 0.2),
-            'max_tokens' => (int) ($options['max_tokens'] ?? 600),
         ];
+        $maxTokens = (int) ($options['max_tokens'] ?? 600);
+        $payload['max_completion_tokens'] = $maxTokens;
 
         if (($options['output_type'] ?? 'text') === 'json') {
             $payload['response_format'] = ['type' => 'json_object'];
@@ -37,10 +38,13 @@ class OpenAIProvider implements LLMProvider
 
         $startedAt = microtime(true);
 
-        $response = Http::timeout(60)
-            ->withToken($apiKey)
-            ->acceptJson()
-            ->post($baseUrl.'/chat/completions', $payload);
+        $response = $this->sendChatCompletionRequest($baseUrl, $apiKey, $payload);
+
+        if ($this->shouldRetryWithLegacyMaxTokens($response)) {
+            unset($payload['max_completion_tokens']);
+            $payload['max_tokens'] = $maxTokens;
+            $response = $this->sendChatCompletionRequest($baseUrl, $apiKey, $payload);
+        }
 
         if (! $response->successful()) {
             throw new RuntimeException('OpenAI request failed: '.$response->body());
@@ -124,5 +128,26 @@ class OpenAIProvider implements LLMProvider
         }
 
         return Str::limit(trim($response->body()), 220, '...');
+    }
+
+    private function sendChatCompletionRequest(string $baseUrl, string $apiKey, array $payload): Response
+    {
+        return Http::timeout(60)
+            ->withToken($apiKey)
+            ->acceptJson()
+            ->post($baseUrl.'/chat/completions', $payload);
+    }
+
+    private function shouldRetryWithLegacyMaxTokens(Response $response): bool
+    {
+        if ($response->successful()) {
+            return false;
+        }
+
+        $parameter = data_get($response->json(), 'error.param');
+        $message = (string) data_get($response->json(), 'error.message', '');
+
+        return $parameter === 'max_completion_tokens'
+            || str_contains($message, 'max_completion_tokens');
     }
 }
