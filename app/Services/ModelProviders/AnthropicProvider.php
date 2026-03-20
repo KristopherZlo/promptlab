@@ -2,11 +2,13 @@
 
 namespace App\Services\ModelProviders;
 
+use App\Exceptions\RetryableOperationException;
+use App\Exceptions\TerminalOperationException;
 use App\Services\ModelProviders\Contracts\LLMProvider;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class AnthropicProvider implements LLMProvider
 {
@@ -20,7 +22,7 @@ class AnthropicProvider implements LLMProvider
         ])));
 
         $payload = [
-            'model' => $this->resolvedModelName((string) ($options['model'] ?? 'claude-sonnet-4-5')),
+            'model' => $this->resolvedModelName((string) ($options['model'] ?? 'claude-sonnet-4-0')),
             'messages' => [
                 [
                     'role' => 'user',
@@ -37,11 +39,10 @@ class AnthropicProvider implements LLMProvider
 
         $startedAt = microtime(true);
 
-        $response = $this->request($baseUrl, $apiKey)
-            ->post($baseUrl.'/messages', $payload);
+        $response = $this->sendRequest($baseUrl, $apiKey, 'post', '/messages', $payload);
 
         if (! $response->successful()) {
-            throw new RuntimeException('Anthropic request failed: '.$this->errorMessage($response));
+            $this->throwForFailedResponse('Anthropic request failed', $response);
         }
 
         $body = $response->json();
@@ -73,11 +74,10 @@ class AnthropicProvider implements LLMProvider
     {
         [$apiKey, $baseUrl] = $this->connectionConfig($options);
 
-        $response = $this->request($baseUrl, $apiKey)
-            ->get($baseUrl.'/models');
+        $response = $this->sendRequest($baseUrl, $apiKey, 'get', '/models');
 
         if (! $response->successful()) {
-            throw new RuntimeException('Anthropic validation failed: '.$this->errorMessage($response));
+            $this->throwForFailedResponse('Anthropic validation failed', $response);
         }
 
         return collect($response->json('data', []))
@@ -101,25 +101,42 @@ class AnthropicProvider implements LLMProvider
         $baseUrl = rtrim((string) ($options['base_url'] ?? config('services.anthropic.base_url')), '/');
 
         if (! $apiKey) {
-            throw new RuntimeException('An API key is required to validate this Anthropic connection.');
+            throw new TerminalOperationException('An API key is required to validate this Anthropic connection.');
         }
 
         if (blank($baseUrl)) {
-            throw new RuntimeException('A base URL is required to validate this Anthropic connection.');
+            throw new TerminalOperationException('A base URL is required to validate this Anthropic connection.');
         }
 
         return [$apiKey, $baseUrl];
     }
 
-    private function request(string $baseUrl, string $apiKey)
+    private function sendRequest(
+        string $baseUrl,
+        string $apiKey,
+        string $method,
+        string $path,
+        array $payload = [],
+    ): Response
     {
-        return Http::timeout(60)
-            ->withHeaders([
-                'x-api-key' => $apiKey,
-                'anthropic-version' => '2023-06-01',
-            ])
-            ->acceptJson()
-            ->baseUrl($baseUrl);
+        try {
+            $request = Http::timeout(60)
+                ->withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                ])
+                ->acceptJson()
+                ->baseUrl($baseUrl);
+
+            return $method === 'get'
+                ? $request->get($path)
+                : $request->post($path, $payload);
+        } catch (ConnectionException $exception) {
+            throw new RetryableOperationException(
+                'Anthropic connection failed: '.$exception->getMessage(),
+                previous: $exception,
+            );
+        }
     }
 
     private function errorMessage(Response $response): string
@@ -140,5 +157,17 @@ class AnthropicProvider implements LLMProvider
             ->map(fn ($item) => (string) data_get($item, 'text', ''))
             ->filter()
             ->implode("\n\n");
+    }
+
+    private function throwForFailedResponse(string $prefix, Response $response): never
+    {
+        $message = $prefix.': '.$this->errorMessage($response);
+        $status = $response->status();
+
+        if ($status === 429 || $status >= 500) {
+            throw new RetryableOperationException($message);
+        }
+
+        throw new TerminalOperationException($message);
     }
 }

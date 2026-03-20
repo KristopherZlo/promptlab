@@ -2,17 +2,20 @@
 
 namespace App\Services\ModelProviders;
 
+use App\Exceptions\RetryableOperationException;
+use App\Exceptions\TerminalOperationException;
 use App\Services\ModelProviders\Contracts\LLMProvider;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class OpenAIProvider implements LLMProvider
 {
     public function runPrompt(string $compiledPrompt, array $options = []): array
     {
         [$apiKey, $baseUrl] = $this->connectionConfig($options);
+        $resolvedModel = $this->resolvedModelName((string) ($options['model'] ?? 'openai:gpt-5.2'));
 
         $messages = array_values(array_filter([
             filled($options['system_prompt'] ?? null)
@@ -25,10 +28,14 @@ class OpenAIProvider implements LLMProvider
         ]));
 
         $payload = [
-            'model' => $this->resolvedModelName((string) ($options['model'] ?? 'openai:gpt-4.1-mini')),
+            'model' => $resolvedModel,
             'messages' => $messages,
-            'temperature' => (float) ($options['temperature'] ?? 0.2),
         ];
+
+        if ($this->supportsChatCompletionTemperature($resolvedModel)) {
+            $payload['temperature'] = (float) ($options['temperature'] ?? 0.2);
+        }
+
         $maxTokens = (int) ($options['max_tokens'] ?? 600);
         $payload['max_completion_tokens'] = $maxTokens;
 
@@ -47,7 +54,7 @@ class OpenAIProvider implements LLMProvider
         }
 
         if (! $response->successful()) {
-            throw new RuntimeException('OpenAI request failed: '.$response->body());
+            $this->throwForFailedResponse('OpenAI request failed', $response);
         }
 
         $body = $response->json();
@@ -106,7 +113,7 @@ class OpenAIProvider implements LLMProvider
             ->get($baseUrl.'/models');
 
         if (! $response->successful()) {
-            throw new RuntimeException('OpenAI validation failed: '.$this->errorMessage($response));
+            $this->throwForFailedResponse('OpenAI validation failed', $response);
         }
 
         return collect($response->json('data', []))
@@ -130,11 +137,11 @@ class OpenAIProvider implements LLMProvider
         $baseUrl = rtrim((string) ($options['base_url'] ?? config('services.openai.base_url')), '/');
 
         if (! $apiKey) {
-            throw new RuntimeException('An API key is required to validate this connection.');
+            throw new TerminalOperationException('An API key is required to validate this connection.');
         }
 
         if (blank($baseUrl)) {
-            throw new RuntimeException('A base URL is required to validate this connection.');
+            throw new TerminalOperationException('A base URL is required to validate this connection.');
         }
 
         return [$apiKey, $baseUrl];
@@ -153,10 +160,17 @@ class OpenAIProvider implements LLMProvider
 
     private function sendChatCompletionRequest(string $baseUrl, string $apiKey, array $payload): Response
     {
-        return Http::timeout(60)
-            ->withToken($apiKey)
-            ->acceptJson()
-            ->post($baseUrl.'/chat/completions', $payload);
+        try {
+            return Http::timeout(60)
+                ->withToken($apiKey)
+                ->acceptJson()
+                ->post($baseUrl.'/chat/completions', $payload);
+        } catch (ConnectionException $exception) {
+            throw new RetryableOperationException(
+                'OpenAI connection failed: '.$exception->getMessage(),
+                previous: $exception,
+            );
+        }
     }
 
     private function probeModel(string $model, array $options): void
@@ -185,7 +199,7 @@ class OpenAIProvider implements LLMProvider
         }
 
         if (! $response->successful()) {
-            throw new RuntimeException('OpenAI validation failed: '.$this->errorMessage($response));
+            $this->throwForFailedResponse('OpenAI validation failed', $response);
         }
     }
 
@@ -200,5 +214,27 @@ class OpenAIProvider implements LLMProvider
 
         return $parameter === 'max_completion_tokens'
             || str_contains($message, 'max_completion_tokens');
+    }
+
+    private function supportsChatCompletionTemperature(string $model): bool
+    {
+        return ! in_array($model, [
+            'gpt-5',
+            'gpt-5-mini',
+            'gpt-5-nano',
+            'gpt-5-chat-latest',
+        ], true);
+    }
+
+    private function throwForFailedResponse(string $prefix, Response $response): never
+    {
+        $message = $prefix.': '.$this->errorMessage($response);
+        $status = $response->status();
+
+        if ($status === 429 || $status >= 500) {
+            throw new RetryableOperationException($message);
+        }
+
+        throw new TerminalOperationException($message);
     }
 }
