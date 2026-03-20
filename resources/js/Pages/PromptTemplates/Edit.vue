@@ -4,6 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
+import PromptQuickTestPanel from '@/Components/PromptQuickTestPanel.vue';
 import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, formatScore, parseJsonInput, parseTagList, safeJsonStringify } from '@/lib/formatters';
@@ -124,6 +125,13 @@ const useCaseName = computed(() =>
     props.useCases.find((useCase) => useCase.id === templateForm.use_case_id)?.name ?? 'Unassigned task',
 );
 const templateTags = computed(() => parseTagList(templateForm.tags_text));
+const templateSaveButtonLabel = computed(() => {
+    if (templateForm.processing) {
+        return props.promptTemplate ? 'Saving...' : 'Creating...';
+    }
+
+    return props.promptTemplate ? 'Save details' : 'Create prompt';
+});
 const versionPanelTitle = computed(() =>
     currentVersion.value ? `${currentVersion.value.version_label} revision` : 'New revision draft',
 );
@@ -147,7 +155,6 @@ const experimentsHref = computed(() =>
         prompt_version_id: currentVersion.value?.id ?? '',
     }),
 );
-const experimentsButtonLabel = computed(() => (currentVersion.value ? 'Test this version' : 'Open tests'));
 const versionLibraryHref = (version) =>
     version?.library_entry?.id
         ? route('library.show', version.library_entry.id)
@@ -202,10 +209,41 @@ const syncLibraryState = () => {
 
 watch(currentVersion, syncLibraryState, { immediate: true });
 
+const templateFieldKeys = new Set([
+    'use_case_id',
+    'name',
+    'description',
+    'task_type',
+    'status',
+    'preferred_model',
+    'tags_json',
+]);
+
+const applyCreatePromptErrors = (error) => {
+    const errors = error.response?.data?.errors ?? {};
+
+    templateForm.clearErrors();
+    versionForm.clearErrors();
+
+    Object.entries(errors).forEach(([key, value]) => {
+        const message = Array.isArray(value) ? value[0] : value;
+
+        if (templateFieldKeys.has(key) || key.startsWith('tags_json')) {
+            templateForm.setError(key, message);
+            return;
+        }
+
+        versionForm.setError(key, message);
+    });
+
+    return errors;
+};
+
 const saveTemplate = async () => {
     templateForm.processing = true;
     templateForm.clearErrors();
     notices.template = '';
+    versionForm.clearErrors();
 
     const payload = {
         use_case_id: templateForm.use_case_id,
@@ -223,20 +261,45 @@ const saveTemplate = async () => {
             notices.template = 'Template details saved.';
             router.reload({ only: ['promptTemplate', 'useCases', 'models'] });
         } else {
-            const response = await axios.post(route('api.prompts.store'), payload);
-            router.visit(hrefWithQuery(response.data.redirect_url, { tab: 'template' }));
+            const initialVersion = versionPayload();
+
+            if (!initialVersion) {
+                return;
+            }
+
+            versionForm.processing = true;
+
+            const response = await axios.post(route('api.prompts.store'), {
+                ...payload,
+                initial_version: initialVersion,
+            });
+            router.visit(hrefWithQuery(response.data.redirect_url, {
+                tab: 'versions',
+                prompt_version_id: response.data.first_version_id ?? '',
+            }));
         }
     } catch (error) {
-        applyServerErrors(templateForm, error);
+        if (props.promptTemplate) {
+            applyServerErrors(templateForm, error);
+        } else {
+            applyCreatePromptErrors(error);
+        }
         notices.template = extractServerMessage(error, 'Template could not be saved.');
     } finally {
         templateForm.processing = false;
+        versionForm.processing = false;
     }
 };
 
 const versionPayload = () => {
     jsonErrors.variables_schema = '';
     jsonErrors.output_schema_json = '';
+    versionForm.clearErrors();
+
+    if (`${versionForm.user_prompt_template ?? ''}`.trim() === '') {
+        versionForm.setError('user_prompt_template', 'Write the prompt text before saving.');
+        return null;
+    }
 
     const variablesSchema = parseJsonInput(versionForm.variables_schema_text, []);
     const outputSchema = parseJsonInput(versionForm.output_schema_text, {});
@@ -334,24 +397,24 @@ const promoteToLibrary = async () => {
 </script>
 
 <template>
-    <Head :title="promptTemplate ? promptTemplate.name : 'New Prompt Template'" />
+    <Head :title="promptTemplate ? promptTemplate.name : 'New Prompt'" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                     <h1 class="text-2xl font-black tracking-tight">
-                        {{ promptTemplate ? promptTemplate.name : 'New Prompt Template' }}
+                        {{ promptTemplate ? promptTemplate.name : 'New Prompt' }}
                     </h1>
                     <p class="mt-1 text-sm text-[var(--muted)]">
                         {{ promptTemplate
-                            ? 'Edit the template, then switch to versions or approval.'
-                            : 'Create the template first.' }}
+                            ? 'Edit the prompt, test it quickly, and create extra versions only when needed.'
+                            : 'Write the prompt and save the first version in one step.' }}
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompt list</Link>
-                    <Link :href="experimentsHref" class="btn-ghost">{{ experimentsButtonLabel }}</Link>
+                    <Link v-if="promptTemplate && currentVersion" :href="experimentsHref" class="btn-ghost">Open full experiments</Link>
                 </div>
             </div>
         </template>
@@ -415,13 +478,17 @@ const promoteToLibrary = async () => {
             <section v-if="activeTab === 'template'" class="panel p-5">
                 <div class="flex items-center justify-between gap-4">
                     <PanelHeader
-                        title="Template details"
-                        description="Stable metadata for this prompt family."
+                        :title="promptTemplate ? 'Prompt details' : 'Prompt setup'"
+                        :description="promptTemplate
+                            ? 'Stable metadata for this prompt family.'
+                            : 'Basic prompt metadata plus the first runnable version.'"
                         :icon="FileStack"
-                        help="Edits the stable metadata shared by all revisions in this prompt family, including task mapping and default model."
+                        :help="promptTemplate
+                            ? 'Edits the stable metadata shared by all revisions in this prompt family, including task mapping and default model.'
+                            : 'Creates the prompt container and the first runnable version together so you do not need a separate setup step.'"
                     />
-                    <button type="button" class="btn-primary" :disabled="templateForm.processing" @click="saveTemplate">
-                        {{ templateForm.processing ? 'Saving...' : 'Save details' }}
+                    <button type="button" class="btn-primary" :disabled="templateForm.processing || versionForm.processing" @click="saveTemplate">
+                        {{ templateSaveButtonLabel }}
                     </button>
                 </div>
 
@@ -503,7 +570,140 @@ const promoteToLibrary = async () => {
                         </span>
                     </div>
                 </div>
+
+                <div v-if="!promptTemplate" class="mt-6 border-t border-[var(--line)] pt-6">
+                    <div class="flex items-center justify-between gap-4">
+                        <PanelHeader
+                            title="First prompt version"
+                            description="This becomes the first runnable prompt right away. Extra versions can wait until you actually need them."
+                            :icon="Workflow"
+                            help="The initial save creates the prompt and v1 together so writing the first prompt does not require a separate versioning step."
+                        />
+                        <span class="status-chip">Creates v1</span>
+                    </div>
+
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="field-label">Version label</label>
+                            <input v-model="versionForm.version_label" type="text" class="field-input" placeholder="v1">
+                            <div class="field-help">Leave empty to create version `v1` automatically.</div>
+                        </div>
+
+                        <div>
+                            <div class="label-with-icon">
+                                <Bot />
+                                <span>Model override</span>
+                            </div>
+                            <select v-model="versionForm.preferred_model" class="field-select">
+                                <option value="">Use prompt default</option>
+                                <option v-for="model in availableModels" :key="model.value" :value="model.value">
+                                    {{ model.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="label-with-icon">
+                                <MessageSquareText />
+                                <span>Change summary</span>
+                            </div>
+                            <input
+                                v-model="versionForm.change_summary"
+                                type="text"
+                                class="field-input"
+                                placeholder="What is special about this first version?"
+                            >
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="label-with-icon">
+                                <FileText />
+                                <span>System prompt</span>
+                            </div>
+                            <textarea
+                                v-model="versionForm.system_prompt"
+                                class="field-textarea"
+                                placeholder="Role, boundaries, tone, and output rules"
+                            />
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="label-with-icon">
+                                <FileCode2 />
+                                <span>Prompt text</span>
+                            </div>
+                            <textarea
+                                v-model="versionForm.user_prompt_template"
+                                class="field-textarea"
+                                placeholder="Write the actual prompt here. Use variables like {{input_text}} or {{language}} when needed."
+                            />
+                            <div v-if="versionForm.errors.user_prompt_template" class="field-error">
+                                {{ versionForm.errors.user_prompt_template }}
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="label-with-icon">
+                                <Braces />
+                                <span>Variables schema</span>
+                            </div>
+                            <textarea v-model="versionForm.variables_schema_text" class="field-textarea"></textarea>
+                            <div class="field-help">
+                                JSON array. Example: [{ "name": "language", "required": true, "default": "English" }]
+                            </div>
+                            <div v-if="jsonErrors.variables_schema" class="field-error">{{ jsonErrors.variables_schema }}</div>
+                        </div>
+
+                        <div>
+                            <div class="label-with-icon">
+                                <FileJson />
+                                <span>Output type</span>
+                            </div>
+                            <select v-model="versionForm.output_type" class="field-select">
+                                <option value="text">Text</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="label-with-icon">
+                                <FileJson />
+                                <span>Output schema</span>
+                            </div>
+                            <textarea v-model="versionForm.output_schema_text" class="field-textarea"></textarea>
+                            <div class="field-help">
+                                JSON object with optional required keys and primitive types for structured validation.
+                            </div>
+                            <div v-if="jsonErrors.output_schema_json" class="field-error">{{ jsonErrors.output_schema_json }}</div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <div class="label-with-icon">
+                                <FileText />
+                                <span>Notes for the team</span>
+                            </div>
+                            <textarea
+                                v-model="versionForm.notes"
+                                class="field-textarea"
+                                placeholder="Describe how the team should use this first version."
+                            />
+                        </div>
+                    </div>
+                </div>
             </section>
+
+            <PromptQuickTestPanel
+                v-if="!promptTemplate && activeTab === 'template'"
+                :use-case-id="templateForm.use_case_id"
+                :task-type="templateForm.task_type"
+                :model-name="versionForm.preferred_model || templateForm.preferred_model || ''"
+                :system-prompt="versionForm.system_prompt"
+                :user-prompt-template="versionForm.user_prompt_template"
+                :variables-schema="parseJsonInput(versionForm.variables_schema_text, []).value || []"
+                :output-type="versionForm.output_type"
+                :output-schema-json="parseJsonInput(versionForm.output_schema_text, {}).value || {}"
+                :models="availableModels"
+            />
 
             <div v-if="promptTemplate && activeTab === 'versions'" class="space-y-6">
                 <section class="panel p-5">
@@ -788,6 +988,18 @@ const promoteToLibrary = async () => {
                         </div>
                     </div>
                 </section>
+
+                <PromptQuickTestPanel
+                    :use-case-id="templateForm.use_case_id"
+                    :task-type="templateForm.task_type"
+                    :model-name="versionForm.preferred_model || templateForm.preferred_model || ''"
+                    :system-prompt="versionForm.system_prompt"
+                    :user-prompt-template="versionForm.user_prompt_template"
+                    :variables-schema="parseJsonInput(versionForm.variables_schema_text, []).value || []"
+                    :output-type="versionForm.output_type"
+                    :output-schema-json="parseJsonInput(versionForm.output_schema_text, {}).value || {}"
+                    :models="availableModels"
+                />
             </div>
 
             <section v-else-if="promptTemplate && activeTab === 'library'" class="panel p-5">

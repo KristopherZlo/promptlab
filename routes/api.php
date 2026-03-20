@@ -22,6 +22,7 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
 
     Route::get('/prompts', [PromptTemplateController::class, 'index'])->name('prompts.index');
     Route::post('/prompts', [PromptTemplateController::class, 'store'])->name('prompts.store');
+    Route::post('/prompts/quick-test', [PromptTemplateController::class, 'quickTest'])->name('prompts.quick-test');
     Route::get('/prompts/{promptTemplate}', [PromptTemplateController::class, 'show'])->name('prompts.show');
     Route::put('/prompts/{promptTemplate}', [PromptTemplateController::class, 'update'])->name('prompts.update');
     Route::post('/prompts/{promptTemplate}/versions', [PromptVersionController::class, 'store'])->name('prompt-versions.store');
