@@ -70,7 +70,7 @@ const filteredEntries = computed(() => {
                 />
 
                 <div class="toolbar mt-4">
-                    <div class="summary-strip">
+                    <div class="summary-strip library-snapshot-strip">
                         <div class="summary-item">
                             <div class="summary-item-label">Workspace</div>
                             <div class="summary-item-value">{{ team.name }}</div>
