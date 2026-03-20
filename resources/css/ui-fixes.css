@@ -1,0 +1,45 @@
+.console-page-actions {
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.console-page-actions > * {
+    flex: 0 0 auto;
+}
+
+.select-with-icon {
+    position: relative;
+}
+
+.select-with-icon > .field-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding-right: 2.75rem;
+    border: 1px solid #303030 !important;
+}
+
+.select-with-icon > .field-select:hover:not(:disabled),
+.select-with-icon > .field-select:focus {
+    border-color: var(--line-strong) !important;
+}
+
+.select-with-icon > .select-with-icon-caret {
+    position: absolute;
+    top: 50%;
+    right: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--muted);
+}
+
+.select-with-icon > .field-select:hover:not(:disabled) + .select-with-icon-caret,
+.select-with-icon > .field-select:focus + .select-with-icon-caret {
+    color: var(--ink);
+}

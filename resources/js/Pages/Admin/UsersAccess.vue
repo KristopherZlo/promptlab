@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
-import { Copy, Download, Slash, UserPlus } from 'lucide-vue-next';
+import { ChevronDown, Copy, Download, Slash, UserPlus } from 'lucide-vue-next';
 import {
     applyServerErrors,
     extractServerMessage,
@@ -481,15 +481,18 @@ const exportMembers = () => {
 
                             <div class="people-access-detail-section">
                                 <label class="field-label">Workspace role</label>
-                                <select
-                                    class="field-select people-access-role-select"
-                                    :value="selectedMembership.team_role"
-                                    @change="updateMemberRole(selectedMembership, $event.target.value)"
-                                >
-                                    <option v-for="role in roleOptions" :key="role" :value="role">
-                                        {{ formatRoleLabel(role) }}
-                                    </option>
-                                </select>
+                                <div class="select-with-icon">
+                                    <select
+                                        class="field-select people-access-role-select"
+                                        :value="selectedMembership.team_role"
+                                        @change="updateMemberRole(selectedMembership, $event.target.value)"
+                                    >
+                                        <option v-for="role in roleOptions" :key="role" :value="role">
+                                            {{ formatRoleLabel(role) }}
+                                        </option>
+                                    </select>
+                                    <ChevronDown class="select-with-icon-caret" />
+                                </div>
                             </div>
 
                             <div class="people-access-detail-section">
@@ -562,11 +565,14 @@ const exportMembers = () => {
                         </div>
                         <div>
                             <label class="field-label">Workspace role</label>
-                            <select v-model="invitationForm.role" class="field-select">
-                                <option v-for="role in roleOptions" :key="role" :value="role">
-                                    {{ formatRoleLabel(role) }}
-                                </option>
-                            </select>
+                            <div class="select-with-icon">
+                                <select v-model="invitationForm.role" class="field-select">
+                                    <option v-for="role in roleOptions" :key="role" :value="role">
+                                        {{ formatRoleLabel(role) }}
+                                    </option>
+                                </select>
+                                <ChevronDown class="select-with-icon-caret" />
+                            </div>
                         </div>
                         <div class="flex items-end">
                             <button type="submit" class="btn-primary w-full" :disabled="invitationForm.processing">
@@ -663,11 +669,14 @@ const exportMembers = () => {
 
                     <div>
                         <label class="field-label">Workspace role</label>
-                        <select v-model="memberForm.role" class="field-select">
-                            <option v-for="role in roleOptions" :key="role" :value="role">
-                                {{ formatRoleLabel(role) }}
-                            </option>
-                        </select>
+                        <div class="select-with-icon">
+                            <select v-model="memberForm.role" class="field-select">
+                                <option v-for="role in roleOptions" :key="role" :value="role">
+                                    {{ formatRoleLabel(role) }}
+                                </option>
+                            </select>
+                            <ChevronDown class="select-with-icon-caret" />
+                        </div>
                     </div>
 
                     <div class="modal-actions">
