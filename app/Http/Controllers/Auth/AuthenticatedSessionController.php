@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\TeamInvitationService;
+use App\Services\WorkspaceJourneyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +32,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, WorkspaceJourneyService $journey): RedirectResponse
     {
         $request->authenticate();
 
@@ -41,7 +42,7 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('team-invitations.show', $request->string('invitation_token')->toString());
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route($journey->landingRouteName(), absolute: false));
     }
 
     /**

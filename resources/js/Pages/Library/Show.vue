@@ -80,11 +80,11 @@ const revokeEntry = () => {
                 <div class="flex flex-wrap gap-3">
                     <Link :href="runHref" class="btn-primary">Test saved prompt</Link>
                     <Link :href="sourceVersionHref" class="btn-secondary">View prompt version</Link>
-                    <Link :href="approvalHref" class="btn-secondary">Open prompt settings</Link>
+                    <Link :href="approvalHref" class="btn-secondary">Open approval settings</Link>
                     <button v-if="canManage" type="button" class="btn-ghost text-[var(--danger)]" @click="revokeEntry">
                         Remove from shared library
                     </button>
-                    <Link :href="route('library.index')" class="btn-secondary">Back to saved prompts</Link>
+                    <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
                 </div>
             </div>
         </template>
@@ -197,7 +197,7 @@ const revokeEntry = () => {
                 <div class="mt-4 flex flex-wrap gap-3 text-sm">
                     <Link :href="runHref" class="app-inline-link">Test saved prompt</Link>
                     <Link :href="sourceVersionHref" class="app-inline-link">View prompt version</Link>
-                    <Link :href="approvalHref" class="app-inline-link">Open prompt settings</Link>
+                    <Link :href="approvalHref" class="app-inline-link">Open approval settings</Link>
                 </div>
             </section>
         </div>

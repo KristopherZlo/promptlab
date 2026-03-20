@@ -224,7 +224,7 @@ onBeforeUnmount(() => {
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1>Prompt Templates</h1>
+                <h1>Prompts</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
                     Search and narrow the template catalog from a single working view.
                 </p>
@@ -390,8 +390,8 @@ onBeforeUnmount(() => {
                                             </div>
 
                                             <div class="console-page-actions">
-                                                <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Edit prompt</Link>
-                                                <Link :href="selectedTemplateRunHref" class="btn-secondary">Test prompt</Link>
+                                                <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Open prompt</Link>
+                                                <Link :href="selectedTemplateRunHref" class="btn-secondary">Test this prompt</Link>
                                             </div>
                                         </div>
 

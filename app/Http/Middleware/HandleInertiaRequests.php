@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Services\CurrentTeamResolver;
 use App\Services\TeamPermissionService;
+use App\Services\WorkspaceJourneyService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -71,6 +72,7 @@ class HandleInertiaRequests extends Middleware
                 'abilities' => $abilities,
             ],
             'navigation' => [
+                'home_url' => $user ? app(WorkspaceJourneyService::class)->landingUrl() : route('login'),
                 'sections' => $this->navigationSections($abilities),
             ],
             'flash' => [
@@ -90,11 +92,11 @@ class HandleInertiaRequests extends Middleware
                 'id' => 'workspace',
                 'label' => 'Workspace',
                 'items' => array_values(array_filter([
-                    $this->navigationItem('dashboard', 'Dashboard', 'dashboard', ['dashboard']),
                     $this->navigationItem('tasks', 'Tasks', 'use-cases.index', ['use-cases.*']),
-                    $this->navigationItem('prompts', 'Prompt Templates', 'prompt-templates.index', ['prompt-templates.*', 'prompt-versions.*']),
+                    $this->navigationItem('prompts', 'Prompts', 'prompt-templates.index', ['prompt-templates.*', 'prompt-versions.*']),
                     $this->navigationItem('experiments', 'Experiments', 'playground', ['playground', 'experiments.show']),
-                    $this->navigationItem('library', 'Approved Library', 'library.index', ['library.*']),
+                    $this->navigationItem('library', 'Library', 'library.index', ['library.*']),
+                    $this->navigationItem('dashboard', 'Dashboard', 'dashboard', ['dashboard']),
                 ])),
             ],
             $canSeeAdministration ? [

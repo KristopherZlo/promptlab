@@ -54,19 +54,20 @@ const dataTourMap = {
 const user = computed(() => page.props.auth?.user);
 const currentTeam = computed(() => page.props.auth?.current_team);
 const navigationSections = computed(() => page.props.navigation?.sections ?? []);
+const homeHref = computed(() => page.props.navigation?.home_url ?? route('use-cases.index'));
 
 const workspaceTools = computed(() => [
-    {
-        id: 'team-workspace',
-        label: 'Workspace Setup',
-        route: 'admin.workspaces',
-        current: ['admin.workspaces', 'team-workspace.index'],
-    },
     {
         id: 'guide',
         label: 'How to Start',
         route: 'getting-started',
         current: ['getting-started'],
+    },
+    {
+        id: 'team-workspace',
+        label: 'Workspace Setup',
+        route: 'admin.workspaces',
+        current: ['admin.workspaces', 'team-workspace.index'],
     },
 ]);
 
@@ -150,8 +151,8 @@ const switchTeam = async (event) => {
     switchingTeam.value = true;
 
     try {
-        await axios.post(route('api.teams.switch'), { team_id: teamId });
-        router.visit(route('dashboard'));
+        const response = await axios.post(route('api.teams.switch'), { team_id: teamId });
+        router.visit(response.data?.redirect_url ?? homeHref.value);
     } finally {
         switchingTeam.value = false;
     }
@@ -169,7 +170,7 @@ const closeMobileMenu = () => {
 
             <aside class="app-sidebar" :class="{ 'app-sidebar-open': mobileOpen }">
                 <div class="app-sidebar-head">
-                    <Link :href="route('dashboard')" class="app-brand" @click="closeMobileMenu">
+                    <Link :href="homeHref" class="app-brand" @click="closeMobileMenu">
                         <span class="app-brand-mark">{{ teamInitials }}</span>
                         <div class="min-w-0">
                             <div class="app-brand-title">PromptFactory</div>

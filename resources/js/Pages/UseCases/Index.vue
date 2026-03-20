@@ -330,8 +330,8 @@ const activeTab = useUrlState({
                                             </div>
 
                                             <div class="console-page-actions">
-                                                <Link :href="route('use-cases.show', selectedUseCase.id)" class="btn-primary">View task</Link>
-                                                <Link v-if="canManage" :href="selectedUseCaseRunHref" class="btn-secondary">Start test</Link>
+                                                <Link :href="route('use-cases.show', selectedUseCase.id)" class="btn-primary">Open task</Link>
+                                                <Link v-if="canManage" :href="selectedUseCaseRunHref" class="btn-secondary">Test this task</Link>
                                             </div>
                                         </div>
 

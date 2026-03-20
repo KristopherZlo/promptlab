@@ -49,7 +49,7 @@ class TeamInvitationController extends Controller
 
         $invitations->acceptInvitation($invitation, $request->user());
 
-        return to_route('dashboard')->with('success', 'Workspace invitation accepted.');
+        return to_route('getting-started')->with('success', 'Workspace invitation accepted.');
     }
 
     public function destroy(Request $request, \App\Models\TeamInvitation $teamInvitation, TeamInvitationService $invitations): JsonResponse

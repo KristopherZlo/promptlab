@@ -63,6 +63,6 @@ class RegisteredUserController extends Controller
             return redirect()->route('team-invitations.show', $request->string('invitation_token')->toString());
         }
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('getting-started', absolute: false));
     }
 }

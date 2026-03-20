@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Services\ActivityLogService;
 use App\Services\CurrentTeamResolver;
 use App\Services\TeamProvisioningService;
+use App\Services\WorkspaceJourneyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -28,7 +29,12 @@ class TeamController extends Controller
         ], 201);
     }
 
-    public function switch(TeamSwitchRequest $request, CurrentTeamResolver $resolver, ActivityLogService $activity): JsonResponse
+    public function switch(
+        TeamSwitchRequest $request,
+        CurrentTeamResolver $resolver,
+        ActivityLogService $activity,
+        WorkspaceJourneyService $journey,
+    ): JsonResponse
     {
         $team = Team::query()->findOrFail($request->integer('team_id'));
         $user = $request->user();
@@ -47,6 +53,7 @@ class TeamController extends Controller
                 'id' => $team->id,
                 'name' => $team->name,
             ],
+            'redirect_url' => $journey->landingUrl(),
         ]);
     }
 }

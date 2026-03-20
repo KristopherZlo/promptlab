@@ -114,9 +114,7 @@ const recentExperimentHref = (experiment) =>
                             <p class="text-sm text-[var(--muted)]">Current volume across tasks, templates, experiments, and approved prompts.</p>
                         </div>
                         <div class="console-page-actions">
-                            <Link :href="route('use-cases.index')" class="btn-secondary">Open tasks</Link>
-                            <Link :href="route('prompt-templates.index')" class="btn-secondary">Open prompts</Link>
-                            <Link :href="route('playground')" class="btn-primary">Start test</Link>
+                            <Link :href="route('use-cases.index')" class="btn-primary">Open tasks</Link>
                         </div>
                     </div>
 
@@ -143,7 +141,7 @@ const recentExperimentHref = (experiment) =>
                         <div class="surface-muted">
                             <div class="flex items-center justify-between gap-3">
                                 <h3 class="section-title">Recent experiments</h3>
-                                <Link :href="route('playground')" class="app-inline-link">Open tests</Link>
+                                <Link :href="route('playground')" class="app-inline-link">Open experiments</Link>
                             </div>
 
                             <table class="data-table mt-4">

@@ -90,7 +90,7 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
     <AuthenticatedLayout>
         <template #header>
             <div class="page-lead">
-                <h1 class="text-2xl font-semibold tracking-tight">Approved Library</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">Library</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">
                     Approved prompt versions ready for controlled reuse.
                 </p>
@@ -125,10 +125,6 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                         </div>
                     </div>
 
-                    <div class="toolbar-actions">
-                        <Link :href="route('prompt-templates.index')" class="btn-secondary">Open prompts</Link>
-                        <Link :href="route('playground')" class="btn-primary">Start test</Link>
-                    </div>
                 </div>
             </section>
 
@@ -172,7 +168,7 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                                 </div>
                                 <div class="mt-3 flex flex-wrap gap-3 text-sm">
                                     <Link :href="entrySourceHref(entry)" class="app-inline-link">View prompt version</Link>
-                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Open prompt settings</Link>
+                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Open approval settings</Link>
                                     <Link :href="entryRunHref(entry)" class="app-inline-link">Test saved prompt</Link>
                                 </div>
                             </td>

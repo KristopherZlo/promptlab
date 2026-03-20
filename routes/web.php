@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return auth()->check()
-        ? redirect()->route('dashboard')
+        ? redirect()->route(app(\App\Services\WorkspaceJourneyService::class)->landingRouteName())
         : redirect()->route('login');
 });
 

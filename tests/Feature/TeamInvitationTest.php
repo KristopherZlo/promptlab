@@ -69,7 +69,7 @@ class TeamInvitationTest extends TestCase
 
         $this->actingAs($invitee)
             ->post(route('team-invitations.accept', $invitation->token))
-            ->assertRedirect(route('dashboard', absolute: false));
+            ->assertRedirect(route('getting-started', absolute: false));
 
         $this->assertDatabaseHas('team_memberships', [
             'team_id' => $team->id,
