@@ -1,0 +1,31 @@
+:root {
+    --anchor-link-arrow-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10'/%3E%3Cpath d='M7 17 17 7'/%3E%3C/svg%3E");
+}
+
+:where(.app-page-card, .panel) a:not(.btn-primary):not(.btn-secondary):not(.btn-ghost):not(.btn-danger):not(.app-brand):not(.app-nav-item):not(.page-tab):not(.profile-menu-link)::after {
+    content: '';
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    margin-left: 0.28rem;
+    vertical-align: text-top;
+    background-color: currentColor;
+    opacity: 0.78;
+    transform: translateY(-1px);
+    transition:
+        transform 140ms ease,
+        opacity 140ms ease;
+    -webkit-mask-image: var(--anchor-link-arrow-icon);
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-image: var(--anchor-link-arrow-icon);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+}
+
+:where(.app-page-card, .panel) a:not(.btn-primary):not(.btn-secondary):not(.btn-ghost):not(.btn-danger):not(.app-brand):not(.app-nav-item):not(.page-tab):not(.profile-menu-link):hover::after {
+    opacity: 1;
+    transform: translate(1px, -2px);
+}

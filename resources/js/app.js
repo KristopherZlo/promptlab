@@ -1,5 +1,5 @@
 import '../css/app.css';
-import '../css/link-arrows.css';
+import '../css/anchor-link-icons.css';
 import './bootstrap';
 
 import { createInertiaApp } from '@inertiajs/vue3';
