@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Services\AnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,9 +10,6 @@ class UseCaseResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        /** @var AnalyticsService $analytics */
-        $analytics = app(AnalyticsService::class);
-
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -28,11 +24,7 @@ class UseCaseResource extends JsonResource
             'updated_by' => $this->whenLoaded('updater', fn () => $this->updater?->display_name),
             'prompt_templates_count' => $this->when(isset($this->prompt_templates_count), $this->prompt_templates_count),
             'test_cases_count' => $this->when(isset($this->test_cases_count), $this->test_cases_count),
-            'best_prompt' => $this->when(
-                ! $this->relationLoaded('promptTemplates'),
-                fn () => $analytics->bestPromptForUseCase($this->resource),
-                null
-            ),
+            'best_prompt' => $this->when(isset($this->best_prompt), $this->best_prompt),
             'prompt_templates' => $this->whenLoaded(
                 'promptTemplates',
                 fn () => PromptTemplateResource::collection($this->promptTemplates)->resolve()

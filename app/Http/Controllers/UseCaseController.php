@@ -16,7 +16,7 @@ use Inertia\Response;
 
 class UseCaseController extends Controller
 {
-    public function index(Request $request): Response|JsonResponse
+    public function index(Request $request, AnalyticsService $analytics): Response|JsonResponse
     {
         $this->authorizeTeamAbility($request, 'view_workspace');
 
@@ -39,6 +39,11 @@ class UseCaseController extends Controller
         }
 
         $useCases = $query->orderBy('name')->get();
+        $bestPrompts = $analytics->bestPromptsForUseCases($useCases->pluck('id'));
+
+        $useCases->each(function (UseCase $useCase) use ($bestPrompts): void {
+            $useCase->setAttribute('best_prompt', $bestPrompts->get($useCase->id));
+        });
 
         if ($this->isApiRequest($request)) {
             return response()->json(['data' => UseCaseResource::collection($useCases)]);
@@ -58,11 +63,11 @@ class UseCaseController extends Controller
         $useCase->load([
             'creator',
             'updater',
-            'promptTemplates.creator',
-            'promptTemplates.versions.libraryEntry',
-            'promptTemplates.versions.experimentRuns.evaluations',
+            'promptTemplates' => fn ($query) => $query->withSummaryMetrics(),
             'testCases',
         ]);
+
+        $useCase->setAttribute('best_prompt', $analytics->bestPromptForUseCase($useCase));
 
         $payload = [
             'useCase' => (new UseCaseResource($useCase))->resolve(),
