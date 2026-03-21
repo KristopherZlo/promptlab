@@ -10,6 +10,7 @@ use App\Models\PromptVersion;
 use App\Models\UseCase;
 use App\Services\ActivityLogService;
 use App\Services\LLMProviderManager;
+use App\Services\PromptOptimizationService;
 use App\Services\PromptCompiler;
 use App\Services\StructuredOutputValidator;
 use Illuminate\Http\JsonResponse;
@@ -32,30 +33,12 @@ class PromptTemplateController extends Controller
             ->with([
                 'useCase',
                 'creator',
-                'versions.creator',
-                'versions.libraryEntry.approver',
-                'versions.experimentRuns.evaluations.evaluator',
+                'versions' => fn ($query) => $query
+                    ->withSummaryMetrics()
+                    ->with(['creator', 'libraryEntry.approver']),
             ]);
 
-        foreach (['use_case_id', 'task_type', 'status', 'preferred_model'] as $filter) {
-            if ($request->filled($filter)) {
-                $query->where($filter, $request->input($filter));
-            }
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-
-            $query->where(function ($builder) use ($search): void {
-                $builder
-                    ->where('name', 'like', '%'.$search.'%')
-                    ->orWhere('description', 'like', '%'.$search.'%');
-            });
-        }
-
-        if ($request->filled('author')) {
-            $query->whereHas('creator', fn ($builder) => $builder->where('name', 'like', '%'.$request->input('author').'%'));
-        }
+        $this->applyIndexFilters($query, $request);
 
         $templates = $query->latest()->get();
 
@@ -63,10 +46,32 @@ class PromptTemplateController extends Controller
             return response()->json(['data' => PromptTemplateResource::collection($templates)]);
         }
 
+        $collectionCounts = PromptTemplate::query()
+            ->select('use_case_id', DB::raw('count(*) as aggregate'))
+            ->whereNotNull('use_case_id');
+
+        $this->applyIndexFilters($collectionCounts, $request, withUseCase: false);
+
+        $collectionCounts = $collectionCounts
+            ->groupBy('use_case_id')
+            ->pluck('aggregate', 'use_case_id');
+
+        $useCases = UseCase::orderBy('name')->get(['id', 'name']);
+        $collections = $useCases
+            ->map(fn (UseCase $useCase) => [
+                'id' => $useCase->id,
+                'name' => $useCase->name,
+                'count' => (int) ($collectionCounts[$useCase->id] ?? 0),
+            ])
+            ->filter(fn (array $collection) => $collection['count'] > 0)
+            ->sort(fn (array $left, array $right) => [$right['count'], $left['name']] <=> [$left['count'], $right['name']])
+            ->values();
+
         return Inertia::render('PromptTemplates/Index', [
             'templates' => PromptTemplateResource::collection($templates)->resolve(),
             'filters' => $request->only(['search', 'use_case_id', 'task_type', 'status', 'author', 'preferred_model']),
-            'useCases' => UseCase::orderBy('name')->get(['id', 'name']),
+            'useCases' => $useCases,
+            'collections' => $collections,
         ]);
     }
 
@@ -78,25 +83,35 @@ class PromptTemplateController extends Controller
             'promptTemplate' => null,
             'useCases' => UseCase::orderBy('name')->get(['id', 'name']),
             'models' => $providers->availableModels(),
+            'optimizationContext' => null,
         ]);
     }
 
-    public function show(Request $request, PromptTemplate $promptTemplate, LLMProviderManager $providers): Response|JsonResponse
-    {
+    public function show(
+        Request $request,
+        PromptTemplate $promptTemplate,
+        LLMProviderManager $providers,
+        PromptOptimizationService $optimizations,
+    ): Response|JsonResponse {
         $this->authorizeTeamAbility($request, 'view_workspace');
 
         $promptTemplate->load([
             'useCase',
+            'useCase.testCases',
             'creator',
-            'versions.creator',
-            'versions.libraryEntry.approver',
-            'versions.experimentRuns.evaluations.evaluator',
+            'versions' => fn ($query) => $query
+                ->withSummaryMetrics()
+                ->with(['creator', 'libraryEntry.approver']),
+            'optimizationRuns.creator',
+            'optimizationRuns.sourceVersion',
+            'optimizationRuns.derivedVersion',
         ]);
 
         $payload = [
             'promptTemplate' => (new PromptTemplateResource($promptTemplate))->resolve(),
             'useCases' => UseCase::orderBy('name')->get(['id', 'name']),
             'models' => $providers->availableModels(),
+            'optimizationContext' => $optimizations->contextForTemplate($promptTemplate),
         ];
 
         if ($this->isApiRequest($request)) {
@@ -220,6 +235,7 @@ class PromptTemplateController extends Controller
         }
 
         $providerResponse = $providers->runPrompt($compiled['final_prompt'], [
+            'team_id' => $team->id,
             'model' => $validated['model_name'],
             'temperature' => $validated['temperature'],
             'max_tokens' => $validated['max_tokens'],
@@ -265,5 +281,32 @@ class PromptTemplateController extends Controller
             'notes' => ['nullable', 'string'],
             'preferred_model' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    private function applyIndexFilters($query, Request $request, bool $withUseCase = true): void
+    {
+        foreach (['task_type', 'status', 'preferred_model'] as $filter) {
+            if ($request->filled($filter)) {
+                $query->where($filter, $request->input($filter));
+            }
+        }
+
+        if ($withUseCase && $request->filled('use_case_id')) {
+            $query->where('use_case_id', $request->input('use_case_id'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+
+            $query->where(function ($builder) use ($search): void {
+                $builder
+                    ->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('description', 'like', '%'.$search.'%');
+            });
+        }
+
+        if ($request->filled('author')) {
+            $query->whereHas('creator', fn ($builder) => $builder->where('name', 'like', '%'.$request->input('author').'%'));
+        }
     }
 }
