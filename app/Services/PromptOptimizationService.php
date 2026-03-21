@@ -116,6 +116,86 @@ class PromptOptimizationService
             return $run;
         });
 
+        \App\Jobs\ExecutePromptOptimization::dispatch($run->id);
+
+        return $this->loadRun($run->fresh());
+    }
+
+    public function executeRun(PromptOptimizationRun|int $run): PromptOptimizationRun
+    {
+        $runId = $run instanceof PromptOptimizationRun ? $run->id : $run;
+        $run = $run instanceof PromptOptimizationRun ? $this->loadRun($run) : $this->loadRun(PromptOptimizationRun::query()->findOrFail($runId));
+
+        if (! $this->claimRun($runId)) {
+            return $this->loadRun(PromptOptimizationRun::query()->findOrFail($runId));
+        }
+
+        $run = $this->loadRun(PromptOptimizationRun::query()->findOrFail($runId));
+
+        $payload = $this->buildPayload($run);
+        $result = $this->optimizer->optimize($run, $payload);
+
+        $bestCandidate = $result['best_candidate'] ?? null;
+
+        if (! is_array($bestCandidate)) {
+            throw new \RuntimeException('GEPA did not return a prompt candidate.');
+        }
+
+        $derivedVersion = DB::transaction(function () use ($bestCandidate, $result, $run) {
+            $freshRun = $this->loadRun($run->fresh());
+            $derivedVersion = $this->createDerivedVersionIfChanged(
+                $freshRun,
+                $bestCandidate,
+                isset($result['best_score']) ? (float) $result['best_score'] : null,
+            );
+
+            $freshRun->update([
+                'status' => 'completed',
+                'best_score' => $result['best_score'] ?? null,
+                'total_metric_calls' => $result['total_metric_calls'] ?? data_get($result, 'result.total_metric_calls'),
+                'candidate_count' => $result['candidate_count'] ?? count(data_get($result, 'result.candidates', [])),
+                'best_candidate_json' => $bestCandidate,
+                'result_json' => $result['result'] ?? null,
+                'derived_prompt_version_id' => $derivedVersion?->id,
+                'completed_at' => now(),
+            ]);
+
+            return $derivedVersion;
+        });
+
+        $this->activity->record('prompt_optimization.completed', $run->fresh(), [
+            'prompt_template_name' => $run->promptTemplate?->name,
+            'source_version_label' => $run->sourceVersion?->version_label,
+            'derived_version_label' => $derivedVersion?->version_label,
+            'best_score' => $run->fresh()->best_score,
+            'metric_calls' => $run->fresh()->total_metric_calls,
+        ], $run->creator, $run->team_id);
+
+        return $this->loadRun($run->fresh());
+    }
+
+    public function markRunFailed(int $runId, \Throwable|string $error): PromptOptimizationRun
+    {
+        $run = PromptOptimizationRun::withoutGlobalScopes()->findOrFail($runId);
+
+        if ($run->status === 'completed') {
+            return $this->loadRun($run);
+        }
+
+        $message = Str::limit(is_string($error) ? $error : $error->getMessage(), 4000, '...');
+
+        $run->update([
+            'status' => 'failed',
+            'error_message' => $message,
+            'completed_at' => now(),
+        ]);
+
+        $this->activity->record('prompt_optimization.failed', $run->fresh(), [
+            'prompt_template_name' => $run->promptTemplate?->name,
+            'source_version_label' => $run->sourceVersion?->version_label,
+            'error' => $message,
+        ], $run->creator, $run->team_id);
+
         return $this->loadRun($run->fresh());
     }
 
@@ -166,6 +246,65 @@ class PromptOptimizationService
         ];
     }
 
+    private function buildPayload(PromptOptimizationRun $run): array
+    {
+        $run->loadMissing('promptTemplate.useCase', 'sourceVersion');
+
+        $trainCases = TestCase::query()
+            ->where('team_id', $run->team_id)
+            ->whereIn('id', $run->train_case_ids_json ?? [])
+            ->orderBy('id')
+            ->get();
+        $validationCases = TestCase::query()
+            ->where('team_id', $run->team_id)
+            ->whereIn('id', $run->validation_case_ids_json ?? [])
+            ->orderBy('id')
+            ->get();
+
+        $sourceVersion = $run->sourceVersion;
+        $promptTemplate = $run->promptTemplate;
+        $useCase = $promptTemplate?->useCase;
+
+        return [
+            'run_id' => $run->id,
+            'project_root' => base_path(),
+            'php_binary' => PHP_BINARY,
+            'artisan_path' => base_path('artisan'),
+            'seed_candidate' => $run->seed_candidate_json ?? $this->seedCandidate($sourceVersion),
+            'dataset' => $this->serializeCases($trainCases),
+            'valset' => $this->serializeCases($validationCases),
+            'budget_metric_calls' => $run->budget_metric_calls,
+            'objective' => trim(implode(' ', array_filter([
+                'Optimize this prompt pair so it scores higher on the workspace automatic checks.',
+                $promptTemplate?->name ? "Prompt family: {$promptTemplate->name}." : null,
+                $useCase?->name ? "Task: {$useCase->name}." : null,
+                'Preserve the task intent, output contract, and required variables.',
+            ]))),
+            'background' => trim(implode("\n\n", array_filter([
+                $useCase?->description ? "Use case description:\n{$useCase->description}" : null,
+                $useCase?->business_goal ? "Business goal:\n{$useCase->business_goal}" : null,
+                $promptTemplate?->description ? "Prompt template description:\n{$promptTemplate->description}" : null,
+                $sourceVersion?->change_summary ? "Current version summary:\n{$sourceVersion->change_summary}" : null,
+                ! empty($sourceVersion?->variables_schema ?? []) ? "Variables schema:\n".$this->jsonPreview($sourceVersion->variables_schema) : null,
+                ($sourceVersion?->output_type === 'json' && ! empty($sourceVersion?->output_schema_json ?? []))
+                    ? "Output schema:\n".$this->jsonPreview($sourceVersion->output_schema_json)
+                    : null,
+            ]))),
+        ];
+    }
+
+    private function serializeCases(Collection $cases): array
+    {
+        return $cases->map(fn (TestCase $testCase) => [
+            'id' => $testCase->id,
+            'title' => $testCase->title,
+            'input_text' => $testCase->input_text,
+            'expected_output' => $testCase->expected_output,
+            'expected_json' => $testCase->expected_json ?? [],
+            'variables_json' => $testCase->variables_json ?? [],
+        ])->values()->all();
+    }
+
     private function seedCandidate(?PromptVersion $sourceVersion): array
     {
         return [
@@ -189,6 +328,79 @@ class PromptOptimizationService
         ];
     }
 
+    private function createDerivedVersionIfChanged(
+        PromptOptimizationRun $run,
+        array $bestCandidate,
+        ?float $bestScore = null,
+    ): ?PromptVersion
+    {
+        $sourceVersion = $run->sourceVersion;
+        $promptTemplate = $run->promptTemplate;
+
+        if (! $sourceVersion || ! $promptTemplate) {
+            return null;
+        }
+
+        $nextSystemPrompt = (string) ($bestCandidate['system_prompt'] ?? '');
+        $nextUserPrompt = (string) ($bestCandidate['user_prompt_template'] ?? '');
+        $sourceSystemPrompt = (string) ($sourceVersion->system_prompt ?? '');
+        $sourceUserPrompt = (string) ($sourceVersion->user_prompt_template ?? '');
+
+        if (
+            $this->normalizeCandidate($nextSystemPrompt) === $this->normalizeCandidate($sourceSystemPrompt)
+            && $this->normalizeCandidate($nextUserPrompt) === $this->normalizeCandidate($sourceUserPrompt)
+        ) {
+            return null;
+        }
+
+        $versionLabel = $this->nextVersionLabel($promptTemplate);
+
+        return PromptVersion::create([
+            'team_id' => $run->team_id,
+            'prompt_template_id' => $promptTemplate->id,
+            'version_label' => $versionLabel,
+            'change_summary' => Str::limit("GEPA optimization draft from {$sourceVersion->version_label}", 255, ''),
+            'system_prompt' => $nextSystemPrompt !== '' ? $nextSystemPrompt : null,
+            'user_prompt_template' => $nextUserPrompt,
+            'variables_schema' => $sourceVersion->variables_schema ?? [],
+            'output_type' => $sourceVersion->output_type,
+            'output_schema_json' => $sourceVersion->output_schema_json ?? [],
+            'notes' => trim(implode("\n\n", array_filter([
+                $sourceVersion->notes,
+                'Generated by GEPA optimization.',
+                "Source version: {$sourceVersion->version_label}",
+                "Requested model: {$run->requested_model_name}",
+                $bestScore !== null ? 'Best validation score: '.number_format($bestScore, 4) : null,
+            ]))),
+            'preferred_model' => $run->requested_model_name,
+            'created_by' => $run->created_by,
+            'updated_by' => $run->created_by,
+        ]);
+    }
+
+    private function nextVersionLabel(PromptTemplate $promptTemplate): string
+    {
+        $versionNumber = max(1, $promptTemplate->versions()->count() + 1);
+
+        do {
+            $candidate = 'v'.$versionNumber;
+            $exists = $promptTemplate->versions()->where('version_label', $candidate)->exists();
+            $versionNumber++;
+        } while ($exists);
+
+        return $candidate;
+    }
+
+    private function normalizeCandidate(string $value): string
+    {
+        return trim(str_replace("\r\n", "\n", $value));
+    }
+
+    private function jsonPreview(array $value): string
+    {
+        return (string) json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     private function loadRun(PromptOptimizationRun $run): PromptOptimizationRun
     {
         return $run->load([
@@ -197,6 +409,25 @@ class PromptOptimizationService
             'sourceVersion',
             'derivedVersion',
         ]);
+    }
+
+    private function claimRun(int $runId): bool
+    {
+        $run = PromptOptimizationRun::withoutGlobalScopes()->findOrFail($runId);
+
+        if ($run->status !== 'queued') {
+            return false;
+        }
+
+        return PromptOptimizationRun::withoutGlobalScopes()
+            ->whereKey($runId)
+            ->where('status', 'queued')
+            ->update([
+                'status' => 'running',
+                'started_at' => $run->started_at ?? now(),
+                'completed_at' => null,
+                'error_message' => null,
+            ]) === 1;
     }
 
 }
