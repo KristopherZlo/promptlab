@@ -35,7 +35,14 @@ class PromptVersionResource extends JsonResource
             return $this->experimentRuns->count() > 0
                 ? round(($this->experimentRuns->where('format_valid', true)->count() / $this->experimentRuns->count()) * 100, 1)
                 : null;
-        }, null);
+        }, $this->format_pass_rate);
+
+        $evaluationCount = $scores->count() > 0 ? $scores->count() : ($this->evaluation_count ?? 0);
+        $averageScore = $scores->isNotEmpty() ? round($scores->avg(), 2) : ($this->average_score !== null ? round((float) $this->average_score, 2) : null);
+        $reviewedRuns = $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->filter(fn ($run) => $run->evaluations->isNotEmpty())->count(), $this->reviewed_runs ?? 0);
+        $reviewerCount = $reviewers->count() > 0 ? $reviewers->count() : ($this->reviewer_count ?? 0);
+        $reviewerNames = $reviewers->isNotEmpty() ? $reviewers->all() : ($this->reviewers ?? []);
+        $lastReviewedIso = optional($lastReviewedAt ?? $this->last_reviewed_at)->toIso8601String();
 
         return [
             'id' => $this->id,
@@ -51,14 +58,14 @@ class PromptVersionResource extends JsonResource
             'notes' => $this->notes,
             'preferred_model' => $this->preferred_model,
             'is_library_approved' => $this->is_library_approved,
-            'run_count' => $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->count()),
-            'reviewed_runs' => $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->filter(fn ($run) => $run->evaluations->isNotEmpty())->count()),
-            'evaluation_count' => $scores->count(),
-            'average_score' => $scores->isNotEmpty() ? round($scores->avg(), 2) : null,
+            'run_count' => $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->count(), $this->run_count ?? null),
+            'reviewed_runs' => $reviewedRuns,
+            'evaluation_count' => $evaluationCount,
+            'average_score' => $averageScore,
             'format_pass_rate' => $formatPassRate,
-            'reviewer_count' => $reviewers->count(),
-            'reviewers' => $reviewers->all(),
-            'last_reviewed_at' => optional($lastReviewedAt)->toIso8601String(),
+            'reviewer_count' => $reviewerCount,
+            'reviewers' => $reviewerNames,
+            'last_reviewed_at' => $lastReviewedIso,
             'library_entry' => $this->whenLoaded('libraryEntry', fn () => [
                 'id' => $this->libraryEntry?->id,
                 'approved_at' => optional($this->libraryEntry?->approved_at)->toIso8601String(),
