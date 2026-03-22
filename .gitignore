@@ -1,24 +1,78 @@
-*.log
-.DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
+/vendor
 /node_modules
-/public/build
+/design-tests
+/design-tests/*
+/backup-css
+/.cursor
+AGENTS.md
+deploy_ghostroom.sh
+/.aider
+/.aider*
+/.cline
+/.codex
+/.continue
+/.openai
+/.roo
+/.windsurf
+/SKILL.md
+/skills.md
+/Uncodixfy.md
+
+# Temp / backups
+/temp_view.txt
+*.backup
+*.log
+
+# Laravel
 /public/hot
 /public/storage
 /storage/*.key
-/storage/pail
-/vendor
-Homestead.json
+.env
+.env.testing
+.env.production
+.env.backup
+.phpunit.result.cache
+.php_cs.cache
 Homestead.yaml
+Homestead.json
+npm-debug.log
+yarn-error.log
+
+# Laravel storage
+/storage/app/*
+!/storage/app/public
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+
+# IDE / OS
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+/.phpstorm.meta.php
+/.DS_Store
 Thumbs.db
+
+# PHP / local auth
+.phpactor.json
+/.phpunit.cache
+/auth.json
+/storage/pail
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+
+# NPM / Vite / Mix
+/public/build
+/public/mix-manifest.json
+/.vite
+/interface-screenshots-auto
+/playwright-report
+/test-results
+
+# Local security tooling (python pentest helpers)
+/scripts/*.py
