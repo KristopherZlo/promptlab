@@ -1,216 +1,221 @@
 # PromptLab
 
-Internal prompt experimentation, evaluation, and approval workspace for business teams working with LLMs.
+PromptLab is a full-stack internal AI experimentation workspace built to help teams move from ad hoc prompting to structured, measurable, reusable generative AI work.
 
-PromptLab is not "another chatbot". It is a team tool for structured AI experimentation: define a business task, create prompt revisions, test them on realistic examples, compare outputs, score quality, approve the strongest version, and keep reusable prompt knowledge in one place.
+This is not a chatbot wrapper and not a toy demo. It is a product-oriented system for:
 
-This project was built to look and behave like a real internal product, not a toy portfolio app.
+- designing prompt workflows around real business tasks
+- comparing prompt versions on realistic inputs
+- validating outputs and reviewing quality
+- tracking experiments and analytics over time
+- approving the strongest prompt versions into a reusable library
+- managing workspace-level AI connections, permissions, and audit visibility
 
-## Portfolio Summary
+Repository name: `PromptFactory`  
+Product name in the UI: `PromptLab`
 
-**PromptLab** demonstrates:
+## Why This Project Exists
 
-- full-stack Laravel + Vue product development
-- LLM workflow design beyond a single chat screen
-- internal tool thinking for teams, not just end users
-- measurable prompt iteration with revision history
-- business-oriented UX, approvals, ownership, and audit visibility
-- SOLID-oriented backend structure with clean separation of concerns
+I built PromptLab as portfolio evidence for roles that combine:
 
-If you need one sentence for an application or interview:
+- applied generative AI
+- internal tool development
+- experimentation and iteration
+- analytics and documentation
+- cross-functional demos for technical and non-technical stakeholders
 
-> I built PromptLab as an internal experimentation tool for business teams using LLMs. It helps teams test prompt revisions, compare outputs, evaluate quality, approve reusable versions, and keep AI experimentation measurable instead of ad hoc.
+The core idea is simple: many teams want to use LLMs, but their prompt work quickly becomes fragmented, hard to measure, and difficult to trust. PromptLab turns that work into a real internal workflow.
 
-## The Problem
+## Why It Is Relevant For AI / Digital Internship Roles
 
-Most team prompt work becomes chaotic very quickly:
+This project is intentionally aligned with roles that expect practical AI application, experimentation, and communication, not only coding.
 
-- prompts live in chats, notes, or docs
-- versions are not tracked properly
-- experiments are repeated manually
-- nobody knows which version is actually better
-- outputs are hard to compare and hard to explain to stakeholders
-- successful prompt patterns get lost instead of reused
+| What employers want to see | Evidence in PromptLab |
+|---|---|
+| Ability to design generative AI solutions | Prompt experimentation workspace, prompt library, structured prompt versioning, quick tests, compare runs, batch experiments |
+| Ability to build internal tools for business needs | Task-first workflow, approval flow, audit visibility, role-based workspace model, team-scoped AI connections |
+| Ability to analyze results and document findings | Experiment summaries, evaluation data, analytics dashboard, use-case detail views, structured README and product docs |
+| Ability to support demos, workshops, and discussion | Seeded business-facing demo scenarios, clear UI flow, explainable metrics, short demo script |
+| Programming fundamentals | Laravel 12, Vue 3, Inertia, queue jobs, realtime updates, Python-backed optimization runtime |
+| Understanding of LLMs and prompt engineering | Prompt compilation, provider abstraction, structured output validation, model whitelisting, prompt optimization workflow |
 
-That makes AI adoption feel random, fragile, and hard to trust.
+If I were using one sentence in an application, it would be this:
 
-## The Product
+> I built PromptLab as an internal AI experimentation platform where teams can version prompts, run structured experiments, evaluate outputs, optimize prompt drafts, and turn successful prompt work into reusable internal assets.
 
-PromptLab turns prompt work into a repeatable internal workflow:
+## Product Overview
+
+In the UI, business workflows are called **Tasks**. In the data model, they are stored as `UseCase`.
+
+PromptLab supports a complete internal prompt workflow:
 
 1. Define a business task.
-2. Create or refine prompt revisions.
-3. Run single, compare, or batch experiments.
-4. Evaluate outputs manually.
-5. Approve the best revision.
-6. Reuse it through the approved prompt library.
+2. Add test cases that represent realistic inputs.
+3. Create prompt templates and iterate through versions.
+4. Run quick tests, compare prompt variants, or execute batch experiments.
+5. Validate structured outputs and review quality.
+6. Analyze results through summaries and metrics.
+7. Approve the strongest prompt version into a reusable library.
+8. Optionally start prompt optimization from evaluated data.
 
-In the UI, business workflows are called **Tasks**.  
-In the backend data model, they are stored as `UseCase`.
+## What The Product Can Do
 
-## What Users Can Do
+### Core workflow
 
-- Create business tasks with goals, descriptions, and saved test cases
-- Create prompt templates and revision history for each task
-- Run one prompt on one example
-- Compare multiple prompt revisions side by side
-- Run batch tests across saved task cases
-- Score outputs with manual evaluation criteria
-- Approve a revision for team reuse
-- Search the approved prompt library
-- Manage team members, roles, API connections, and audit history
-- See who created or updated tasks and when
+- Create and manage business tasks with goals, descriptions, ownership, and saved examples
+- Create prompt templates with an initial version in one request
+- Maintain prompt version history with metadata and preferred model selection
+- Run draft-level quick tests before saving a full experiment
+- Run single, compare, and batch experiments
+- Review experiment details with output data, token counts, latency, and validation state
+- Store approved prompt versions in a reusable internal library
 
-## Core UX Flows
+### Evaluation and analytics
 
-### 1. Task-first workflow
+- Manual scoring for clarity, correctness, completeness, tone, and hallucination risk
+- Structured output validation for JSON-based tasks
+- Automatic checks against expected text fragments and expected JSON subsets
+- Overview analytics for top prompts, top models, and recent activity
+- Use-case level summaries to identify the strongest prompt for a business task
 
-The intended order is:
+### Team and governance features
 
-- open a Task
-- inspect the business goal and saved examples
-- move to Prompt Templates
-- edit or create a revision
-- run the revision in Playground
-- review and approve only what is ready
+- Multi-workspace / multi-team structure
+- Role-based access and team switching
+- Workspace-scoped AI connection management
+- Audit logging for important actions
+- Approval flow before a prompt becomes reusable team knowledge
 
-### 2. Prompt revision workflow
+### AI-specific capabilities
 
-Prompt Templates behave like a lightweight git-style revision history:
+- Provider abstraction behind a clean service boundary
+- Support for mock and OpenAI-compatible runtime flows
+- Strict workspace model validation and connection ownership checks
+- Queue-backed experiment execution with retry classification
+- Realtime experiment progress updates with Laravel Reverb
+- GEPA-based prompt optimization flow that can generate a derived prompt draft from test-case data
 
-- one template = one prompt family
-- many revisions = controlled prompt changes over time
-- newest revisions are visible first
-- each revision carries run counts, score signals, and approval state
+## Portfolio Highlights
 
-### 3. Approval workflow
+The strongest portfolio signal here is not one individual feature. It is the combination of product thinking and engineering discipline:
 
-Approval is explicit. A revision is not considered team-ready just because it exists.
+- This project frames AI as an internal workflow problem, not only as a chat UI problem.
+- It models prompt engineering as versioned, testable, reviewable work.
+- It includes data, evaluation, approvals, and reuse instead of stopping at "send prompt, get answer".
+- It demonstrates attention to architecture, async processing, permissions, and documentation.
+- It is seeded and structured so it can be demoed to a technical lead, a product person, or a business stakeholder.
 
-The team can:
+## Example Business Scenarios
 
-- select a revision
-- review its scores and run history
-- fill approval metadata
-- approve it for the shared library
+The project is intentionally seeded with realistic, demo-friendly use cases:
 
-Approved revisions then appear in the **Approved Prompt Library** as the safe reuse layer.
+- Customer Email Summarization
+- Ticket Categorization
+- Rewrite for Business Tone
+- Meeting Note Summarization
 
-### 4. Safe deletion flow
+These scenarios make the system easier to understand for non-developers and easier to present in interviews or demos.
 
-Destructive actions do not delete immediately where undo matters.
+## Key AI Workflows
 
-For example:
+### 1. Prompt authoring
 
-- removing a team member
-- deleting an AI connection
-- deleting an account
+- Create a prompt template
+- Store the first prompt version immediately
+- Keep subsequent prompt changes as explicit revisions
+- Attach task type, model preference, notes, schema, and change summaries
 
-These actions first enter a short undo state instead of disappearing instantly.
+### 2. Quick testing
 
-## Demo-Ready Use Cases
+- Test an unsaved or draft prompt directly from the prompt editor
+- Preview the compiled prompt
+- Validate whether the output format is acceptable before running larger experiments
 
-The project is seeded with realistic examples:
+### 3. Structured experimentation
 
-- **Customer Email Summarization**
-- **Ticket Categorization**
-- **Rewrite for Business Tone**
-- **Meeting Note Summarization**
+- `single`: run one prompt version on one input
+- `compare`: run multiple versions against the same input
+- `batch`: run a saved prompt version across many test cases
 
-These make the demo feel business-facing instead of abstract.
+This is the part that makes PromptLab meaningfully different from a generic prompt playground.
 
-## Key Features
+### 4. Evaluation
 
-### Workspace and team features
+- Manual rubric-based review for qualitative judgment
+- Automatic checks against expected outputs for faster feedback loops
+- Structured JSON validation for tasks that require machine-readable output
 
-- team switching
-- team roles and permissions
-- audit trail for key actions
-- ownership and timestamps on tasks
-- OpenAI-compatible API connection management
+### 5. Prompt optimization
 
-### Prompt workflow features
+PromptLab also includes a prompt optimization workflow:
 
-- task management
-- prompt template CRUD
-- revision history
-- revision metadata and scores
-- approval and library handoff
+- select a source prompt version
+- reuse eligible test cases as train/validation data
+- run a GEPA-backed optimization job
+- receive a derived prompt draft with optimization metadata
 
-### Experiment workflow features
+This is a strong portfolio signal because it shows understanding of experimentation loops beyond manual prompt tweaking.
 
-- single run
-- compare mode
-- batch mode
-- variable inputs
-- prompt preview before execution
-- structured evaluation
-
-### Quality and visibility features
-
-- manual scoring
-- structured output validation
-- top prompt metrics
-- recent experiments
-- approved prompt library search
-
-## Tech Stack
+## Technical Stack
 
 ### Backend
 
-- Laravel 12
 - PHP 8.2+
+- Laravel 12
 - MariaDB / MySQL
 - Laravel Reverb
-- queue-backed batch processing
+- queued jobs for experiment processing
 
 ### Frontend
 
 - Vue 3
 - Inertia.js
+- Vite
+- Tailwind CSS
 - Blade app shell
-- Lucide icons
 
-### Runtime
+### Runtime and AI integration
 
-- XAMPP-friendly local setup
-- mock provider for development and demo safety
-- OpenAI-compatible provider support for real model calls
+- mock provider for safe local development
+- OpenAI-compatible provider integration
+- Python-backed GEPA runtime for prompt optimization
 
 ## Architecture
 
-The backend is intentionally structured around clear responsibilities.
-
-### SOLID-oriented layers
+The backend is structured around explicit responsibilities instead of putting all behavior into controllers or models.
 
 | Layer | Responsibility |
 |---|---|
-| Controllers | HTTP flow and coordination only |
-| Form Requests | Validation and request rules |
-| Resources | Stable response shaping for UI/API |
-| Services | Business logic, orchestration, analytics, provider handling |
-| Provider contracts | Decouple model integrations from application logic |
+| Controllers | HTTP coordination only |
+| Form Requests | validation and request rules |
+| Resources | stable payload shaping for UI and API |
+| Services | business workflows, orchestration, analytics, providers, optimization |
+| Jobs | async execution and retry / failure semantics |
+| Provider contracts | decoupling model integrations from application logic |
 
-### Important service classes
+Important services include:
 
 - `app/Services/ExperimentService.php`
 - `app/Services/AnalyticsService.php`
 - `app/Services/PromptCompiler.php`
 - `app/Services/StructuredOutputValidator.php`
 - `app/Services/LLMProviderManager.php`
-- `app/Services/ModelProviders/Contracts/LLMProvider.php`
+- `app/Services/PromptOptimizationService.php`
+- `app/Services/GepaPromptOptimizer.php`
 
-### Example architectural decisions
+## Engineering Decisions I Would Be Comfortable Discussing In An Interview
 
-- prompt compilation is separated from HTTP controllers
-- model execution is abstracted behind a provider interface
-- validation logic for structured outputs is isolated
-- analytics calculations do not live inside controllers or Vue pages
-- UI gets shaped data through resources instead of raw models
+- Why prompt work should be modeled as versioned assets instead of chat history
+- Why experiment execution belongs in async jobs instead of inline web requests
+- Why provider integration should sit behind an abstraction layer
+- Why structured output validation matters for business-facing AI workflows
+- Why workspace boundaries and model whitelisting matter in multi-team AI tools
+- Why analytics payloads should be summary-shaped instead of loading deep relational trees
+- Why prompt optimization needs guardrails, datasets, and a reproducible runtime
 
 ## Data Model
 
-Main entities:
+The main entities are:
 
 - `UseCase`
 - `PromptTemplate`
@@ -222,217 +227,125 @@ Main entities:
 - `LibraryEntry`
 - `Team`
 - `TeamMembership`
+- `TeamInvitation`
 - `LlmConnection`
 - `ActivityLog`
+- `PromptOptimizationRun`
 
-This separation keeps task definitions, prompt revisions, experiments, scoring, approvals, and team governance from collapsing into one giant model.
+This separation is intentional. It keeps business tasks, prompt assets, experiments, evaluation, approvals, and governance from collapsing into one vague "AI record".
 
-## Prompt Execution Flow
+## Product Signals Beyond CRUD
 
-1. User selects a task and one or more prompt revisions.
-2. Variables are resolved into a compiled prompt.
-3. The selected provider executes the request.
-4. The result is stored with latency, token counts, status, and metadata.
-5. If the task expects structured JSON, format validation is applied.
-6. Reviewers score the output manually.
-7. Analytics and approval state update from stored run history.
+What makes this a stronger portfolio project than a standard CRUD app:
 
-## Evaluation Model
+- async experiment processing
+- realtime progress events
+- workspace-level permissions
+- model and connection validation
+- structured JSON output validation
+- automatic and manual evaluation
+- approval workflow and library promotion
+- prompt optimization pipeline
+- analytics designed for decision-making instead of raw data dumps
 
-Manual review supports:
+## Documentation And Demo Readiness
 
-- clarity
-- correctness
-- completeness
-- tone
-- manual format validity
-- hallucination risk
-- free-text notes
+This repository is meant to be easy to present.
 
-Structured validation supports:
+Supporting material includes:
 
-- valid / invalid JSON detection
-- required field checks
-- primitive type checks through a lightweight schema object
+- a structured README
+- product planning notes in [`PLAN.md`](./PLAN.md)
+- UX flow documentation in [`docs/user-life-cycle-map.md`](./docs/user-life-cycle-map.md)
 
-## Running Locally on XAMPP
+That documentation is part of the portfolio value: it shows I can explain systems clearly, not only build them.
 
-This project is designed to run well inside an XAMPP workflow.
+## Suggested Demo Flow
 
-### Expected local URL
+This project demos well in 5 to 7 minutes.
 
-- `http://localhost/PromptFactory/public`
+1. Open the dashboard and show recent experiment activity.
+2. Open a Task and explain the business problem behind it.
+3. Move into prompt templates and show version history.
+4. Run a quick test or compare experiment.
+5. Open the experiment result and explain validation + scoring.
+6. Show analytics or best-prompt signals.
+7. Open the library and explain how approved prompt knowledge becomes reusable.
+8. If relevant, show the prompt optimization workflow and the derived draft version.
+
+## Running Locally
 
 ### Prerequisites
 
-- XAMPP Apache
-- XAMPP MySQL or MariaDB
-- PHP available in PATH
-- Composer available in PATH
-- Node.js and npm available in PATH
+- PHP 8.2+
+- Composer
+- Node.js + npm
+- MySQL / MariaDB
+- optional XAMPP workflow for local hosting
 
-### 1. Install dependencies
+### Setup
 
 ```bash
 composer install
 npm install
-```
-
-### 2. Configure environment
-
-Copy `.env.example` to `.env` if needed and set your database values.
-
-Important local values typically look like:
-
-```env
-APP_URL=http://localhost/PromptFactory/public
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=promptlab
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-### 3. Create database and seed demo data
-
-```bash
+cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
-```
-
-### 4. Build frontend assets
-
-For normal XAMPP use:
-
-```bash
 npm run build
 ```
 
-Optional dev mode:
-
-```bash
-npm run dev
-```
-
-### 5. Start Reverb for live experiment updates
+If you want live progress updates for experiments:
 
 ```bash
 php artisan reverb:start
 ```
 
-### 6. Start XAMPP services
+If you want the standard Laravel dev loop:
 
-- start **Apache**
-- start **MySQL**
-
-Then open:
-
-- `http://localhost/PromptFactory/public`
+```bash
+composer run dev
+```
 
 ## Demo Accounts
 
 - `admin@promptlab.local` / `password`
 - `team@promptlab.local` / `password`
 
-## Real AI Connection Setup
-
-PromptLab supports an OpenAI-compatible provider flow from the UI.
-
-### How to connect a real model
-
-1. Open **Team Workspace**
-2. Go to **AI connections**
-3. Create a connection
-4. Enter:
-   - connection name
-   - base URL
-   - API key
-   - one or more model names
-5. Mark the connection active
-6. Optionally mark it as the team default
-
-Once saved, those models become available in:
-
-- **Prompt Templates**
-- **Playground**
-
-For local development, the project also includes a mock provider so the UI works even without a paid API.
-
-## Suggested Demo Script
-
-This product demos well in 5-7 minutes.
-
-### Fast demo flow
-
-1. Open **Dashboard** and show recent experiment activity.
-2. Open **Tasks** and select `Customer Email Summarization`.
-3. Show task ownership and linked prompt work.
-4. Open **Prompt Templates** and show revision history.
-5. Open the **Approval** tab to show what approved work means.
-6. Go to **Playground**.
-7. Walk through the steps: Setup -> Versions -> Input -> Review.
-8. Run one compare experiment.
-9. Open the result and show scoring.
-10. Open **Approved Prompt Library** and explain reuse.
-
-### What to say during the demo
-
-- "This is an internal workflow tool, not just a chat interface."
-- "The goal is to make prompt work measurable and reusable."
-- "Prompt revisions are versioned and reviewed before approval."
-- "Teams can compare outputs instead of guessing."
-- "Approved prompts become reusable internal knowledge."
-
-## Why This Is a Strong Portfolio Project
-
-This project is strong for an internship or junior product engineering application because it shows more than CRUD.
-
-It shows that you can:
-
-- frame a real business problem
-- design internal tooling, not only consumer UI
-- structure AI experimentation into a repeatable workflow
-- connect frontend UX decisions to backend architecture
-- discuss tradeoffs honestly
-- present a system clearly to both technical and non-technical reviewers
-
-## Limitations
-
-This is a strong MVP, not a finished enterprise platform.
-
-Current limits:
-
-- manual evaluation is still subjective
-- output quality depends on the chosen model
-- prompt performance may shift with different input distributions
-- the tool organizes experiments but does not guarantee correctness
-- compliance and security hardening are not production-complete
-- advanced collaboration features are intentionally out of scope
-
-## Future Improvements
-
-- prompt diff view between revisions
-- automatic prompt improvement suggestions based on failed runs, low scores, and format violations
-- comments on runs and approvals
-- CSV dataset import
-- automatic evaluation heuristics
-- richer approval policies
-- export for experiment history and evaluations
-- deeper search and tagging
-- more provider integrations
-- multilingual UI
-
 ## Verification
 
 Verified locally with:
 
 ```bash
-php artisan migrate --force
 php artisan test
 npm run build
 ```
 
+## What This Project Says About Me As A Candidate
+
+PromptLab shows that I can:
+
+- identify a real business problem around AI adoption
+- turn that problem into a product with clear workflows
+- build the backend and frontend of the solution
+- think about evaluation, reuse, governance, and analytics
+- document the system in a way that helps non-technical stakeholders understand it
+- build something that is both technically discussable and demo-ready
+
+That is the reason this repository exists.
+
+## Future Directions
+
+Possible next steps:
+
+- richer automatic evaluation heuristics
+- prompt diff views between revisions
+- CSV dataset import
+- comments and collaboration around experiments
+- more provider integrations
+- exportable experiment history
+- stronger approval policies
+- multilingual UX improvements
+
 ## License
 
-This project is provided as a portfolio/internal-tool showcase built on top of the Laravel ecosystem.
+This project is shared as a portfolio and internal-tool showcase built on top of the Laravel ecosystem.
