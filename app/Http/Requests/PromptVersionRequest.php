@@ -27,7 +27,6 @@ class PromptVersionRequest extends TeamAwareRequest
             'output_schema_json' => ['nullable', 'array'],
             'notes' => ['nullable', 'string'],
             'preferred_model' => ['nullable', 'string', 'max:255'],
-            'is_library_approved' => ['nullable', 'boolean'],
         ];
     }
 }

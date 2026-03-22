@@ -26,7 +26,7 @@ class PromptTemplateResource extends JsonResource
         $approvedVersion = $this->relationLoaded('versions')
             ? $this->versions
                 ->sortByDesc('id')
-                ->first(fn ($version) => $version->is_library_approved)
+                ->first(fn ($version) => $version->libraryEntry !== null)
             : null;
 
         return [

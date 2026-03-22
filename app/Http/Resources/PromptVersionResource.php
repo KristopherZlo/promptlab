@@ -43,6 +43,8 @@ class PromptVersionResource extends JsonResource
         $reviewerCount = $reviewers->count() > 0 ? $reviewers->count() : ($this->reviewer_count ?? 0);
         $reviewerNames = $reviewers->isNotEmpty() ? $reviewers->all() : ($this->reviewers ?? []);
         $lastReviewedIso = optional($lastReviewedAt ?? $this->last_reviewed_at)->toIso8601String();
+        $libraryEntry = $this->relationLoaded('libraryEntry') ? $this->libraryEntry : $this->libraryEntry()->with('approver')->first();
+        $isLibraryApproved = $libraryEntry !== null;
 
         return [
             'id' => $this->id,
@@ -57,7 +59,7 @@ class PromptVersionResource extends JsonResource
             'output_schema_json' => $this->output_schema_json ?? [],
             'notes' => $this->notes,
             'preferred_model' => $this->preferred_model,
-            'is_library_approved' => $this->is_library_approved,
+            'is_library_approved' => $isLibraryApproved,
             'run_count' => $this->whenLoaded('experimentRuns', fn () => $this->experimentRuns->count(), $this->run_count ?? null),
             'reviewed_runs' => $reviewedRuns,
             'evaluation_count' => $evaluationCount,
@@ -66,14 +68,14 @@ class PromptVersionResource extends JsonResource
             'reviewer_count' => $reviewerCount,
             'reviewers' => $reviewerNames,
             'last_reviewed_at' => $lastReviewedIso,
-            'library_entry' => $this->whenLoaded('libraryEntry', fn () => [
-                'id' => $this->libraryEntry?->id,
-                'approved_at' => optional($this->libraryEntry?->approved_at)->toIso8601String(),
-                'approved_by' => $this->libraryEntry?->approver?->display_name,
-                'recommended_model' => $this->libraryEntry?->recommended_model,
-                'best_for' => $this->libraryEntry?->best_for,
-                'usage_notes' => $this->libraryEntry?->usage_notes,
-            ]),
+            'library_entry' => $libraryEntry ? [
+                'id' => $libraryEntry->id,
+                'approved_at' => optional($libraryEntry->approved_at)->toIso8601String(),
+                'approved_by' => $libraryEntry->approver?->display_name,
+                'recommended_model' => $libraryEntry->recommended_model,
+                'best_for' => $libraryEntry->best_for,
+                'usage_notes' => $libraryEntry->usage_notes,
+            ] : null,
         ];
     }
 }

@@ -30,7 +30,9 @@ class PromptVersionController extends Controller
         ], $request->user());
 
         if ($this->isApiRequest($request)) {
-            return response()->json(['data' => new PromptVersionResource($promptVersion)], 201);
+            return response()->json([
+                'data' => new PromptVersionResource($promptVersion->fresh(['libraryEntry.approver'])),
+            ], 201);
         }
 
         return to_route('prompt-templates.show', $promptTemplate)->with('success', 'Prompt version created.');
@@ -49,7 +51,9 @@ class PromptVersionController extends Controller
         ], $request->user());
 
         if ($this->isApiRequest($request)) {
-            return response()->json(['data' => new PromptVersionResource($promptVersion->fresh())]);
+            return response()->json([
+                'data' => new PromptVersionResource($promptVersion->fresh(['libraryEntry.approver'])),
+            ]);
         }
 
         return to_route('prompt-templates.show', $promptVersion->promptTemplate)->with('success', 'Prompt version updated.');
