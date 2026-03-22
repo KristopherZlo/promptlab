@@ -5,6 +5,7 @@ use App\Http\Controllers\ExperimentController;
 use App\Http\Controllers\EvaluationController;
 use App\Http\Controllers\LibraryEntryController;
 use App\Http\Controllers\LlmConnectionController;
+use App\Http\Controllers\PromptOptimizationRunController;
 use App\Http\Controllers\PromptTemplateController;
 use App\Http\Controllers\PromptVersionController;
 use App\Http\Controllers\TeamController;
@@ -22,10 +23,15 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
 
     Route::get('/prompts', [PromptTemplateController::class, 'index'])->name('prompts.index');
     Route::post('/prompts', [PromptTemplateController::class, 'store'])->name('prompts.store');
-    Route::post('/prompts/quick-test', [PromptTemplateController::class, 'quickTest'])->name('prompts.quick-test');
+    Route::post('/prompts/quick-test', [PromptTemplateController::class, 'quickTest'])
+        ->middleware('throttle:prompt-quick-test')
+        ->name('prompts.quick-test');
     Route::get('/prompts/{promptTemplate}', [PromptTemplateController::class, 'show'])->name('prompts.show');
     Route::put('/prompts/{promptTemplate}', [PromptTemplateController::class, 'update'])->name('prompts.update');
     Route::post('/prompts/{promptTemplate}/versions', [PromptVersionController::class, 'store'])->name('prompt-versions.store');
+    Route::post('/prompts/{promptTemplate}/optimizations', [PromptOptimizationRunController::class, 'store'])
+        ->middleware('throttle:prompt-optimization-store')
+        ->name('prompt-optimizations.store');
     Route::put('/prompt-versions/{promptVersion}', [PromptVersionController::class, 'update'])->name('prompt-versions.update');
 
     Route::post('/use-cases/{useCase}/test-cases', [TestCaseController::class, 'store'])->name('test-cases.store');
@@ -33,7 +39,9 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
     Route::delete('/test-cases/{testCase}', [TestCaseController::class, 'destroy'])->name('test-cases.destroy');
 
     Route::get('/experiments', [ExperimentController::class, 'index'])->name('experiments.index');
-    Route::post('/experiments', [ExperimentController::class, 'store'])->name('experiments.store');
+    Route::post('/experiments', [ExperimentController::class, 'store'])
+        ->middleware('throttle:experiment-store')
+        ->name('experiments.store');
     Route::get('/experiments/{experiment}', [ExperimentController::class, 'show'])->name('experiments.show');
 
     Route::post('/evaluations', [EvaluationController::class, 'store'])->name('evaluations.store');
@@ -50,7 +58,9 @@ Route::middleware(['web', 'auth', 'verified'])->name('api.')->group(function () 
     Route::delete('/team-memberships/{teamMembership}', [TeamMembershipController::class, 'destroy'])->name('team-memberships.destroy');
     Route::post('/team-invitations', [TeamInvitationController::class, 'store'])->name('team-invitations.store');
     Route::delete('/team-invitations/{teamInvitation}', [TeamInvitationController::class, 'destroy'])->name('team-invitations.destroy');
-    Route::post('/llm-connections/validate', [LlmConnectionController::class, 'validateConnection'])->name('llm-connections.validate');
+    Route::post('/llm-connections/validate', [LlmConnectionController::class, 'validateConnection'])
+        ->middleware('throttle:llm-connection-validation')
+        ->name('llm-connections.validate');
     Route::post('/llm-connections', [LlmConnectionController::class, 'store'])->name('llm-connections.store');
     Route::put('/llm-connections/{llmConnection}', [LlmConnectionController::class, 'update'])->name('llm-connections.update');
     Route::delete('/llm-connections/{llmConnection}', [LlmConnectionController::class, 'destroy'])->name('llm-connections.destroy');
