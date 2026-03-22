@@ -28,6 +28,8 @@ deploy_ghostroom.sh
 /public/storage
 /storage/*.key
 .env
+.env.*
+!.env.example
 .env.testing
 .env.production
 .env.backup
@@ -43,6 +45,10 @@ yarn-error.log
 !/storage/app/public
 /storage/framework/cache/*
 /storage/framework/sessions/*
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/tmp/*
+!/storage/framework/tmp/.gitignore
 /storage/framework/views/*
 /storage/logs/*
 
