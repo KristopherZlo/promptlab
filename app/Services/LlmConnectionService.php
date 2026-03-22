@@ -12,11 +12,15 @@ class LlmConnectionService
     public function __construct(
         private readonly ActivityLogService $activity,
         private readonly LLMProviderManager $providers,
+        private readonly ConnectionBaseUrlPolicy $baseUrls,
     ) {
     }
 
     public function save(Team $team, User $actor, array $data, ?LlmConnection $connection = null): LlmConnection
     {
+        $normalizedBaseUrl = $this->baseUrls->normalize($data['base_url'] ?? null);
+        $this->baseUrls->assertAllowed((string) $data['driver'], $normalizedBaseUrl);
+
         if (($data['is_default'] ?? false) === true) {
             LlmConnection::withoutGlobalScopes()
                 ->where('team_id', $team->id)
@@ -27,7 +31,7 @@ class LlmConnectionService
             'team_id' => $team->id,
             'name' => $data['name'],
             'driver' => $data['driver'],
-            'base_url' => $data['base_url'] ?: null,
+            'base_url' => $normalizedBaseUrl,
             'models_json' => $data['models_json'] ?? [],
             'is_active' => (bool) ($data['is_active'] ?? true),
             'is_default' => (bool) ($data['is_default'] ?? false),
@@ -81,6 +85,9 @@ class LlmConnectionService
         }
 
         try {
+            $baseUrl = $data['base_url'] ?? $connection?->base_url;
+            $this->baseUrls->assertAllowed((string) $data['driver'], is_string($baseUrl) ? $baseUrl : null);
+
             $models = collect($data['models_json'] ?? $connection?->models_json ?? [])
                 ->filter(fn ($model) => is_string($model) && filled($model))
                 ->map(fn (string $model) => trim($model))
@@ -89,7 +96,7 @@ class LlmConnectionService
                 ->all();
 
             $result = $this->providers->validateConnection($data['driver'], [
-                'base_url' => $data['base_url'] ?? null,
+                'base_url' => $this->baseUrls->normalize(is_string($baseUrl) ? $baseUrl : null),
                 'api_key' => filled($data['api_key'] ?? null)
                     ? $data['api_key']
                     : $connection?->api_key,

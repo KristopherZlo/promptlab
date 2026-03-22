@@ -17,6 +17,7 @@ class LLMProviderManager
         private readonly MockProvider $mockProvider,
         private readonly OpenAIProvider $openAiProvider,
         private readonly AnthropicProvider $anthropicProvider,
+        private readonly ConnectionBaseUrlPolicy $baseUrls,
     ) {
     }
 
@@ -84,6 +85,12 @@ class LLMProviderManager
             ->orderBy('name')
             ->get()
             ->flatMap(function (LlmConnection $connection): array {
+                $resolvedBaseUrl = $connection->base_url ?: $this->defaultBaseUrl($connection->driver);
+
+                if (! $this->baseUrls->isAllowed($connection->driver, $resolvedBaseUrl)) {
+                    return [];
+                }
+
                 $models = collect($connection->models_json ?? [])->filter()->values();
 
                 return $models->map(fn (string $model) => [
@@ -124,13 +131,16 @@ class LLMProviderManager
                 throw new TerminalOperationException('The selected AI connection no longer exposes this model.');
             }
 
+            $resolvedBaseUrl = $connection->base_url ?: $this->defaultBaseUrl($connection->driver);
+            $this->baseUrls->assertAllowed($connection->driver, $resolvedBaseUrl);
+
             return [
                 'driver' => $connection->driver,
                 'options' => [
                     ...$options,
                     'model' => $matches[3],
                     'api_key' => $connection->api_key,
-                    'base_url' => $connection->base_url ?: $this->defaultBaseUrl($connection->driver),
+                    'base_url' => $this->baseUrls->normalize($resolvedBaseUrl),
                     'connection_id' => $connection->id,
                     'connection_name' => $connection->name,
                 ],

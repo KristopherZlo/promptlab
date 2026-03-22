@@ -19,8 +19,8 @@ class LlmConnectionValidationTest extends TestCase
         Http::fake([
             'https://api.openai.com/v1/models' => Http::response([
                 'data' => [
-                    ['id' => 'gpt-4.1'],
-                    ['id' => 'gpt-4.1-mini'],
+                    ['id' => 'gpt-5.2'],
+                    ['id' => 'gpt-5-mini'],
                 ],
             ]),
         ]);
@@ -43,8 +43,8 @@ class LlmConnectionValidationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.ok', true)
             ->assertJsonPath('data.reachable', true)
-            ->assertJsonPath('data.models.0', 'gpt-4.1')
-            ->assertJsonPath('data.models.1', 'gpt-4.1-mini');
+            ->assertJsonPath('data.models.0', 'gpt-5-mini')
+            ->assertJsonPath('data.models.1', 'gpt-5.2');
 
         Http::assertSent(fn (ClientRequest $request) =>
             $request->url() === 'https://api.openai.com/v1/models'
@@ -57,7 +57,7 @@ class LlmConnectionValidationTest extends TestCase
         Http::fake([
             'https://api.openai.com/v1/models' => Http::response([
                 'data' => [
-                    ['id' => 'gpt-4.1-mini'],
+                    ['id' => 'gpt-5-mini'],
                 ],
             ]),
         ]);
@@ -77,7 +77,7 @@ class LlmConnectionValidationTest extends TestCase
             'driver' => 'openai',
             'base_url' => 'https://api.openai.com/v1',
             'api_key' => 'stored-secret-key',
-            'models_json' => ['gpt-4.1-mini'],
+            'models_json' => ['gpt-5-mini'],
             'is_active' => true,
             'is_default' => true,
             'created_by' => $user->id,
@@ -92,7 +92,7 @@ class LlmConnectionValidationTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.ok', true)
-            ->assertJsonPath('data.models.0', 'gpt-4.1-mini');
+            ->assertJsonPath('data.models.0', 'gpt-5-mini');
 
         Http::assertSent(fn (ClientRequest $request) =>
             $request->url() === 'https://api.openai.com/v1/models'
@@ -105,8 +105,8 @@ class LlmConnectionValidationTest extends TestCase
         Http::fake([
             'https://api.anthropic.com/v1/models' => Http::response([
                 'data' => [
-                    ['id' => 'claude-sonnet-4-5'],
-                    ['id' => 'claude-haiku-4-5'],
+                    ['id' => 'claude-sonnet-4-0'],
+                    ['id' => 'claude-3-5-haiku-latest'],
                 ],
             ]),
         ]);
@@ -129,13 +129,38 @@ class LlmConnectionValidationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.ok', true)
             ->assertJsonPath('data.reachable', true)
-            ->assertJsonPath('data.models.0', 'claude-haiku-4-5')
-            ->assertJsonPath('data.models.1', 'claude-sonnet-4-5');
+            ->assertJsonPath('data.models.0', 'claude-3-5-haiku-latest')
+            ->assertJsonPath('data.models.1', 'claude-sonnet-4-0');
 
         Http::assertSent(fn (ClientRequest $request) =>
             $request->url() === 'https://api.anthropic.com/v1/models'
             && $request->hasHeader('x-api-key', 'claude-key-123')
             && $request->hasHeader('anthropic-version', '2023-06-01')
         );
+    }
+
+    public function test_connection_validation_rejects_unapproved_base_urls(): void
+    {
+        Http::fake();
+
+        $user = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        app(TeamProvisioningService::class)->createTeam($user, [
+            'name' => 'Validation Guardrails',
+            'description' => 'Workspace for connection URL restrictions.',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('api.llm-connections.validate'), [
+                'driver' => 'openai',
+                'base_url' => 'https://attacker.example/v1',
+                'api_key' => 'sk-test-123',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['base_url']);
+
+        Http::assertNothingSent();
     }
 }
