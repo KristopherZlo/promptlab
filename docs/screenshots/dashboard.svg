@@ -1,0 +1,29 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="28" fill="#F4F7F5"/>
+  <rect x="28" y="28" width="1224" height="664" rx="24" fill="#FCFDFB" stroke="#D6E0D7"/>
+  <rect x="28" y="28" width="1224" height="52" rx="24" fill="#E7EFE9"/>
+  <circle cx="66" cy="54" r="8" fill="#E58B7B"/>
+  <circle cx="92" cy="54" r="8" fill="#E7BC62"/>
+  <circle cx="118" cy="54" r="8" fill="#79B38F"/>
+  <rect x="52" y="110" width="220" height="540" rx="18" fill="#183B2D"/>
+  <rect x="308" y="110" width="894" height="72" rx="18" fill="#EDF4EF"/>
+  <rect x="332" y="132" width="240" height="14" rx="7" fill="#244C3A"/>
+  <rect x="332" y="154" width="164" height="10" rx="5" fill="#6B8775"/>
+  <rect x="308" y="206" width="206" height="124" rx="18" fill="#F8FBF8" stroke="#D6E0D7"/>
+  <rect x="332" y="230" width="92" height="10" rx="5" fill="#6B8775"/>
+  <rect x="332" y="250" width="128" height="36" rx="12" fill="#214A39"/>
+  <rect x="536" y="206" width="206" height="124" rx="18" fill="#F8FBF8" stroke="#D6E0D7"/>
+  <rect x="764" y="206" width="206" height="124" rx="18" fill="#F8FBF8" stroke="#D6E0D7"/>
+  <rect x="992" y="206" width="210" height="124" rx="18" fill="#F8FBF8" stroke="#D6E0D7"/>
+  <rect x="308" y="354" width="560" height="276" rx="18" fill="#F8FBF8" stroke="#D6E0D7"/>
+  <rect x="892" y="354" width="310" height="276" rx="18" fill="#F8FBF8" stroke="#D6E0D7"/>
+  <rect x="332" y="382" width="174" height="12" rx="6" fill="#244C3A"/>
+  <rect x="332" y="410" width="500" height="14" rx="7" fill="#D8E5DB"/>
+  <rect x="332" y="438" width="468" height="14" rx="7" fill="#D8E5DB"/>
+  <rect x="332" y="466" width="512" height="14" rx="7" fill="#D8E5DB"/>
+  <rect x="920" y="382" width="150" height="12" rx="6" fill="#244C3A"/>
+  <rect x="920" y="414" width="254" height="14" rx="7" fill="#D8E5DB"/>
+  <rect x="920" y="442" width="224" height="14" rx="7" fill="#D8E5DB"/>
+  <text x="332" y="608" fill="#244C3A" font-family="Arial, sans-serif" font-size="34" font-weight="700">Dashboard Overview</text>
+  <text x="332" y="646" fill="#6B8775" font-family="Arial, sans-serif" font-size="20">Recent experiments, top prompts, model summaries, and team activity.</text>
+</svg>

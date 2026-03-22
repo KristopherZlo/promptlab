@@ -1,0 +1,26 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="28" fill="#F6F4FA"/>
+  <rect x="28" y="28" width="1224" height="664" rx="24" fill="#FDFCFF" stroke="#DDD7EA"/>
+  <rect x="28" y="28" width="1224" height="52" rx="24" fill="#ECE8F5"/>
+  <circle cx="66" cy="54" r="8" fill="#E58B7B"/>
+  <circle cx="92" cy="54" r="8" fill="#E7BC62"/>
+  <circle cx="118" cy="54" r="8" fill="#79B38F"/>
+  <rect x="52" y="110" width="220" height="540" rx="18" fill="#29243A"/>
+  <rect x="308" y="110" width="894" height="98" rx="18" fill="#F2EEFA"/>
+  <rect x="332" y="136" width="246" height="16" rx="8" fill="#3A3058"/>
+  <rect x="332" y="162" width="510" height="12" rx="6" fill="#8577A2"/>
+  <rect x="308" y="236" width="420" height="394" rx="18" fill="#FFFEFF" stroke="#DDD7EA"/>
+  <rect x="752" y="236" width="450" height="186" rx="18" fill="#FFFEFF" stroke="#DDD7EA"/>
+  <rect x="752" y="444" width="450" height="186" rx="18" fill="#FFFEFF" stroke="#DDD7EA"/>
+  <rect x="336" y="266" width="176" height="12" rx="6" fill="#3A3058"/>
+  <rect x="336" y="294" width="364" height="14" rx="7" fill="#E6E0F1"/>
+  <rect x="336" y="322" width="328" height="14" rx="7" fill="#E6E0F1"/>
+  <rect x="336" y="350" width="352" height="14" rx="7" fill="#E6E0F1"/>
+  <rect x="780" y="266" width="182" height="12" rx="6" fill="#3A3058"/>
+  <rect x="780" y="296" width="390" height="14" rx="7" fill="#E6E0F1"/>
+  <rect x="780" y="474" width="182" height="12" rx="6" fill="#3A3058"/>
+  <rect x="780" y="504" width="390" height="14" rx="7" fill="#E6E0F1"/>
+  <rect x="336" y="540" width="182" height="36" rx="12" fill="#3A3058"/>
+  <text x="336" y="606" fill="#3A3058" font-family="Arial, sans-serif" font-size="34" font-weight="700">Prompt Optimization</text>
+  <text x="336" y="644" fill="#8577A2" font-family="Arial, sans-serif" font-size="20">GEPA-backed run context, candidate score summary, and derived draft version.</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="28" fill="#F2F5FA"/>
+  <rect x="28" y="28" width="1224" height="664" rx="24" fill="#FBFCFE" stroke="#D7DFEA"/>
+  <rect x="28" y="28" width="1224" height="52" rx="24" fill="#E5EAF3"/>
+  <circle cx="66" cy="54" r="8" fill="#E58B7B"/>
+  <circle cx="92" cy="54" r="8" fill="#E7BC62"/>
+  <circle cx="118" cy="54" r="8" fill="#79B38F"/>
+  <rect x="52" y="110" width="220" height="540" rx="18" fill="#1F2E43"/>
+  <rect x="308" y="110" width="894" height="72" rx="18" fill="#EEF2F8"/>
+  <rect x="308" y="206" width="284" height="424" rx="18" fill="#FCFDFF" stroke="#D7DFEA"/>
+  <rect x="613" y="206" width="284" height="424" rx="18" fill="#FCFDFF" stroke="#D7DFEA"/>
+  <rect x="918" y="206" width="284" height="424" rx="18" fill="#FCFDFF" stroke="#D7DFEA"/>
+  <rect x="336" y="232" width="86" height="30" rx="10" fill="#244A7F"/>
+  <rect x="641" y="232" width="86" height="30" rx="10" fill="#244A7F"/>
+  <rect x="946" y="232" width="86" height="30" rx="10" fill="#244A7F"/>
+  <rect x="336" y="282" width="228" height="12" rx="6" fill="#1F2E43"/>
+  <rect x="641" y="282" width="228" height="12" rx="6" fill="#1F2E43"/>
+  <rect x="946" y="282" width="228" height="12" rx="6" fill="#1F2E43"/>
+  <rect x="336" y="310" width="228" height="168" rx="12" fill="#EAF0F8"/>
+  <rect x="641" y="310" width="228" height="168" rx="12" fill="#EAF0F8"/>
+  <rect x="946" y="310" width="228" height="168" rx="12" fill="#EAF0F8"/>
+  <rect x="336" y="502" width="160" height="12" rx="6" fill="#5E7494"/>
+  <rect x="641" y="502" width="160" height="12" rx="6" fill="#5E7494"/>
+  <rect x="946" y="502" width="160" height="12" rx="6" fill="#5E7494"/>
+  <text x="336" y="586" fill="#1F2E43" font-family="Arial, sans-serif" font-size="34" font-weight="700">Compare Experiment</text>
+  <text x="336" y="624" fill="#5E7494" font-family="Arial, sans-serif" font-size="20">Side-by-side prompt outputs, validation state, and review signals.</text>
+</svg>
