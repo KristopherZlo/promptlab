@@ -201,6 +201,12 @@ const activeTab = useUrlState({
         </template>
 
         <div class="page-frame">
+            <ToastRelay
+                :message="uiState.notice"
+                :action-href="uiState.createdTask ? route('use-cases.show', uiState.createdTask.id) : ''"
+                :action-label="uiState.createdTask ? `Open ${uiState.createdTask.name}` : ''"
+            />
+
             <div class="page-tabs">
                 <button
                     v-for="tab in tabs"
@@ -224,19 +230,6 @@ const activeTab = useUrlState({
                         </div>
                         <div class="console-page-actions">
                             <Link v-if="canManage" :href="selectedTemplateCreateHref" class="btn-secondary">Add prompt</Link>
-                        </div>
-                    </div>
-
-                    <div v-if="uiState.notice" class="surface-block-body pb-0">
-                        <div class="notice-banner">
-                            <span>{{ uiState.notice }}</span>
-                            <Link
-                                v-if="uiState.createdTask"
-                                :href="route('use-cases.show', uiState.createdTask.id)"
-                                class="ml-2 font-semibold text-[var(--accent)] hover:underline"
-                            >
-                                Open {{ uiState.createdTask.name }}
-                            </Link>
                         </div>
                     </div>
 
@@ -414,8 +407,6 @@ const activeTab = useUrlState({
                     </div>
 
                     <div class="surface-block-body">
-                        <div v-if="uiState.notice" class="notice-banner mb-6">{{ uiState.notice }}</div>
-
                         <form class="grid gap-4 md:grid-cols-2" @submit.prevent="submit">
                             <div>
                                 <label class="field-label">Name</label>

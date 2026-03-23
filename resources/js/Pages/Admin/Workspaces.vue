@@ -69,6 +69,8 @@ const createWorkspace = async () => {
         </template>
 
         <div class="page-frame">
+            <ToastRelay :message="notices.workspace" />
+
             <div class="page-tabs">
                 <button
                     type="button"
@@ -120,10 +122,6 @@ const createWorkspace = async () => {
                         </div>
                     </div>
                 </section>
-
-                <div v-if="notices.workspace" class="notice-banner">
-                    {{ notices.workspace }}
-                </div>
 
                 <section v-if="activeTab === 'current'" class="surface-block">
                     <div class="surface-block-header">

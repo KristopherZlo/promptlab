@@ -193,6 +193,8 @@ const send = async () => {
 
 <template>
     <section class="panel p-5">
+        <ToastRelay :message="errorMessage" tone="error" />
+
         <PanelHeader
             title="Quick test chat"
             description="Send a short conversation without leaving the editor. This uses the current draft fields."
@@ -208,7 +210,7 @@ const send = async () => {
                             <Sparkles />
                             <span>Conversation</span>
                         </div>
-                        <button type="button" class="btn-secondary" @click="resetConversation">
+                        <button type="button" class="btn-danger" @click="resetConversation">
                             <RotateCcw class="h-4 w-4" />
                             <span>Reset chat</span>
                         </button>
@@ -240,8 +242,6 @@ const send = async () => {
                         class="field-textarea"
                         placeholder="Type a short message to test the current prompt..."
                     />
-
-                    <div v-if="errorMessage" class="field-error mt-3">{{ errorMessage }}</div>
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <div class="text-sm text-[var(--muted)]">

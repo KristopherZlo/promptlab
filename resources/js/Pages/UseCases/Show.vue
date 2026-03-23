@@ -11,6 +11,7 @@ import {
     FolderKanban,
     LayoutDashboard,
     Settings2,
+    Trash2,
     UserRound,
 } from 'lucide-vue-next';
 import { computed, reactive, ref, watch } from 'vue';
@@ -404,6 +405,9 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
         </template>
 
         <div class="page-frame">
+            <ToastRelay :message="uiState.testCaseNotice" />
+            <ToastRelay :message="uiState.useCaseNotice" />
+
             <div class="page-tabs">
                 <button
                     v-for="tab in tabs.filter((item) => !item.manageOnly || canManage)"
@@ -420,12 +424,12 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
 
             <div class="page-frame-content">
                 <section class="surface-block">
-                    <div class="surface-block-header">
+                    <div class="surface-block-header lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <h2 class="section-title">Task status</h2>
                             <p class="text-sm text-[var(--muted)]">Keep high-level maturity signals in one stable area while the detailed work happens in tabs.</p>
                         </div>
-                        <div class="console-page-actions">
+                        <div class="console-page-actions lg:flex-none">
                             <Link
                                 v-if="canManage && activeTab !== 'templates'"
                                 :href="createTemplateHref"
@@ -688,11 +692,13 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    class="btn-ghost text-[var(--danger)]"
+                                                    class="btn-danger btn-icon-only"
                                                     :disabled="uiState.testCaseActionId === testCase.id"
+                                                    :title="`Delete ${testCase.title}`"
+                                                    :aria-label="`Delete ${testCase.title}`"
                                                     @click="deleteTestCase(testCase)"
                                                 >
-                                                    Delete
+                                                    <Trash2 class="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -713,10 +719,6 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     ? 'Update the reusable example without leaving the task page.'
                                     : 'Save a new reusable example for future compare or batch runs.' }}
                             </p>
-
-                            <div v-if="uiState.testCaseNotice" class="notice-banner mt-4">
-                                {{ uiState.testCaseNotice }}
-                            </div>
 
                             <form class="mt-5 grid gap-4" @submit.prevent="saveTestCase">
                                 <div>
@@ -791,10 +793,6 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                     </div>
 
                     <div class="surface-block-body">
-                        <div v-if="uiState.useCaseNotice" class="notice-banner mb-5">
-                            {{ uiState.useCaseNotice }}
-                        </div>
-
                         <form class="grid gap-4 md:grid-cols-2" @submit.prevent="saveUseCase">
                             <div>
                                 <label class="field-label">Name</label>
