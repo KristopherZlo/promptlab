@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Evaluation;
+use App\Services\AutomaticEvaluationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,6 +12,10 @@ class ExperimentRunResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $automaticEvaluation = $this->whenLoaded('testCase', function () {
+            return app(AutomaticEvaluationService::class)->evaluateRun($this->resource);
+        }, app(AutomaticEvaluationService::class)->evaluateRun($this->resource));
+
         $scores = $this->whenLoaded('evaluations', function () {
             return $this->evaluations
                 ->map(fn (Evaluation $evaluation) => $evaluation->averageScore())
@@ -35,6 +41,7 @@ class ExperimentRunResource extends JsonResource
                 'use_case' => $this->promptVersion?->promptTemplate?->useCase?->name,
             ]),
             'test_case' => $this->whenLoaded('testCase'),
+            'automatic_evaluation' => $automaticEvaluation,
             'manual_average_score' => $scores->isNotEmpty() ? round($scores->avg(), 2) : null,
             'evaluations' => EvaluationResource::collection($this->whenLoaded('evaluations')),
         ];
