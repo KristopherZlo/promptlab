@@ -3,6 +3,7 @@ import axios from 'axios';
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AutomaticChecksPanel from '@/Components/AutomaticChecksPanel.vue';
 import EvaluationPanel from '@/Components/EvaluationPanel.vue';
 import HelpHint from '@/Components/HelpHint.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
@@ -86,7 +87,11 @@ const compareGridClasses = computed(() =>
         : 'grid gap-4 xl:grid-cols-2',
 );
 const problemRuns = computed(() =>
-    runs.value.filter((run) => ['failed', 'invalid_format'].includes(run.status) || run.format_valid === false),
+    runs.value.filter((run) =>
+        ['failed', 'invalid_format'].includes(run.status)
+        || run.format_valid === false
+        || (run.automatic_evaluation?.configured && run.automatic_evaluation?.passed === false),
+    ),
 );
 const batchActiveRun = computed(() =>
     runs.value.find((run) => `${run.id}` === selectedRunId.value) ?? runs.value[0] ?? null,
@@ -251,6 +256,12 @@ const promoteRun = async (run) => {
                             {{ summary.average_latency_ms != null ? `${summary.average_latency_ms} ms` : 'N/A' }}
                         </div>
                     </div>
+                    <div class="summary-item">
+                        <div class="summary-item-label">Automatic pass rate</div>
+                        <div class="summary-item-value">
+                            {{ summary.automatic_pass_rate != null ? `${summary.automatic_pass_rate}%` : 'N/A' }}
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -369,6 +380,8 @@ const promoteRun = async (run) => {
                             <pre class="code-block mt-2">{{ run.compiled_prompt || 'Prompt compilation is not available yet.' }}</pre>
                         </div>
 
+                        <AutomaticChecksPanel :run="run" />
+
                         <div v-if="run.error_message" class="mt-4 flex items-start gap-2 rounded-[8px] border border-[var(--danger)]/20 bg-[rgba(224,30,90,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
                             <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
                             <span>{{ run.error_message }}</span>
@@ -437,7 +450,9 @@ const promoteRun = async (run) => {
                                 class="cursor-pointer"
                                 :class="{
                                     'bg-[rgba(255,255,255,0.04)]': `${run.id}` === selectedRunId,
-                                    'bg-[rgba(224,30,90,0.08)]': ['failed', 'invalid_format'].includes(run.status) || run.format_valid === false,
+                                    'bg-[rgba(224,30,90,0.08)]': ['failed', 'invalid_format'].includes(run.status)
+                                        || run.format_valid === false
+                                        || (run.automatic_evaluation?.configured && run.automatic_evaluation?.passed === false),
                                 }"
                                 @click="selectedRunId = `${run.id}`"
                             >
@@ -496,6 +511,8 @@ const promoteRun = async (run) => {
                         </div>
                         <pre class="code-block mt-2">{{ batchActiveRun.compiled_prompt || 'Prompt compilation is not available yet.' }}</pre>
                     </div>
+
+                    <AutomaticChecksPanel :run="batchActiveRun" />
 
                     <div class="mt-4">
                         <EvaluationPanel :run="batchActiveRun" @saved="loadExperiment" />
