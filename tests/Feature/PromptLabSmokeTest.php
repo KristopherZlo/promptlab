@@ -119,6 +119,15 @@ class PromptLabSmokeTest extends TestCase
             ->assertOk();
 
         $this->actingAs($user)
+            ->get('/acknowledgements')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Acknowledgements')
+                ->where('sources.0.name', 'agency-agents')
+                ->where('sources.0.author', 'msitarzewski')
+            );
+
+        $this->actingAs($user)
             ->get('/use-cases')
             ->assertOk();
 

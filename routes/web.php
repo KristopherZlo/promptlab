@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdministrationController;
+use App\Http\Controllers\AcknowledgementsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExperimentController;
 use App\Http\Controllers\GettingStartedController;
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/start-here', [GettingStartedController::class, 'index'])->name('getting-started');
+    Route::get('/acknowledgements', [AcknowledgementsController::class, 'index'])->name('acknowledgements.index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/team-workspace', [TeamWorkspaceController::class, 'index'])->name('team-workspace.index');
     Route::prefix('/admin')->name('admin.')->group(function () {

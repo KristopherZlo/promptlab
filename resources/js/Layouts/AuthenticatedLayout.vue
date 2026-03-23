@@ -3,6 +3,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
+    BadgeInfo,
     BookCopy,
     Bot,
     Building2,
@@ -34,6 +35,7 @@ const iconMap = {
     prompts: FileStack,
     experiments: FlaskConical,
     library: BookCopy,
+    acknowledgements: BadgeInfo,
     'users-access': Users,
     workspaces: Building2,
     'ai-connections': Bot,
@@ -68,6 +70,12 @@ const workspaceTools = computed(() => [
         label: 'Workspace Setup',
         route: 'admin.workspaces',
         current: ['admin.workspaces', 'team-workspace.index'],
+    },
+    {
+        id: 'acknowledgements',
+        label: 'Acknowledgements',
+        route: 'acknowledgements.index',
+        current: ['acknowledgements.index'],
     },
 ]);
 
