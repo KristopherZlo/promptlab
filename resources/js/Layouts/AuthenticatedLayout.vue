@@ -308,7 +308,6 @@ const closeMobileMenu = () => {
                         </div>
 
                         <div class="app-page-card-body">
-                            <div v-if="page.props.flash?.success" class="notice-banner">{{ page.props.flash.success }}</div>
                             <slot />
                         </div>
                     </section>
