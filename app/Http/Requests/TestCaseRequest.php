@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\MaxEncodedSize;
 use Illuminate\Validation\Rule;
 
 class TestCaseRequest extends TeamAwareRequest
@@ -15,11 +16,11 @@ class TestCaseRequest extends TeamAwareRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'input_text' => ['required', 'string'],
-            'expected_output' => ['nullable', 'string'],
-            'expected_json' => ['nullable', 'array'],
-            'variables_json' => ['nullable', 'array'],
-            'metadata_json' => ['nullable', 'array'],
+            'input_text' => ['required', 'string', 'max:12000'],
+            'expected_output' => ['nullable', 'string', 'max:12000'],
+            'expected_json' => ['nullable', 'array', new MaxEncodedSize(12000)],
+            'variables_json' => ['nullable', 'array', new MaxEncodedSize(12000)],
+            'metadata_json' => ['nullable', 'array', new MaxEncodedSize(12000)],
             'status' => ['required', Rule::in(['active', 'draft', 'archived'])],
         ];
     }
