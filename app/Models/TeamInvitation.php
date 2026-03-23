@@ -10,11 +10,14 @@ class TeamInvitation extends Model
 {
     use HasFactory;
 
+    public ?string $public_token = null;
+
     protected $fillable = [
         'team_id',
         'email',
         'role',
         'token',
+        'token_ciphertext',
         'status',
         'invited_by',
         'accepted_at',
@@ -22,9 +25,15 @@ class TeamInvitation extends Model
         'expires_at',
     ];
 
+    protected $hidden = [
+        'token',
+        'token_ciphertext',
+    ];
+
     protected function casts(): array
     {
         return [
+            'token_ciphertext' => 'encrypted',
             'accepted_at' => 'datetime',
             'revoked_at' => 'datetime',
             'expires_at' => 'datetime',

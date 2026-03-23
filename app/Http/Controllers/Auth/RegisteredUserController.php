@@ -28,6 +28,7 @@ class RegisteredUserController extends Controller
 
         return Inertia::render('Auth/Register', [
             'invitation' => $invitation ? (new TeamInvitationResource($invitation))->resolve() : null,
+            'invitationToken' => $request->string('invitation')->toString() ?: null,
         ]);
     }
 

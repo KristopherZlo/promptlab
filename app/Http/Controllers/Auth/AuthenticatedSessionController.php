@@ -26,6 +26,7 @@ class AuthenticatedSessionController extends Controller
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             'invitation' => $invitation ? (new \App\Http\Resources\TeamInvitationResource($invitation))->resolve() : null,
+            'invitationToken' => $request->string('invitation')->toString() ?: null,
         ]);
     }
 

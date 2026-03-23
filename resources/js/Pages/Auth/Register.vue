@@ -7,6 +7,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    invitationToken: {
+        type: String,
+        default: '',
+    },
 });
 
 const form = useForm({
@@ -15,7 +19,7 @@ const form = useForm({
     email: props.invitation?.email ?? '',
     password: '',
     password_confirmation: '',
-    invitation_token: props.invitation?.token ?? '',
+    invitation_token: props.invitationToken ?? '',
 });
 
 const submit = () => {
@@ -75,7 +79,7 @@ const submit = () => {
             </div>
 
             <div class="flex items-center justify-between gap-4">
-                <Link :href="invitation ? route('login', { invitation: invitation.token }) : route('login')" class="text-sm text-[var(--muted)] hover:text-[var(--ink)]">
+                <Link :href="invitation ? route('login', { invitation: invitationToken }) : route('login')" class="text-sm text-[var(--muted)] hover:text-[var(--ink)]">
                     Already have an account?
                 </Link>
                 <button type="submit" class="btn-primary" :disabled="form.processing">

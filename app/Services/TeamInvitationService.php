@@ -20,6 +20,7 @@ class TeamInvitationService
     public function createInvitation(Team $team, User $actor, string $email, string $role): TeamInvitation
     {
         $normalizedEmail = Str::lower(trim($email));
+        $plainToken = Str::random(64);
 
         if ($team->memberships()->whereHas('user', fn ($query) => $query->where('email', $normalizedEmail))->exists()) {
             throw ValidationException::withMessages([
@@ -35,7 +36,8 @@ class TeamInvitationService
             ],
             [
                 'role' => $role,
-                'token' => Str::random(64),
+                'token' => hash('sha256', $plainToken),
+                'token_ciphertext' => $plainToken,
                 'invited_by' => $actor->id,
                 'accepted_at' => null,
                 'revoked_at' => null,
@@ -50,7 +52,7 @@ class TeamInvitationService
             'expires_at' => optional($invitation->expires_at)->toIso8601String(),
         ], $actor, $team->id);
 
-        return $invitation->fresh(['inviter']);
+        return $this->attachPublicToken($invitation->fresh(['inviter']), $plainToken);
     }
 
     public function findByToken(string $token): ?TeamInvitation
@@ -59,10 +61,12 @@ class TeamInvitationService
             return null;
         }
 
-        return TeamInvitation::query()
+        $invitation = TeamInvitation::query()
             ->with(['team', 'inviter'])
-            ->where('token', $token)
+            ->where('token', hash('sha256', $token))
             ->first();
+
+        return $invitation ? $this->attachPublicToken($invitation, $token) : null;
     }
 
     public function statusFor(TeamInvitation $invitation): string
@@ -142,6 +146,16 @@ class TeamInvitationService
             ], $actor, $team->id);
         }
 
-        return $invitation->fresh(['team', 'inviter']);
+        return $this->attachPublicToken(
+            $invitation->fresh(['team', 'inviter']),
+            $invitation->token_ciphertext,
+        );
+    }
+
+    private function attachPublicToken(TeamInvitation $invitation, ?string $plainToken): TeamInvitation
+    {
+        $invitation->public_token = $plainToken;
+
+        return $invitation;
     }
 }

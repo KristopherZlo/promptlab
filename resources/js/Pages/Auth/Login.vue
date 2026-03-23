@@ -14,13 +14,17 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    invitationToken: {
+        type: String,
+        default: '',
+    },
 });
 
 const form = useForm({
     email: props.invitation?.email ?? '',
     password: '',
     remember: false,
-    invitation_token: props.invitation?.token ?? '',
+    invitation_token: props.invitationToken ?? '',
 });
 
 const submit = () => {
@@ -98,7 +102,7 @@ const submit = () => {
 
             <div v-if="invitation" class="text-sm text-[var(--muted)]">
                 Need a new account?
-                <Link :href="route('register', { invitation: invitation.token })" class="app-inline-link">Create an account for this invite</Link>
+                <Link :href="route('register', { invitation: invitationToken })" class="app-inline-link">Create an account for this invite</Link>
             </div>
         </form>
     </GuestLayout>

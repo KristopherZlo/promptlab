@@ -22,20 +22,32 @@ const props = defineProps({
         type: Boolean,
         required: true,
     },
+    acceptUrl: {
+        type: String,
+        default: null,
+    },
+    loginUrl: {
+        type: String,
+        default: null,
+    },
+    registerUrl: {
+        type: String,
+        default: null,
+    },
 });
 
 const page = usePage();
 const isAuthenticated = computed(() => !!page.props.auth?.user);
 const layoutComponent = computed(() => (isAuthenticated.value ? AuthenticatedLayout : GuestLayout));
-const loginHref = computed(() => routeWithQuery('login', {}, { invitation: props.invitation?.token ?? '' }));
-const registerHref = computed(() => routeWithQuery('register', {}, { invitation: props.invitation?.token ?? '' }));
+const loginHref = computed(() => props.loginUrl ?? routeWithQuery('login'));
+const registerHref = computed(() => props.registerUrl ?? routeWithQuery('register'));
 
 const acceptInvitation = () => {
-    if (!props.invitation) {
+    if (!props.invitation || !props.acceptUrl) {
         return;
     }
 
-    router.post(route('team-invitations.accept', props.invitation.token));
+    router.post(props.acceptUrl);
 };
 </script>
 

@@ -24,23 +24,23 @@ class TeamInvitationTest extends TestCase
             'description' => 'Workspace for invitation tests.',
         ]);
 
-        $this->actingAs($user)
-            ->post(route('api.team-invitations.store'), [
+        $response = $this->actingAs($user)
+            ->postJson(route('api.team-invitations.store'), [
                 'email' => 'invitee@example.com',
                 'role' => 'reviewer',
             ])
             ->assertCreated()
             ->assertJsonPath('data.email', 'invitee@example.com')
             ->assertJsonPath('data.role', 'reviewer')
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonMissingPath('data.token');
 
-        $this->assertDatabaseHas('team_invitations', [
-            'team_id' => $team->id,
-            'email' => 'invitee@example.com',
-            'role' => 'reviewer',
-            'status' => 'pending',
-        ]);
-        $this->assertTrue(TeamInvitation::query()->where('team_id', $team->id)->where('email', 'invitee@example.com')->exists());
+        $invitation = TeamInvitation::query()->where('team_id', $team->id)->where('email', 'invitee@example.com')->firstOrFail();
+        $rawToken = basename((string) parse_url($response->json('data.invite_url'), PHP_URL_PATH));
+
+        $this->assertSame(hash('sha256', $rawToken), $invitation->token);
+        $this->assertNotSame($rawToken, $invitation->token);
+        $this->assertSame($rawToken, $invitation->token_ciphertext);
     }
 
     public function test_invited_user_can_accept_workspace_invitation(): void
@@ -61,14 +61,15 @@ class TeamInvitationTest extends TestCase
             'team_id' => $team->id,
             'email' => 'invitee@example.com',
             'role' => 'editor',
-            'token' => 'accept-token',
+            'token' => hash('sha256', 'accept-token'),
+            'token_ciphertext' => 'accept-token',
             'status' => 'pending',
             'invited_by' => $owner->id,
             'expires_at' => now()->addDays(7),
         ]);
 
         $this->actingAs($invitee)
-            ->post(route('team-invitations.accept', $invitation->token))
+            ->post(route('team-invitations.accept', 'accept-token'))
             ->assertRedirect(route('getting-started', absolute: false));
 
         $this->assertDatabaseHas('team_memberships', [
@@ -99,7 +100,8 @@ class TeamInvitationTest extends TestCase
             'team_id' => $team->id,
             'email' => 'invitee@example.com',
             'role' => 'reviewer',
-            'token' => 'revoke-token',
+            'token' => hash('sha256', 'revoke-token'),
+            'token_ciphertext' => 'revoke-token',
             'status' => 'pending',
             'invited_by' => $owner->id,
             'expires_at' => now()->addDays(7),

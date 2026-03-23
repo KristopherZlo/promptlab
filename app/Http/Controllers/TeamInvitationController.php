@@ -39,6 +39,9 @@ class TeamInvitationController extends Controller
             'invitation' => $invitation ? (new TeamInvitationResource($invitation))->resolve() : null,
             'canAccept' => (bool) ($user && $invitation && $emailMatches && $invitations->statusFor($invitation) === 'pending'),
             'emailMatches' => $emailMatches,
+            'acceptUrl' => $invitation ? route('team-invitations.accept', $token) : null,
+            'loginUrl' => route('login', ['invitation' => $token]),
+            'registerUrl' => route('register', ['invitation' => $token]),
         ]);
     }
 
