@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Trash2 } from 'lucide-vue-next';
 import { useUrlState } from '@/lib/urlState';
 
 const props = defineProps({
@@ -87,32 +88,32 @@ const scheduleAccountDeletion = () => {
         </template>
 
         <div class="page-frame">
-            <aside class="page-frame-rail">
+            <div class="page-tabs">
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'profile' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'profile' }"
                     @click="activeTab = 'profile'"
                 >
                     <span>Profile</span>
                 </button>
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'password' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'password' }"
                     @click="activeTab = 'password'"
                 >
                     <span>Password</span>
                 </button>
                 <button
                     type="button"
-                    class="page-frame-tab"
-                    :class="{ 'page-frame-tab-active': activeTab === 'danger' }"
+                    class="page-tab"
+                    :class="{ 'page-tab-active': activeTab === 'danger' }"
                     @click="activeTab = 'danger'"
                 >
                     <span>Danger zone</span>
                 </button>
-            </aside>
+            </div>
 
             <div class="page-frame-content">
                 <section class="panel p-5">
@@ -249,10 +250,11 @@ const scheduleAccountDeletion = () => {
 
                         <button
                             type="button"
-                            class="inline-flex items-center justify-center rounded-[8px] border border-[var(--danger)] px-3.5 py-2.5 text-sm font-bold text-[var(--danger)] transition hover:bg-[rgba(224,30,90,0.08)]"
+                            class="btn-danger"
                             :disabled="deleteForm.processing"
                             @click="scheduleAccountDeletion"
                         >
+                            <Trash2 class="h-4 w-4" />
                             {{ deleteForm.processing ? 'Deleting...' : 'Delete account' }}
                         </button>
                     </div>

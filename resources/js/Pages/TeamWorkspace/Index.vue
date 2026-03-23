@@ -7,7 +7,7 @@ import { applyServerErrors, extractServerMessage, formatRoleLabel } from '@/lib/
 import { formatDateTime } from '@/lib/formatters';
 import { useUndoableAction } from '@/lib/useUndoableAction';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Bot, Clock3, History, KeyRound, Link2, Server, Settings2, Shield, Users } from 'lucide-vue-next';
+import { Bot, Clock3, History, KeyRound, Link2, Server, Settings2, Shield, Trash2, Users, X } from 'lucide-vue-next';
 import { computed, reactive, ref } from 'vue';
 
 const props = defineProps({
@@ -45,7 +45,7 @@ const connectionForm = useForm({
     driver: 'openai',
     base_url: 'https://api.openai.com/v1',
     api_key: '',
-    models_text: 'gpt-4.1-mini',
+    models_text: 'gpt-5.2',
     is_active: true,
     is_default: props.team.connections.length === 0,
 });
@@ -98,7 +98,7 @@ const resetConnectionForm = () => {
     connectionForm.reset();
     connectionForm.base_url = 'https://api.openai.com/v1';
     connectionForm.driver = 'openai';
-    connectionForm.models_text = 'gpt-4.1-mini';
+    connectionForm.models_text = 'gpt-5.2';
     connectionForm.is_active = true;
     connectionForm.is_default = props.team.connections.length === 0;
     connectionForm.clearErrors();
@@ -262,6 +262,10 @@ const scheduleConnectionRemoval = (connection) => {
         </template>
 
         <div class="page-frame">
+            <ToastRelay :message="notices.member" />
+            <ToastRelay :message="notices.connection" />
+            <ToastRelay :message="notices.team" />
+
             <div class="page-tabs">
                 <button
                     v-for="tab in tabs"
@@ -349,10 +353,6 @@ const scheduleConnectionRemoval = (connection) => {
                     :icon="Users"
                 />
 
-                <div v-if="notices.member" class="notice-banner mt-4">
-                    {{ notices.member }}
-                </div>
-
                 <UndoBanner
                     v-if="memberRemoval.pendingAction.active"
                     class="mt-4"
@@ -394,7 +394,15 @@ const scheduleConnectionRemoval = (connection) => {
                                     </template>
                                 </td>
                                 <td v-if="canManageMembers">
-                                    <button type="button" class="btn-ghost" @click="scheduleMemberRemoval(membership)">Remove</button>
+                                    <button
+                                        type="button"
+                                        class="btn-danger btn-icon-only"
+                                        :title="`Remove ${membership.user.display_name || membership.user.name}`"
+                                        :aria-label="`Remove ${membership.user.display_name || membership.user.name}`"
+                                        @click="scheduleMemberRemoval(membership)"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -454,10 +462,6 @@ const scheduleConnectionRemoval = (connection) => {
                     :icon="Bot"
                 />
 
-                <div v-if="notices.connection" class="notice-banner mt-4">
-                    {{ notices.connection }}
-                </div>
-
                 <UndoBanner
                     v-if="connectionRemoval.pendingAction.active"
                     class="mt-4"
@@ -503,7 +507,15 @@ const scheduleConnectionRemoval = (connection) => {
                         </div>
                         <div v-if="canManageConnections" class="mt-4 flex gap-3">
                             <button type="button" class="btn-secondary" @click="editConnection(connection)">Edit</button>
-                            <button type="button" class="btn-ghost" @click="scheduleConnectionRemoval(connection)">Delete</button>
+                            <button
+                                type="button"
+                                class="btn-danger btn-icon-only"
+                                :title="`Delete ${connection.name}`"
+                                :aria-label="`Delete ${connection.name}`"
+                                @click="scheduleConnectionRemoval(connection)"
+                            >
+                                <Trash2 class="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -533,6 +545,7 @@ const scheduleConnectionRemoval = (connection) => {
                             <span>API key</span>
                         </div>
                         <input v-model="connectionForm.api_key" type="password" class="field-input" placeholder="Leave empty to keep the stored key on update">
+                        <div class="field-help">Stored encrypted at rest and never returned in API responses after save.</div>
                     </div>
 
                     <div>
@@ -540,7 +553,7 @@ const scheduleConnectionRemoval = (connection) => {
                             <Server />
                             <span>Models</span>
                         </div>
-                        <textarea v-model="connectionForm.models_text" class="field-textarea" placeholder="gpt-4.1-mini, gpt-4o-mini"></textarea>
+                        <textarea v-model="connectionForm.models_text" class="field-textarea" placeholder="gpt-5.2, gpt-5-mini"></textarea>
                         <div class="field-help">Enter one or more model names separated by commas or line breaks.</div>
                         <div v-if="connectionForm.errors.models_json" class="field-error">{{ connectionForm.errors.models_json }}</div>
                     </div>
@@ -566,7 +579,10 @@ const scheduleConnectionRemoval = (connection) => {
                         <button type="submit" class="btn-primary" :disabled="connectionForm.processing">
                             {{ connectionForm.processing ? 'Saving...' : editingConnectionId ? 'Save changes' : 'Add connection' }}
                         </button>
-                        <button type="button" class="btn-secondary" @click="resetConnectionForm">Clear</button>
+                        <button type="button" class="btn-danger" @click="resetConnectionForm">
+                            <X class="h-4 w-4" />
+                            <span>Clear</span>
+                        </button>
                     </div>
                 </form>
             </section>
@@ -616,10 +632,6 @@ const scheduleConnectionRemoval = (connection) => {
                     description="Create a separate workspace when a different business unit or experiment stream should not share prompts and access."
                     :icon="Settings2"
                 />
-
-                <div v-if="notices.team" class="notice-banner mt-4">
-                    {{ notices.team }}
-                </div>
 
                 <form class="mt-5 space-y-4" @submit.prevent="createTeam">
                     <div>

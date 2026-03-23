@@ -4,7 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
-import { ChevronDown, KeyRound, ListChecks, Settings2 } from 'lucide-vue-next';
+import { ChevronDown, KeyRound, ListChecks, Settings2, Trash2 } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { AI_CONNECTION_PRESETS, DEFAULT_AI_CONNECTION_PRESET_ID, findAiConnectionPresetById } from '@/lib/aiConnectionPresets';
 import { useUndoableAction } from '@/lib/useUndoableAction';
@@ -41,6 +41,7 @@ const validationState = reactive({
 });
 const providerPresetId = ref(DEFAULT_AI_CONNECTION_PRESET_ID);
 const selectedPrimaryModel = ref(findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.defaultModel ?? '');
+const selectedDiscoveredModel = ref('');
 const driverLabels = {
     openai: 'OpenAI-compatible',
     anthropic: 'Anthropic Claude',
@@ -61,7 +62,7 @@ const connectionForm = useForm({
     driver: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.driver ?? 'openai',
     base_url: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.baseUrl ?? 'https://api.openai.com/v1',
     api_key: '',
-    models_text: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.defaultModel ?? 'gpt-4.1-mini',
+    models_text: findAiConnectionPresetById(DEFAULT_AI_CONNECTION_PRESET_ID)?.defaultModel ?? 'gpt-5.2',
     is_active: true,
     is_default: props.connections.length === 0,
 });
@@ -71,6 +72,13 @@ const totalModels = computed(() =>
     props.connections.reduce((count, connection) => count + (connection.models_json?.length || 0), 0),
 );
 const activePreset = computed(() => findAiConnectionPresetById(providerPresetId.value));
+const quickModelOptions = computed(() => {
+    const presetModels = activePreset.value?.models ?? [];
+
+    return selectedPrimaryModel.value && !presetModels.includes(selectedPrimaryModel.value)
+        ? [selectedPrimaryModel.value, ...presetModels]
+        : presetModels;
+});
 
 const resetValidationState = () => {
     validationState.checked = false;
@@ -79,6 +87,7 @@ const resetValidationState = () => {
     validationState.reachable = false;
     validationState.message = '';
     validationState.models = [];
+    selectedDiscoveredModel.value = '';
 };
 
 const normalizeBaseUrl = (value) => `${value ?? ''}`.trim().replace(/\/+$/, '');
@@ -88,6 +97,17 @@ const parseModels = () =>
         .split(/[\n,]+/)
         .map((item) => item.trim())
         .filter(Boolean);
+
+const syncDiscoveredModel = (models = []) => {
+    const availableModels = Array.isArray(models) ? models : [];
+    const preferredModel = [
+        selectedDiscoveredModel.value,
+        parseModels()[0] ?? '',
+        selectedPrimaryModel.value,
+    ].find((model) => availableModels.includes(model));
+
+    selectedDiscoveredModel.value = preferredModel ?? availableModels[0] ?? '';
+};
 
 const inferPreset = (connectionLike) => AI_CONNECTION_PRESETS.find((preset) =>
     preset.driver === connectionLike.driver
@@ -258,12 +278,14 @@ const validateConnection = async () => {
         validationState.reachable = !!result.reachable;
         validationState.message = result.message || 'Connection test finished.';
         validationState.models = Array.isArray(result.models) ? result.models : [];
+        syncDiscoveredModel(validationState.models);
     } catch (error) {
         validationState.checked = true;
         validationState.ok = false;
         validationState.reachable = false;
         validationState.message = extractServerMessage(error, 'Connection test failed.');
         validationState.models = [];
+        selectedDiscoveredModel.value = '';
     } finally {
         validationState.testing = false;
     }
@@ -277,6 +299,16 @@ const importDiscoveredModels = () => {
     connectionForm.models_text = validationState.models.join(', ');
     selectedPrimaryModel.value = validationState.models[0] ?? selectedPrimaryModel.value;
     notices.connection = `Imported ${validationState.models.length} discovered model${validationState.models.length === 1 ? '' : 's'} into the form.`;
+};
+
+const applyDiscoveredModel = () => {
+    if (!selectedDiscoveredModel.value) {
+        return;
+    }
+
+    connectionForm.models_text = selectedDiscoveredModel.value;
+    selectedPrimaryModel.value = selectedDiscoveredModel.value;
+    notices.connection = `Selected ${selectedDiscoveredModel.value} from the latest provider response.`;
 };
 
 const saveConnection = async () => {
@@ -346,6 +378,8 @@ const scheduleConnectionRemoval = (connection) => {
         </template>
 
         <div class="page-frame">
+            <ToastRelay :message="notices.connection" />
+
             <div class="page-tabs">
                 <button
                     type="button"
@@ -396,10 +430,6 @@ const scheduleConnectionRemoval = (connection) => {
                             </div>
                         </div>
 
-                        <div v-if="notices.connection" class="notice-banner">
-                            {{ notices.connection }}
-                        </div>
-
                         <UndoBanner
                             v-if="connectionRemoval.pendingAction.active"
                             :label="connectionRemoval.pendingAction.label"
@@ -446,7 +476,15 @@ const scheduleConnectionRemoval = (connection) => {
                                         <td>
                                             <div class="flex flex-wrap gap-2">
                                                 <button type="button" class="btn-secondary" @click="editConnection(connection)">Edit</button>
-                                                <button type="button" class="btn-ghost text-[var(--danger)]" @click="scheduleConnectionRemoval(connection)">Delete</button>
+                                                <button
+                                                    type="button"
+                                                    class="btn-danger btn-icon-only"
+                                                    :title="`Delete ${connection.name}`"
+                                                    :aria-label="`Delete ${connection.name}`"
+                                                    @click="scheduleConnectionRemoval(connection)"
+                                                >
+                                                    <Trash2 class="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -465,14 +503,9 @@ const scheduleConnectionRemoval = (connection) => {
                             <h2 class="section-title">{{ editingConnectionId ? 'Edit AI connection' : 'Add AI connection' }}</h2>
                             <p class="text-sm text-[var(--muted)]">Use a provider preset for the common setup, then keep only the model names your workspace should see.</p>
                         </div>
-                        <button type="button" class="btn-secondary" @click="closeEditor">Back to list</button>
                     </div>
 
                     <div class="surface-block-body">
-                        <div v-if="notices.connection" class="notice-banner mb-6">
-                            {{ notices.connection }}
-                        </div>
-
                         <form class="grid gap-4" @submit.prevent="saveConnection">
                             <div class="connection-preset-panel">
                                 <div class="connection-preset-header">
@@ -528,7 +561,7 @@ const scheduleConnectionRemoval = (connection) => {
                                             >
                                                 <option value="" disabled>Select a model</option>
                                                 <option
-                                                    v-for="model in activePreset?.models ?? []"
+                                                    v-for="model in quickModelOptions"
                                                     :key="model"
                                                     :value="model"
                                                 >
@@ -566,6 +599,7 @@ const scheduleConnectionRemoval = (connection) => {
                             <div>
                                 <label class="field-label">API key</label>
                                 <input v-model="connectionForm.api_key" type="password" class="field-input" placeholder="Leave empty to keep the stored key on update and during tests">
+                                <div class="field-hint">Stored encrypted at rest and never sent back to the client after save.</div>
                             </div>
 
                             <div class="grid gap-4 md:grid-cols-2">
@@ -585,9 +619,9 @@ const scheduleConnectionRemoval = (connection) => {
                                         v-model="connectionForm.models_text"
                                         type="text"
                                         class="field-input"
-                                        :placeholder="activePreset?.models.join(', ') || 'gpt-4.1-mini, gpt-4.1'"
+                                        :placeholder="activePreset?.models.join(', ') || 'gpt-5.2, gpt-5-mini'"
                                     >
-                                    <div class="field-hint">Use one model for the simple path, or list several models separated by commas.</div>
+                                    <div class="field-hint">Use one model for the simple path, or list several models separated by commas. The connection check below can import one discovered model or the full list.</div>
                                     <div v-if="connectionForm.errors.models_json" class="field-error">{{ connectionForm.errors.models_json }}</div>
                                 </div>
                             </div>
@@ -662,16 +696,41 @@ const scheduleConnectionRemoval = (connection) => {
                                         </span>
                                     </div>
 
-                                    <div v-if="validationState.models.length" class="flex flex-wrap gap-3">
-                                        <button
-                                            type="button"
-                                            class="btn-secondary"
-                                            @click="importDiscoveredModels"
-                                        >
-                                            Use found models
-                                        </button>
-                                        <div class="text-sm text-[var(--muted)]">
-                                            Replaces the models field with the provider response from the latest successful test.
+                                    <div v-if="validationState.models.length" class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                                        <div>
+                                            <label class="field-label">Model from provider response</label>
+                                            <div class="select-with-icon">
+                                                <select v-model="selectedDiscoveredModel" class="field-select">
+                                                    <option value="" disabled>Select a discovered model</option>
+                                                    <option
+                                                        v-for="model in validationState.models"
+                                                        :key="model"
+                                                        :value="model"
+                                                    >
+                                                        {{ model }}
+                                                    </option>
+                                                </select>
+                                                <ChevronDown class="select-with-icon-caret" />
+                                            </div>
+                                            <div class="field-hint">Pick one discovered model for the workspace, or import the whole provider list.</div>
+                                        </div>
+
+                                        <div class="flex flex-wrap gap-3">
+                                            <button
+                                                type="button"
+                                                class="btn-secondary"
+                                                :disabled="!selectedDiscoveredModel"
+                                                @click="applyDiscoveredModel"
+                                            >
+                                                Use selected model
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn-secondary"
+                                                @click="importDiscoveredModels"
+                                            >
+                                                Use all found models
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

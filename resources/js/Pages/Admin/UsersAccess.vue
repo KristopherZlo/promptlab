@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
 import UndoBanner from '@/Components/UndoBanner.vue';
-import { ChevronDown, Copy, Download, Slash, UserPlus } from 'lucide-vue-next';
+import { ChevronDown, Copy, Download, LogOut, Slash, UserMinus, UserPlus } from 'lucide-vue-next';
 import {
     applyServerErrors,
     extractServerMessage,
@@ -253,6 +253,8 @@ const memberInitials = (membership) =>
     || 'U';
 
 const isCurrentUser = (membership) => membership?.user?.id === currentUserId.value;
+const memberRemovalLabel = (membership) => (isCurrentUser(membership) ? 'Leave workspace' : 'Remove member');
+const memberRemovalIcon = (membership) => (isCurrentUser(membership) ? LogOut : UserMinus);
 
 const selectMembership = (membershipId) => {
     selectedMembershipId.value = membershipId;
@@ -360,6 +362,9 @@ const exportMembers = () => {
         </template>
 
         <div class="people-access-page">
+            <ToastRelay :message="notices.member" />
+            <ToastRelay :message="notices.invitation" />
+
             <div class="page-tabs people-access-tabs">
                 <button
                     v-for="tab in tabs"
@@ -371,13 +376,6 @@ const exportMembers = () => {
                 >
                     {{ tab.label }}
                 </button>
-            </div>
-
-            <div v-if="notices.member" class="notice-banner">
-                {{ notices.member }}
-            </div>
-            <div v-if="notices.invitation" class="notice-banner">
-                {{ notices.invitation }}
             </div>
 
             <UndoBanner
@@ -440,10 +438,12 @@ const exportMembers = () => {
                             <div class="people-access-member-actions" @click.stop>
                                 <button
                                     type="button"
-                                    class="btn-secondary people-access-mini"
+                                    class="btn-danger people-access-mini btn-icon-only"
+                                    :title="memberRemovalLabel(membership)"
+                                    :aria-label="memberRemovalLabel(membership)"
                                     @click.stop="scheduleMemberRemoval(membership)"
                                 >
-                                    {{ isCurrentUser(membership) ? 'Leave' : 'Remove' }}
+                                    <component :is="memberRemovalIcon(membership)" class="h-4 w-4" />
                                 </button>
                                 <button
                                     type="button"
@@ -517,10 +517,11 @@ const exportMembers = () => {
                             <div class="people-access-detail-footer">
                                 <button
                                     type="button"
-                                    class="btn-ghost text-[var(--danger)]"
+                                    class="btn-danger"
                                     @click="scheduleMemberRemoval(selectedMembership)"
                                 >
-                                    {{ isCurrentUser(selectedMembership) ? 'Leave workspace' : 'Remove member' }}
+                                    <component :is="memberRemovalIcon(selectedMembership)" class="h-4 w-4" />
+                                    {{ memberRemovalLabel(selectedMembership) }}
                                 </button>
                             </div>
                         </template>
@@ -607,20 +608,22 @@ const exportMembers = () => {
                                             <button
                                                 v-if="canRevokeInvitation(invitation)"
                                                 type="button"
-                                                class="btn-secondary people-access-mini"
+                                                class="btn-secondary people-access-mini btn-icon-only"
+                                                title="Copy invitation link"
+                                                aria-label="Copy invitation link"
                                                 @click="copyInvitationLink(invitation)"
                                             >
                                                 <Copy class="h-4 w-4" />
-                                                <span>Copy link</span>
                                             </button>
                                             <button
                                                 v-if="canRevokeInvitation(invitation)"
                                                 type="button"
-                                                class="btn-ghost people-access-mini text-[var(--danger)]"
+                                                class="btn-danger people-access-mini btn-icon-only"
+                                                title="Revoke invitation"
+                                                aria-label="Revoke invitation"
                                                 @click="revokeInvitation(invitation)"
                                             >
                                                 <Slash class="h-4 w-4" />
-                                                <span>Revoke</span>
                                             </button>
                                             <span v-else class="text-sm text-[var(--muted)]">No actions</span>
                                         </div>

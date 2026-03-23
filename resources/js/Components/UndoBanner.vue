@@ -37,7 +37,8 @@ defineEmits(['undo', 'commit']);
                 <RotateCcw class="mr-2 h-4 w-4" />
                 Undo
             </button>
-            <button type="button" class="btn-ghost text-[var(--danger)] hover:bg-[rgba(224,30,90,0.08)]" :disabled="busy" @click="$emit('commit')">
+            <button type="button" class="btn-danger" :disabled="busy" @click="$emit('commit')">
+                <Trash2 class="h-4 w-4" />
                 {{ busy ? 'Deleting...' : 'Delete now' }}
             </button>
         </div>

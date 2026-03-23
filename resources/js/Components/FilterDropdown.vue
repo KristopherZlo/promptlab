@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Check, ChevronDown } from 'lucide-vue-next';
+import { Check, ChevronDown, X } from 'lucide-vue-next';
 
 const props = defineProps({
     label: {
@@ -203,7 +203,8 @@ onBeforeUnmount(() => {
                     </div>
 
                     <button v-if="clearable" type="button" class="filter-menu-clear" @click="clearSelection">
-                        {{ clearLabel }}
+                        <X class="h-4 w-4" />
+                        <span>{{ clearLabel }}</span>
                     </button>
                 </slot>
             </div>

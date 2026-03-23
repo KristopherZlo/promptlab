@@ -5,7 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import FilterDropdown from '@/Components/FilterDropdown.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
-import { ArrowDownWideNarrow, History } from 'lucide-vue-next';
+import { ArrowDownWideNarrow, History, RotateCcw } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
 
 const props = defineProps({
@@ -266,8 +266,15 @@ onBeforeUnmount(() => {
                             :clearable="false"
                             @select="updateSort($event)"
                         />
-                        <button v-if="hasFilters" type="button" class="filter-toolbar-reset" @click="resetFilters">
-                            Reset
+                        <button
+                            v-if="hasFilters"
+                            type="button"
+                            class="filter-toolbar-reset filter-toolbar-reset-icon"
+                            title="Reset filters"
+                            aria-label="Reset filters"
+                            @click="resetFilters"
+                        >
+                            <RotateCcw class="h-4 w-4" />
                         </button>
                     </SearchFilterBar>
                 </div>
