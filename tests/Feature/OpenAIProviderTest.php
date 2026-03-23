@@ -13,7 +13,7 @@ class OpenAIProviderTest extends TestCase
     {
         Http::fake([
             'https://api.openai.com/v1/chat/completions' => Http::response([
-                'model' => 'gpt-4.1-mini',
+                'model' => 'gpt-5.2',
                 'choices' => [
                     [
                         'message' => [
@@ -31,7 +31,7 @@ class OpenAIProviderTest extends TestCase
         $response = app(OpenAIProvider::class)->runPrompt('Say hello.', [
             'api_key' => 'sk-test-123',
             'base_url' => 'https://api.openai.com/v1',
-            'model' => 'openai:gpt-4.1-mini',
+            'model' => 'openai:gpt-5.2',
             'temperature' => 0.2,
             'max_tokens' => 321,
         ]);
@@ -93,6 +93,42 @@ class OpenAIProviderTest extends TestCase
         $this->assertArrayNotHasKey('max_tokens', $requests[0]);
         $this->assertSame(111, $requests[1]['max_tokens'] ?? null);
         $this->assertArrayNotHasKey('max_completion_tokens', $requests[1]);
+    }
+
+    public function test_openai_provider_omits_temperature_for_legacy_gpt_5_chat_models(): void
+    {
+        Http::fake([
+            'https://api.openai.com/v1/chat/completions' => Http::response([
+                'model' => 'gpt-5-mini',
+                'choices' => [
+                    [
+                        'message' => [
+                            'content' => 'Hello from OpenAI.',
+                        ],
+                    ],
+                ],
+                'usage' => [
+                    'prompt_tokens' => 12,
+                    'completion_tokens' => 6,
+                ],
+            ]),
+        ]);
+
+        app(OpenAIProvider::class)->runPrompt('Say hello.', [
+            'api_key' => 'sk-test-123',
+            'base_url' => 'https://api.openai.com/v1',
+            'model' => 'openai:gpt-5-mini',
+            'temperature' => 0.6,
+            'max_tokens' => 321,
+        ]);
+
+        Http::assertSent(function (ClientRequest $request): bool {
+            $data = $request->data();
+
+            return $request->url() === 'https://api.openai.com/v1/chat/completions'
+                && ! array_key_exists('temperature', $data)
+                && ($data['model'] ?? null) === 'gpt-5-mini';
+        });
     }
 
     public function test_openai_provider_can_validate_with_selected_model_when_model_listing_is_unavailable(): void

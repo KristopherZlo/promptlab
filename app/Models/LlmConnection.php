@@ -25,6 +25,10 @@ class LlmConnection extends Model
         'updated_by',
     ];
 
+    protected $hidden = [
+        'api_key',
+    ];
+
     protected function casts(): array
     {
         return [

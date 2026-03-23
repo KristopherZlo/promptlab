@@ -13,7 +13,7 @@ class AnthropicProviderTest extends TestCase
     {
         Http::fake([
             'https://api.anthropic.com/v1/messages' => Http::response([
-                'model' => 'claude-sonnet-4-5',
+                'model' => 'claude-sonnet-4-0',
                 'content' => [
                     [
                         'type' => 'text',
@@ -30,7 +30,7 @@ class AnthropicProviderTest extends TestCase
         $response = app(AnthropicProvider::class)->runPrompt('Say hello.', [
             'api_key' => 'claude-test-key',
             'base_url' => 'https://api.anthropic.com/v1',
-            'model' => 'anthropic:claude-sonnet-4-5',
+            'model' => 'anthropic:claude-sonnet-4-0',
         ]);
 
         $this->assertSame('Hello from Claude.', $response['output_text']);
@@ -39,7 +39,7 @@ class AnthropicProviderTest extends TestCase
             $request->url() === 'https://api.anthropic.com/v1/messages'
             && $request->hasHeader('x-api-key', 'claude-test-key')
             && $request->hasHeader('anthropic-version', '2023-06-01')
-            && ($request->data()['model'] ?? null) === 'claude-sonnet-4-5'
+            && ($request->data()['model'] ?? null) === 'claude-sonnet-4-0'
         );
     }
 
@@ -48,8 +48,8 @@ class AnthropicProviderTest extends TestCase
         Http::fake([
             'https://api.anthropic.com/v1/models' => Http::response([
                 'data' => [
-                    ['id' => 'claude-sonnet-4-5'],
-                    ['id' => 'claude-haiku-4-5'],
+                    ['id' => 'claude-sonnet-4-0'],
+                    ['id' => 'claude-3-5-haiku-latest'],
                 ],
             ]),
         ]);
@@ -59,6 +59,6 @@ class AnthropicProviderTest extends TestCase
             'base_url' => 'https://api.anthropic.com/v1',
         ]);
 
-        $this->assertSame(['claude-haiku-4-5', 'claude-sonnet-4-5'], $models);
+        $this->assertSame(['claude-3-5-haiku-latest', 'claude-sonnet-4-0'], $models);
     }
 }
