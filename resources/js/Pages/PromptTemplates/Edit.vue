@@ -4,6 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
+import PromptOptimizationPanel from '@/Components/PromptOptimizationPanel.vue';
 import PromptQuickTestPanel from '@/Components/PromptQuickTestPanel.vue';
 import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
@@ -22,6 +23,10 @@ const props = defineProps({
     models: {
         type: Array,
         required: true,
+    },
+    optimizationContext: {
+        type: Object,
+        default: null,
     },
 });
 
@@ -93,6 +98,7 @@ const tabItems = computed(() => [
     { id: 'template', label: 'Details', icon: FileStack, disabled: false },
     { id: 'versions', label: 'Versions', icon: Workflow, disabled: !props.promptTemplate },
     { id: 'library', label: 'Shared Library', icon: BookCopy, disabled: !props.promptTemplate },
+    { id: 'optimize', label: 'Optimize', icon: Target, disabled: !props.promptTemplate },
 ]);
 const activeTab = useUrlState({
     key: 'tab',
@@ -100,13 +106,14 @@ const activeTab = useUrlState({
         ? 'versions'
         : 'template',
     allowedValues: props.promptTemplate
-        ? ['template', 'versions', 'library']
+        ? ['template', 'versions', 'optimize', 'library']
         : ['template'],
 });
 
 const versions = computed(() => props.promptTemplate?.versions ?? []);
 const versionHistory = computed(() => [...versions.value].reverse());
 const approvedHistory = computed(() =>
+const latestSavedVersion = computed(() => versions.value.at(-1) ?? null);
     versions.value
         .filter((version) => version.library_entry?.id)
         .sort((left, right) => {
@@ -1187,3 +1194,12 @@ const promoteToLibrary = async () => {
         </div>
     </AuthenticatedLayout>
 </template>
+            <PromptOptimizationPanel
+                v-else-if="promptTemplate && activeTab === 'optimize'"
+                :prompt-template="promptTemplate"
+                :versions="versions"
+                :models="availableModels"
+                :optimization-context="optimizationContext"
+                :suggested-source-version-id="currentVersion?.id ?? latestSavedVersion?.id ?? null"
+            />
+
