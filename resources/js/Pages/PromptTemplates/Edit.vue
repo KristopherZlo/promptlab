@@ -6,7 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
 import PromptOptimizationPanel from '@/Components/PromptOptimizationPanel.vue';
 import PromptQuickTestPanel from '@/Components/PromptQuickTestPanel.vue';
-import { BookCopy, Bot, Braces, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Settings2, Target, User, Workflow } from 'lucide-vue-next';
+import { BookCopy, Bot, Braces, Clock3, Copy, FileCode2, FileJson, FileStack, FileText, FlaskConical, Gauge, MessageSquareText, Plus, Settings2, Target, User, Workflow } from 'lucide-vue-next';
 import { applyServerErrors, extractServerMessage } from '@/lib/forms';
 import { formatDateTime, formatScore, parseJsonInput, parseTagList, safeJsonStringify } from '@/lib/formatters';
 import { hrefWithQuery, readQueryParam, routeWithQuery, useUrlState } from '@/lib/urlState';
@@ -79,6 +79,7 @@ const selectedVersionId = ref(
         ? requestedVersionId
         : props.promptTemplate?.versions?.at(-1)?.id ?? null,
 );
+const draftBaseVersionId = ref(null);
 const jsonErrors = reactive({
     variables_schema: '',
     output_schema_json: '',
@@ -97,8 +98,8 @@ const notices = reactive({
 const tabItems = computed(() => [
     { id: 'template', label: 'Details', icon: FileStack, disabled: false },
     { id: 'versions', label: 'Versions', icon: Workflow, disabled: !props.promptTemplate },
-    { id: 'library', label: 'Shared Library', icon: BookCopy, disabled: !props.promptTemplate },
     { id: 'optimize', label: 'Optimize', icon: Target, disabled: !props.promptTemplate },
+    { id: 'library', label: 'Shared Library', icon: BookCopy, disabled: !props.promptTemplate },
 ]);
 const activeTab = useUrlState({
     key: 'tab',
@@ -112,8 +113,8 @@ const activeTab = useUrlState({
 
 const versions = computed(() => props.promptTemplate?.versions ?? []);
 const versionHistory = computed(() => [...versions.value].reverse());
-const approvedHistory = computed(() =>
 const latestSavedVersion = computed(() => versions.value.at(-1) ?? null);
+const approvedHistory = computed(() =>
     versions.value
         .filter((version) => version.library_entry?.id)
         .sort((left, right) => {
@@ -176,9 +177,133 @@ const versionRunHref = (version) =>
     });
 
 const versionReference = (version) => `#${String(version.id).padStart(4, '0')}`;
+const versionContentFields = [
+    { key: 'change_summary', label: 'Change summary', emptyLabel: 'No change summary', mono: false },
+    { key: 'system_prompt', label: 'System prompt', emptyLabel: 'No system prompt', mono: true },
+    { key: 'user_prompt_template', label: 'User prompt template', emptyLabel: 'No user prompt template', mono: true },
+    { key: 'variables_schema_text', label: 'Variables schema', emptyLabel: '[]', mono: true },
+    { key: 'output_type', label: 'Output type', emptyLabel: 'text', mono: true },
+    { key: 'output_schema_text', label: 'Output schema', emptyLabel: '{}', mono: true },
+    { key: 'preferred_model', label: 'Preferred model', emptyLabel: 'Template default', mono: true },
+    { key: 'notes', label: 'Team notes', emptyLabel: 'No team notes', mono: false },
+];
+
+const buildVersionSnapshot = (source = null) => ({
+    change_summary: source?.change_summary ?? '',
+    system_prompt: source?.system_prompt ?? '',
+    user_prompt_template: source?.user_prompt_template ?? '',
+    variables_schema_text: source ? safeJsonStringify(source.variables_schema ?? [], '[]') : '[]',
+    output_type: source?.output_type ?? 'text',
+    output_schema_text: source ? safeJsonStringify(source.output_schema_json ?? {}, '{}') : '{}',
+    preferred_model: source?.preferred_model ?? '',
+    notes: source?.notes ?? '',
+});
+
+const editorVersionSnapshot = computed(() => ({
+    change_summary: versionForm.change_summary ?? '',
+    system_prompt: versionForm.system_prompt ?? '',
+    user_prompt_template: versionForm.user_prompt_template ?? '',
+    variables_schema_text: versionForm.variables_schema_text ?? '[]',
+    output_type: versionForm.output_type ?? 'text',
+    output_schema_text: versionForm.output_schema_text ?? '{}',
+    preferred_model: versionForm.preferred_model ?? '',
+    notes: versionForm.notes ?? '',
+}));
+
+const normalizeSnapshotValue = (value) => `${value ?? ''}`.replace(/\r\n/g, '\n').trim();
+const displaySnapshotValue = (value, emptyLabel) => {
+    const normalized = normalizeSnapshotValue(value);
+
+    return normalized !== '' ? normalized : emptyLabel;
+};
+
+const compareVersionSnapshots = (baseSnapshot, nextSnapshot) =>
+    versionContentFields
+        .map((field) => {
+            const previousValue = normalizeSnapshotValue(baseSnapshot?.[field.key]);
+            const currentValue = normalizeSnapshotValue(nextSnapshot?.[field.key]);
+
+            if (previousValue === currentValue) {
+                return null;
+            }
+
+            const changeType = !previousValue && currentValue
+                ? 'added'
+                : previousValue && !currentValue
+                    ? 'removed'
+                    : 'updated';
+
+            return {
+                ...field,
+                changeType,
+                changeTypeLabel: changeType === 'added' ? 'Added' : changeType === 'removed' ? 'Removed' : 'Updated',
+                previousValue,
+                currentValue,
+                previousDisplay: displaySnapshotValue(previousValue, field.emptyLabel),
+                currentDisplay: displaySnapshotValue(currentValue, field.emptyLabel),
+            };
+        })
+        .filter(Boolean);
+
+const versionIndexById = computed(() =>
+    new Map(versions.value.map((version, index) => [version.id, index])),
+);
+const versionById = computed(() =>
+    new Map(versions.value.map((version) => [version.id, version])),
+);
+const previousVersionFor = (version) => {
+    const index = versionIndexById.value.get(version.id);
+
+    return typeof index === 'number' && index > 0 ? versions.value[index - 1] : null;
+};
+const versionHistoryEntries = computed(() =>
+    versionHistory.value.map((version) => {
+        const parentVersion = previousVersionFor(version);
+        const changes = compareVersionSnapshots(buildVersionSnapshot(parentVersion), buildVersionSnapshot(version));
+
+        return {
+            version,
+            parentVersion,
+            changes,
+            changedLabels: changes.slice(0, 3).map((change) => change.label),
+            extraChanges: Math.max(changes.length - 3, 0),
+            isLatest: latestSavedVersion.value?.id === version.id,
+        };
+    }),
+);
+const versionComparisonBase = computed(() =>
+    currentVersion.value
+        ? previousVersionFor(currentVersion.value)
+        : (draftBaseVersionId.value ? versionById.value.get(draftBaseVersionId.value) ?? latestSavedVersion.value : latestSavedVersion.value),
+);
+const currentVersionChanges = computed(() =>
+    compareVersionSnapshots(buildVersionSnapshot(versionComparisonBase.value), editorVersionSnapshot.value),
+);
+const currentVersionCommitTitle = computed(() =>
+    currentVersion.value?.change_summary
+    || versionForm.change_summary
+    || currentVersion.value?.version_label
+    || 'Working draft',
+);
+const currentVersionDetailCopy = computed(() => {
+    if (currentVersion.value) {
+        const author = currentVersion.value.created_by || 'Unknown author';
+        const createdAt = currentVersion.value.created_at ? formatDateTime(currentVersion.value.created_at) : 'No timestamp';
+        const parentLabel = versionComparisonBase.value?.version_label || 'initial state';
+
+        return `${author} saved this revision on ${createdAt}. Comparing against ${parentLabel}.`;
+    }
+
+    if (versionComparisonBase.value) {
+        return `Unsaved draft compared with ${versionComparisonBase.value.version_label}. Save when the change is ready to join history.`;
+    }
+
+    return 'Create the first revision. The history view will start tracking prompt changes after the first save.';
+});
 
 const selectVersion = (version) => {
     selectedVersionId.value = version.id;
+    draftBaseVersionId.value = null;
     applyState(versionForm, versionDefaults(version));
     versionForm.clearErrors();
     jsonErrors.variables_schema = '';
@@ -189,6 +314,7 @@ const beginNewVersion = (cloneCurrent = false) => {
     const source = cloneCurrent ? currentVersion.value : null;
 
     selectedVersionId.value = null;
+    draftBaseVersionId.value = source?.id ?? latestSavedVersion.value?.id ?? null;
     applyState(versionForm, versionDefaults(source));
     versionForm.version_label = '';
     versionForm.change_summary = '';
@@ -367,6 +493,7 @@ const saveVersion = async () => {
 
         const response = await axios.post(route('api.prompt-versions.store', props.promptTemplate.id), payload);
         selectedVersionId.value = response.data.data.id;
+        draftBaseVersionId.value = null;
         notices.version = 'New revision created.';
         router.reload({ only: ['promptTemplate'] });
     } catch (error) {
@@ -443,6 +570,9 @@ const promoteToLibrary = async () => {
             </div>
 
             <div class="page-frame-content">
+            <ToastRelay :message="notices.template" />
+            <ToastRelay :message="notices.version" />
+
             <section v-if="activeTab === 'template' && promptTemplate" class="panel p-5">
                 <PanelHeader
                     title="Template snapshot"
@@ -497,10 +627,6 @@ const promoteToLibrary = async () => {
                     <button type="button" class="btn-primary" :disabled="templateForm.processing || versionForm.processing" @click="saveTemplate">
                         {{ templateSaveButtonLabel }}
                     </button>
-                </div>
-
-                <div v-if="notices.template" class="notice-banner mt-4">
-                    {{ notices.template }}
                 </div>
 
                 <div class="mt-5 grid gap-4 md:grid-cols-2">
@@ -714,93 +840,114 @@ const promoteToLibrary = async () => {
 
             <div v-if="promptTemplate && activeTab === 'versions'" class="space-y-6">
                 <section class="panel p-5">
-                    <div class="version-workbench">
-                        <div class="space-y-4">
+                    <div class="prompt-history-layout">
+                        <aside class="prompt-history-sidebar space-y-4">
                             <PanelHeader
                                 title="Revision history"
-                                description="Newest revisions first. Pick one revision to inspect or edit."
+                                description="Commit-style prompt history with quick context for what changed in each revision."
                                 :icon="Workflow"
-                                help="Shows the saved revision timeline so the team can reopen prior changes, compare versions, or branch a new draft."
+                                help="Shows the saved revision timeline so the team can reopen prior changes, branch from a prior version, and inspect revision-by-revision changes like a commit view."
                             />
 
                             <div class="flex flex-wrap gap-3">
-                                <button type="button" class="btn-secondary" @click="beginNewVersion(false)">New version</button>
+                                <button type="button" class="btn-secondary" @click="beginNewVersion(false)">
+                                    <Plus class="h-4 w-4" />
+                                    <span>New revision</span>
+                                </button>
                                 <button type="button" class="btn-secondary" :disabled="!currentVersion" @click="beginNewVersion(true)">
-                                    Copy selected version
+                                    <Copy class="h-4 w-4" />
+                                    <span>Branch from selected</span>
                                 </button>
                             </div>
 
-                            <div class="version-log">
+                            <div class="prompt-history-list">
                                 <button
                                     type="button"
-                                    class="version-log-item"
-                                    :class="{ 'version-log-item-active': isDraftVersion }"
+                                    class="prompt-history-entry"
+                                    :class="{ 'prompt-history-entry-active': isDraftVersion }"
                                     @click="beginNewVersion(false)"
                                 >
-                                    <div class="version-log-rail">
-                                        <span class="version-log-node" />
-                                        <span v-if="versionHistory.length" class="version-log-line" />
+                                    <div class="prompt-history-entry-graph">
+                                        <span class="prompt-history-entry-dot" />
+                                        <span v-if="versionHistory.length" class="prompt-history-entry-line" />
                                     </div>
+
                                     <div class="min-w-0 flex-1">
-                                        <div class="flex items-start justify-between gap-3">
-                                            <div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="font-bold">Draft revision</span>
-                                                    <span class="version-log-ref">unsaved</span>
-                                                </div>
-                                                <div class="mt-1 text-sm text-[var(--muted)]">Start a new prompt change from scratch.</div>
-                                            </div>
+                                        <div class="prompt-history-entry-title">Working draft</div>
+                                        <div class="prompt-history-entry-meta">
+                                            <span class="prompt-history-entry-ref">draft</span>
+                                            <span v-if="latestSavedVersion" class="prompt-history-entry-ref">
+                                                based on {{ draftBaseVersionId ? versionById.get(draftBaseVersionId)?.version_label || latestSavedVersion.version_label : latestSavedVersion.version_label }}
+                                            </span>
+                                        </div>
+                                        <div class="prompt-history-entry-copy">
+                                            Start a fresh revision or branch from the selected commit before saving it into history.
                                         </div>
                                     </div>
                                 </button>
 
                                 <button
-                                    v-for="(version, index) in versionHistory"
-                                    :key="version.id"
+                                    v-for="(entry, index) in versionHistoryEntries"
+                                    :key="entry.version.id"
                                     type="button"
-                                    class="version-log-item"
-                                    :class="{ 'version-log-item-active': version.id === selectedVersionId }"
-                                    @click="selectVersion(version)"
+                                    class="prompt-history-entry"
+                                    :class="{ 'prompt-history-entry-active': entry.version.id === selectedVersionId }"
+                                    @click="selectVersion(entry.version)"
                                 >
-                                    <div class="version-log-rail">
-                                        <span class="version-log-node" />
-                                        <span v-if="index < versionHistory.length - 1" class="version-log-line" />
+                                    <div class="prompt-history-entry-graph">
+                                        <span class="prompt-history-entry-dot" />
+                                        <span v-if="index < versionHistoryEntries.length - 1" class="prompt-history-entry-line" />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <span class="font-bold">{{ version.version_label }}</span>
-                                                    <span class="version-log-ref">{{ versionReference(version) }}</span>
-                                                    <span v-if="version.is_library_approved" class="status-chip">Approved</span>
+                                                <div class="prompt-history-entry-title">
+                                                    {{ entry.version.change_summary || `${entry.version.version_label} revision` }}
                                                 </div>
-                                                <div class="mt-1 text-sm leading-6 text-[var(--muted)]">
-                                                    {{ version.change_summary || 'No change summary yet.' }}
+                                                <div class="prompt-history-entry-meta">
+                                                    <span class="inline-meta-item">
+                                                        <User />
+                                                        {{ entry.version.created_by || 'Unknown author' }}
+                                                    </span>
+                                                    <span class="inline-meta-item">
+                                                        <Clock3 />
+                                                        {{ entry.version.created_at ? formatDateTime(entry.version.created_at) : 'No date' }}
+                                                    </span>
+                                                    <span class="prompt-history-entry-ref">{{ entry.version.version_label }}</span>
+                                                    <span class="prompt-history-entry-ref">{{ versionReference(entry.version) }}</span>
+                                                    <span v-if="entry.isLatest" class="status-chip">Latest</span>
+                                                    <span v-if="entry.version.is_library_approved" class="status-chip">Approved</span>
                                                 </div>
                                             </div>
-                                            <div class="text-right text-xs text-[var(--muted)]">
-                                                {{ version.created_at ? formatDateTime(version.created_at) : 'No date' }}
-                                            </div>
+                                            <div class="prompt-history-entry-count">{{ entry.changes.length }}</div>
                                         </div>
 
-                                        <div class="version-log-meta">
-                                            <span class="inline-meta-item">
-                                                <User />
-                                                {{ version.created_by || 'Unknown author' }}
-                                            </span>
+                                        <div class="prompt-history-entry-metrics">
                                             <span class="inline-meta-item">
                                                 <FlaskConical />
-                                                {{ version.run_count ?? 0 }} runs
+                                                {{ entry.version.run_count ?? 0 }} runs
                                             </span>
                                             <span class="inline-meta-item">
                                                 <Gauge />
-                                                {{ formatScore(version.average_score) }} score
+                                                {{ formatScore(entry.version.average_score) }} score
                                             </span>
-                                            <span v-if="version.reviewer_count" class="inline-meta-item">
+                                            <span v-if="entry.version.reviewer_count" class="inline-meta-item">
                                                 <MessageSquareText />
-                                                {{ version.reviewer_count }} reviewers
+                                                {{ entry.version.reviewer_count }} reviewers
                                             </span>
+                                        </div>
+
+                                        <div v-if="entry.changedLabels.length" class="prompt-history-entry-scopes">
+                                            <span v-for="label in entry.changedLabels" :key="`${entry.version.id}-${label}`" class="prompt-history-scope">
+                                                {{ label }}
+                                            </span>
+                                            <span v-if="entry.extraChanges" class="prompt-history-scope">
+                                                +{{ entry.extraChanges }} more
+                                            </span>
+                                        </div>
+                                        <div v-else class="prompt-history-entry-copy">
+                                            No content changes recorded beyond the default baseline.
                                         </div>
                                     </div>
                                 </button>
@@ -809,46 +956,112 @@ const promoteToLibrary = async () => {
                             <div v-if="!versionHistory.length" class="text-sm text-[var(--muted)]">
                                 No saved revisions yet. Save the draft to create the first history entry.
                             </div>
-                        </div>
+                        </aside>
 
                         <div class="space-y-5">
-                            <div class="flex items-center justify-between gap-4">
-                                <PanelHeader
-                                    :title="versionPanelTitle"
-                                    :description="versionPanelSummary"
-                                    :icon="Settings2"
-                                    help="Edits one specific revision, including prompt text, variables, output validation, and revision notes."
-                                />
-                                <div class="flex flex-wrap gap-3">
-                                    <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Test this version</Link>
-                                    <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
-                                        {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save version' : 'Save as new version' }}
-                                    </button>
-                                </div>
-                            </div>
+                            <article class="prompt-history-detail">
+                                <div class="prompt-history-detail-header">
+                                    <div class="min-w-0">
+                                        <div class="prompt-history-detail-title-row">
+                                            <h3 class="prompt-history-detail-title">{{ currentVersionCommitTitle }}</h3>
+                                            <span v-if="currentVersion" class="prompt-history-entry-ref">{{ currentVersion.version_label }}</span>
+                                            <span v-if="currentVersion" class="prompt-history-entry-ref">{{ versionReference(currentVersion) }}</span>
+                                            <span v-else class="prompt-history-entry-ref">draft</span>
+                                            <span v-if="currentVersion?.library_entry" class="status-chip">Approved</span>
+                                            <span v-if="currentVersion?.id === latestSavedVersion?.id" class="status-chip">Latest</span>
+                                        </div>
+                                        <p class="prompt-history-detail-copy">{{ currentVersionDetailCopy }}</p>
+                                    </div>
 
-                            <div v-if="notices.version" class="notice-banner">
-                                {{ notices.version }}
-                            </div>
+                                    <div class="flex flex-wrap gap-3">
+                                        <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Test this version</Link>
+                                        <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
+                                            {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save version' : 'Save as new version' }}
+                                        </button>
+                                    </div>
+                                </div>
 
-                            <div class="summary-strip">
-                                <div class="summary-item">
-                                    <div class="summary-item-label">Revision</div>
-                                    <div class="summary-item-value">{{ currentVersion?.version_label || 'Draft' }}</div>
+                                <div class="summary-strip">
+                                    <div class="summary-item">
+                                        <div class="summary-item-label">Revision</div>
+                                        <div class="summary-item-value">{{ currentVersion?.version_label || 'Draft' }}</div>
+                                    </div>
+                                    <div class="summary-item">
+                                        <div class="summary-item-label">Reference</div>
+                                        <div class="summary-item-value mono">{{ currentVersion ? versionReference(currentVersion) : 'unsaved' }}</div>
+                                    </div>
+                                    <div class="summary-item">
+                                        <div class="summary-item-label">Parent</div>
+                                        <div class="summary-item-value">{{ versionComparisonBase?.version_label || 'Initial state' }}</div>
+                                    </div>
+                                    <div class="summary-item">
+                                        <div class="summary-item-label">Created</div>
+                                        <div class="summary-item-value">{{ currentVersion?.created_at ? formatDateTime(currentVersion.created_at) : 'Not saved yet' }}</div>
+                                    </div>
                                 </div>
-                                <div class="summary-item">
-                                    <div class="summary-item-label">Reference</div>
-                                    <div class="summary-item-value mono">{{ currentVersion ? versionReference(currentVersion) : 'unsaved' }}</div>
+
+                                <div class="prompt-history-diff">
+                                    <div class="prompt-history-diff-header">
+                                        <div>
+                                            <div class="section-title">Files changed</div>
+                                            <p class="mt-1 text-sm text-[var(--muted)]">
+                                                Compare this revision with {{ versionComparisonBase?.version_label || 'the initial state' }} before editing further.
+                                            </p>
+                                        </div>
+                                        <div class="prompt-history-entry-count">{{ currentVersionChanges.length }}</div>
+                                    </div>
+
+                                    <div v-if="currentVersionChanges.length" class="prompt-history-change-list">
+                                        <section
+                                            v-for="change in currentVersionChanges"
+                                            :key="change.key"
+                                            class="prompt-history-change-card"
+                                        >
+                                            <div class="prompt-history-change-header">
+                                                <div class="font-semibold text-[var(--ink)]">{{ change.label }}</div>
+                                                <span
+                                                    class="prompt-history-change-status"
+                                                    :class="`prompt-history-change-status-${change.changeType}`"
+                                                >
+                                                    {{ change.changeTypeLabel }}
+                                                </span>
+                                            </div>
+
+                                            <div class="prompt-history-change-grid">
+                                                <div class="prompt-history-change-pane prompt-history-change-pane-old">
+                                                    <div class="prompt-history-change-pane-label">
+                                                        {{ versionComparisonBase?.version_label || 'Initial state' }}
+                                                    </div>
+                                                    <pre
+                                                        class="prompt-history-change-body"
+                                                        :class="{ 'prompt-history-change-body-mono': change.mono }"
+                                                    >{{ change.previousDisplay }}</pre>
+                                                </div>
+                                                <div class="prompt-history-change-pane prompt-history-change-pane-new">
+                                                    <div class="prompt-history-change-pane-label">
+                                                        {{ currentVersion?.version_label || 'Draft' }}
+                                                    </div>
+                                                    <pre
+                                                        class="prompt-history-change-body"
+                                                        :class="{ 'prompt-history-change-body-mono': change.mono }"
+                                                    >{{ change.currentDisplay }}</pre>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    </div>
+
+                                    <div v-else class="prompt-history-empty">
+                                        No content changes yet. Update the editor below to build a meaningful revision diff.
+                                    </div>
                                 </div>
-                                <div class="summary-item">
-                                    <div class="summary-item-label">Created</div>
-                                    <div class="summary-item-value">{{ currentVersion?.created_at ? formatDateTime(currentVersion.created_at) : 'Not saved yet' }}</div>
-                                </div>
-                                <div class="summary-item">
-                                    <div class="summary-item-label">Approved</div>
-                                    <div class="summary-item-value">{{ currentVersion?.library_entry ? 'Yes' : 'No' }}</div>
-                                </div>
-                            </div>
+                            </article>
+
+                            <PanelHeader
+                                :title="versionPanelTitle"
+                                :description="versionPanelSummary"
+                                :icon="Settings2"
+                                help="Edits one specific revision, including prompt text, variables, output validation, and revision notes."
+                            />
 
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
@@ -989,9 +1202,9 @@ const promoteToLibrary = async () => {
                                 </div>
                             </div>
 
-                            <div v-if="currentVersion?.reviewer_count" class="text-sm text-[var(--muted)]">
-                                Reviewers involved: {{ currentVersion.reviewers.join(', ') }}
-                            </div>
+                                <div v-if="currentVersion?.reviewer_count" class="text-sm text-[var(--muted)]">
+                                    Reviewers involved: {{ currentVersion.reviewers?.join(', ') || 'Reviewer names not recorded.' }}
+                                </div>
                         </div>
                     </div>
                 </section>
@@ -1008,6 +1221,15 @@ const promoteToLibrary = async () => {
                     :models="availableModels"
                 />
             </div>
+
+            <PromptOptimizationPanel
+                v-else-if="promptTemplate && activeTab === 'optimize'"
+                :prompt-template="promptTemplate"
+                :versions="versions"
+                :models="availableModels"
+                :optimization-context="optimizationContext"
+                :suggested-source-version-id="currentVersion?.id ?? latestSavedVersion?.id ?? null"
+            />
 
             <section v-else-if="promptTemplate && activeTab === 'library'" class="panel p-5">
                 <PanelHeader
@@ -1194,12 +1416,3 @@ const promoteToLibrary = async () => {
         </div>
     </AuthenticatedLayout>
 </template>
-            <PromptOptimizationPanel
-                v-else-if="promptTemplate && activeTab === 'optimize'"
-                :prompt-template="promptTemplate"
-                :versions="versions"
-                :models="availableModels"
-                :optimization-context="optimizationContext"
-                :suggested-source-version-id="currentVersion?.id ?? latestSavedVersion?.id ?? null"
-            />
-
