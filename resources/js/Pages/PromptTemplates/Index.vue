@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
 
         <div class="page-frame-content">
             <section class="surface-block">
-                <div class="surface-block-header">
+                <div class="surface-block-header lg:flex-row lg:items-start lg:justify-between">
                     <div>
                         <h2 class="section-title">Prompt catalog</h2>
                         <p class="text-sm text-[var(--muted)]">

@@ -223,7 +223,7 @@ const activeTab = useUrlState({
 
             <div class="page-frame-content">
                 <section v-if="activeTab === 'directory'" class="surface-block">
-                    <div class="surface-block-header">
+                    <div class="surface-block-header lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <h2 class="section-title">Task directory</h2>
                             <p class="text-sm text-[var(--muted)]">Browse tasks on the left and inspect the selected task on the right.</p>

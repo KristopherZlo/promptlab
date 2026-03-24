@@ -108,7 +108,7 @@ const recentExperimentHref = (experiment) =>
 
             <div class="page-frame-content">
                 <section v-if="activeTab === 'overview'" class="surface-block">
-                    <div class="surface-block-header">
+                    <div class="surface-block-header lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <h2 class="section-title">Workspace overview</h2>
                             <p class="text-sm text-[var(--muted)]">Current volume across tasks, templates, experiments, and approved prompts.</p>
