@@ -48,6 +48,35 @@
         --focus-ring-strong: rgba(243, 239, 230, 0.1);
         --nav-muted: rgba(243, 239, 230, 0.74);
         --selection-accent: #f3efe6;
+        --selection-ink: #131313;
+        --checkbox-border: #5a5a5a;
+        --surface-faint: rgba(255, 255, 255, 0.02);
+        --surface-faint-strong: rgba(255, 255, 255, 0.04);
+        --surface-faint-hover: rgba(255, 255, 255, 0.06);
+        --surface-stroke-highlight: rgba(255, 255, 255, 0.02);
+        --surface-stroke-highlight-soft: rgba(255, 255, 255, 0.015);
+        --surface-shadow: rgba(0, 0, 0, 0.3);
+        --surface-shadow-soft: rgba(0, 0, 0, 0.28);
+        --surface-shadow-strong: rgba(0, 0, 0, 0.32);
+        --overlay-scrim: rgba(0, 0, 0, 0.55);
+        --success-subtle: rgba(125, 164, 138, 0.08);
+        --success-subtle-strong: rgba(94, 154, 103, 0.16);
+        --success-border: rgba(125, 164, 138, 0.32);
+        --success-border-soft: rgba(125, 164, 138, 0.18);
+        --success-ink: #d3ecd8;
+        --warning-subtle: rgba(191, 133, 79, 0.12);
+        --warning-border: rgba(191, 133, 79, 0.32);
+        --warning-ink: #f0dcc4;
+        --danger-subtle: rgba(207, 113, 113, 0.12);
+        --danger-subtle-strong: rgba(207, 113, 113, 0.18);
+        --danger-border: rgba(207, 113, 113, 0.85);
+        --danger-border-strong: rgba(207, 113, 113, 0.95);
+        --danger-border-soft: rgba(207, 113, 113, 0.35);
+        --danger-ink: #ffd7d7;
+        --danger-ink-strong: #fff0f0;
+        --panel-contrast: #181818;
+        --select-caret-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='m6 9 6 6 6-6' stroke='%23a39d92' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        --checkbox-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 6.2L4.9 8.6L9.4 3.8' stroke='%23131313' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
     :root[data-theme='light'] {
@@ -86,6 +115,35 @@
         --focus-ring-strong: rgba(37, 99, 235, 0.18);
         --nav-muted: rgba(13, 13, 13, 0.72);
         --selection-accent: #2563eb;
+        --selection-ink: #ffffff;
+        --checkbox-border: #94a3b8;
+        --surface-faint: rgba(15, 23, 42, 0.03);
+        --surface-faint-strong: rgba(15, 23, 42, 0.05);
+        --surface-faint-hover: rgba(15, 23, 42, 0.08);
+        --surface-stroke-highlight: rgba(255, 255, 255, 0.7);
+        --surface-stroke-highlight-soft: rgba(255, 255, 255, 0.55);
+        --surface-shadow: rgba(15, 23, 42, 0.06);
+        --surface-shadow-soft: rgba(15, 23, 42, 0.04);
+        --surface-shadow-strong: rgba(15, 23, 42, 0.08);
+        --overlay-scrim: rgba(15, 23, 42, 0.18);
+        --success-subtle: rgba(22, 163, 74, 0.08);
+        --success-subtle-strong: rgba(22, 163, 74, 0.16);
+        --success-border: rgba(22, 163, 74, 0.24);
+        --success-border-soft: rgba(22, 163, 74, 0.18);
+        --success-ink: #166534;
+        --warning-subtle: rgba(249, 115, 22, 0.08);
+        --warning-border: rgba(249, 115, 22, 0.24);
+        --warning-ink: #c2410c;
+        --danger-subtle: rgba(220, 38, 38, 0.08);
+        --danger-subtle-strong: rgba(220, 38, 38, 0.14);
+        --danger-border: rgba(220, 38, 38, 0.24);
+        --danger-border-strong: rgba(220, 38, 38, 0.34);
+        --danger-border-soft: rgba(220, 38, 38, 0.2);
+        --danger-ink: #b91c1c;
+        --danger-ink-strong: #991b1b;
+        --panel-contrast: #f3f4f6;
+        --select-caret-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='m6 9 6 6 6-6' stroke='%235d5d5d' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        --checkbox-check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 6.2L4.9 8.6L9.4 3.8' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     }
 
     * {
@@ -206,7 +264,7 @@
 
     .record-list-item {
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
         padding: 1rem 1.1rem;
     }
 
@@ -236,7 +294,7 @@
     .console-page,
     .page-frame-rail,
     .app-page-card {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.015);
+        box-shadow: inset 0 1px 0 var(--surface-stroke-highlight-soft);
     }
 
     .surface-muted,
@@ -249,12 +307,12 @@
     .app-avatar-button,
     .btn-secondary,
     .btn-ghost {
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
     }
 
     .status-chip,
     .role-badge {
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--surface-faint-strong);
     }
 
     .btn-ghost:hover,
@@ -262,7 +320,7 @@
     .app-user-trigger:hover,
     .app-mobile-button:hover,
     .app-avatar-button:hover {
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--surface-faint-hover);
     }
 }
 
@@ -272,8 +330,8 @@
         border-color: var(--line);
         background: var(--panel);
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.02),
-            0 1px 0 rgba(0, 0, 0, 0.3);
+            inset 0 1px 0 var(--surface-stroke-highlight),
+            0 1px 0 var(--surface-shadow);
     }
 
     .panel-muted {
@@ -288,8 +346,8 @@
         border-color: var(--line);
         background: var(--panel);
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.02),
-            0 1px 0 rgba(0, 0, 0, 0.28);
+            inset 0 1px 0 var(--surface-stroke-highlight),
+            0 1px 0 var(--surface-shadow-soft);
     }
 
     .page-primer-grid,
@@ -333,8 +391,8 @@
     }
 
     .workflow-step-complete {
-        border-color: rgba(125, 164, 138, 0.32);
-        background: rgba(125, 164, 138, 0.08);
+        border-color: var(--success-border);
+        background: var(--success-subtle);
     }
 
     .workflow-step-topline,
@@ -417,7 +475,7 @@
     .tour-spotlight {
         @apply fixed rounded-[10px] border;
         border-color: var(--accent-border-max);
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.62);
+        box-shadow: 0 0 0 9999px color-mix(in srgb, var(--overlay-scrim) 100%, transparent);
         pointer-events: none;
         transition:
             top 140ms ease,
@@ -431,7 +489,7 @@
         @apply fixed w-[min(320px,calc(100vw-2rem))] rounded-[10px] border p-4;
         border-color: var(--line);
         background: var(--panel);
-        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.32);
+        box-shadow: 0 16px 32px var(--surface-shadow-strong);
         transition:
             top 140ms ease,
             left 140ms ease,
@@ -526,7 +584,7 @@
         border-color: var(--line);
         background: var(--tooltip-surface);
         color: var(--ink);
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 12px 24px var(--surface-shadow);
     }
 
     .help-hint:hover .help-hint-tooltip,
@@ -721,7 +779,7 @@
 
     .field-select {
         appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5.25L7 8.75L10.5 5.25' stroke='%23a39d92' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-image: var(--select-caret-icon);
         background-position: right 0.85rem center;
         background-repeat: no-repeat;
         background-size: 14px 14px;
@@ -785,14 +843,14 @@
     }
 
     .btn-danger {
-        border-color: rgba(207, 113, 113, 0.85);
-        background: rgba(207, 113, 113, 0.12);
-        color: #ffd7d7;
+        border-color: var(--danger-border);
+        background: var(--danger-subtle);
+        color: var(--danger-ink);
     }
 
     .btn-danger:hover {
-        background: rgba(207, 113, 113, 0.18);
-        border-color: rgba(207, 113, 113, 0.95);
+        background: var(--danger-subtle-strong);
+        border-color: var(--danger-border-strong);
     }
 
     .btn-primary:focus-visible,
@@ -819,7 +877,7 @@
         @apply border-b px-4 py-3 font-semibold;
         border-color: var(--line);
         color: var(--muted);
-        background: rgba(255, 255, 255, 0.01);
+        background: var(--surface-faint);
     }
 
     .data-table tbody td {
@@ -861,7 +919,7 @@
 
     .check-row:hover {
         border-color: var(--line-strong);
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
     }
 
     .check-row input[type='checkbox'] {
@@ -870,7 +928,7 @@
         height: 1rem;
         margin-top: 0.18rem;
         flex-shrink: 0;
-        border: 1px solid #5a5a5a;
+        border: 1px solid var(--checkbox-border);
         border-radius: 4px;
         background-color: transparent;
         background-position: center;
@@ -883,9 +941,9 @@
     }
 
     .check-row input[type='checkbox']:checked {
-        border-color: #f3efe6;
-        background-color: #f3efe6;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 6.2L4.9 8.6L9.4 3.8' stroke='%23131313' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        border-color: var(--selection-accent);
+        background-color: var(--selection-accent);
+        background-image: var(--checkbox-check-icon);
     }
 
     .check-row input[type='checkbox']:focus-visible {
@@ -907,7 +965,7 @@
         height: 1rem;
         margin-top: 0.18rem;
         flex-shrink: 0;
-        border: 1px solid #5a5a5a;
+        border: 1px solid var(--checkbox-border);
         border-radius: 999px;
         background: transparent;
         transition:
@@ -963,9 +1021,9 @@
 
     .notice-banner {
         @apply rounded-[10px] border px-4 py-3 text-sm;
-        border-color: rgba(191, 133, 79, 0.32);
-        background: rgba(191, 133, 79, 0.12);
-        color: #f0dcc4;
+        border-color: var(--warning-border);
+        background: var(--warning-subtle);
+        color: var(--warning-ink);
     }
 
     .scrollbar-hidden {
@@ -983,7 +1041,8 @@
     }
 
     .shell-overlay {
-        @apply fixed inset-0 z-30 bg-black/60 lg:hidden;
+        @apply fixed inset-0 z-30 lg:hidden;
+        background: var(--overlay-scrim);
     }
 
     .shell-sidebar {
@@ -1037,7 +1096,7 @@
     }
 
     .shell-nav-link-active {
-        background: #232323;
+        background: var(--surface-accent);
         color: var(--ink);
     }
 
@@ -1186,7 +1245,7 @@
         background-image: none;
         color: var(--ink);
         cursor: pointer;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        box-shadow: inset 0 1px 0 var(--surface-stroke-highlight);
     }
 
     .shell-select-sidebar:hover:not(:disabled) {
@@ -1264,9 +1323,9 @@
     }
 
     .role-badge-platform {
-        border-color: rgba(125, 164, 138, 0.18);
-        background: rgba(125, 164, 138, 0.08);
-        color: #d3ecd8;
+        border-color: var(--success-border-soft);
+        background: var(--success-subtle);
+        color: var(--success-ink);
     }
 
     .modal-actions {
@@ -1365,7 +1424,7 @@
     .console-list-pane {
         @apply border-b;
         border-color: var(--line);
-        background: #181818;
+        background: var(--panel-contrast);
     }
 
     .console-list-head {
@@ -1486,7 +1545,7 @@
     }
 
     .console-rail {
-        background: #181818;
+        background: var(--panel-contrast);
     }
 
     .console-rail-title {
@@ -1589,7 +1648,7 @@
     .quick-link-card,
     .workspace-tab,
     .workflow-step {
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.01);
+        box-shadow: inset 0 1px 0 var(--surface-stroke-highlight-soft);
     }
 
     .page-primer,
@@ -1666,7 +1725,7 @@
     .page-tab:hover,
     .app-section-tab:hover {
         color: var(--ink);
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
     }
 
     .page-tab-active,
@@ -1739,7 +1798,7 @@
     }
 
     .data-table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
     }
 
     .console-page {
@@ -1773,7 +1832,7 @@
     .console-list-head,
     .console-rail-section,
     .console-usage-stage {
-        background: rgba(255, 255, 255, 0.01);
+        background: var(--surface-faint);
     }
 
     .console-list-head,
@@ -1808,7 +1867,7 @@
     }
 
     .console-list-item-active {
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--surface-faint);
     }
 
     .console-detail-section {
@@ -1827,8 +1886,8 @@
 
     .notice-banner {
         border-radius: 10px;
-        border-color: rgba(191, 133, 79, 0.28);
-        background: rgba(191, 133, 79, 0.08);
+        border-color: var(--warning-border);
+        background: var(--warning-subtle);
         color: var(--ink);
     }
 
@@ -1856,7 +1915,7 @@
         position: fixed;
         inset: 0;
         z-index: 40;
-        background: rgba(0, 0, 0, 0.55);
+        background: var(--overlay-scrim);
     }
 
     .app-sidebar {
@@ -1960,12 +2019,12 @@
     }
 
     .app-nav-item:hover {
-        background: rgba(255, 255, 255, 0.04);
+        background: var(--surface-faint-strong);
         color: var(--ink);
     }
 
     .app-nav-item-active {
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--surface-faint-hover);
         color: var(--ink);
     }
 
@@ -2097,7 +2156,7 @@
         overflow: hidden;
         border: 1px solid var(--line);
         border-radius: 18px;
-        background: #212121;
+        background: var(--panel);
     }
 
     .app-page-card-head {
@@ -2284,7 +2343,7 @@
     .filter-chip:hover,
     .filter-chip-active {
         border-color: var(--line-strong);
-        background: #2b2b2b;
+        background: var(--surface-accent);
         color: var(--ink);
     }
 
@@ -2326,8 +2385,8 @@
         width: min(var(--filter-menu-width), calc(100vw - 2rem));
         border: 1px solid var(--line);
         border-radius: 14px;
-        background: #2a2a2a;
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+        background: var(--panel);
+        box-shadow: 0 18px 40px var(--surface-shadow-strong);
         overflow: hidden;
         z-index: 70;
     }
@@ -2382,7 +2441,7 @@
     }
 
     .filter-menu-clear:hover {
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--surface-faint);
         color: var(--ink);
     }
 
@@ -2421,7 +2480,7 @@
 
     .filter-toolbar-reset:hover {
         border-color: var(--line-strong);
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--surface-faint);
         color: var(--ink);
     }
 
@@ -2527,11 +2586,11 @@
     }
 
     .record-list-item:hover {
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
     }
 
     .record-list-item-active {
-        background: rgba(255, 255, 255, 0.04);
+        background: var(--surface-faint-strong);
     }
 
     .key-value-grid {
@@ -2691,7 +2750,7 @@
     .people-access-member:hover,
     .people-access-member-active {
         border-color: var(--line-strong);
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
     }
 
     .people-access-member-main,
@@ -2720,7 +2779,7 @@
         justify-content: center;
         border: 1px solid var(--line);
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.02);
+        background: var(--surface-faint);
         color: var(--ink);
         font-size: 0.82rem;
         font-weight: 600;
@@ -2783,7 +2842,7 @@
         align-items: center;
         border: 1px solid var(--line);
         color: var(--ink);
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--surface-faint);
         font-size: 0.74rem;
         font-weight: 600;
     }
@@ -2795,9 +2854,9 @@
     }
 
     .people-access-tag-self {
-        border-color: rgba(94, 154, 103, 0.32);
-        background: rgba(94, 154, 103, 0.16);
-        color: #8ed39d;
+        border-color: var(--success-border);
+        background: var(--success-subtle-strong);
+        color: var(--success-ink);
     }
 
     .people-access-detail {
