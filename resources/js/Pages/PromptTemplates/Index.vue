@@ -4,7 +4,18 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import FilterDropdown from '@/Components/FilterDropdown.vue';
 import SearchFilterBar from '@/Components/SearchFilterBar.vue';
-import { Bot, ClipboardList, Filter, FolderKanban, UserRound } from 'lucide-vue-next';
+import {
+    BadgeCheck,
+    Bot,
+    ClipboardList,
+    Filter,
+    FolderKanban,
+    Gauge,
+    Layers3,
+    RotateCcw,
+    UserRound,
+    X,
+} from 'lucide-vue-next';
 import { formatDateTime, formatScore } from '@/lib/formatters';
 import { routeWithQuery } from '@/lib/urlState';
 
@@ -21,12 +32,25 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    collections: {
+        type: Array,
+        required: true,
+    },
 });
 
 const page = usePage();
 const taskTypes = ['summarization', 'classification', 'rewrite', 'extraction', 'generation'];
 const statuses = ['active', 'draft', 'archived'];
+const sortOptions = [
+    { label: 'Recently updated', value: 'recent' },
+    { label: 'Highest score', value: 'score' },
+    { label: 'Most reviewed', value: 'reviewed' },
+    { label: 'Most versions', value: 'versions' },
+    { label: 'Name', value: 'name' },
+];
+
 const selectedTemplateId = ref(null);
+const sortBy = ref('recent');
 
 const filterForm = reactive({
     search: props.filters.search ?? '',
@@ -38,16 +62,24 @@ const filterForm = reactive({
 });
 
 const canManageTemplates = computed(() => (page.props.auth?.abilities ?? []).includes('manage_prompts'));
-const taskTypeOptions = taskTypes.map((taskType) => ({
-    label: taskType,
-    value: taskType,
-}));
-const statusOptions = statuses.map((status) => ({
-    label: status,
-    value: status,
-}));
+const taskTypeOptions = taskTypes.map((taskType) => ({ label: taskType, value: taskType }));
+const statusOptions = statuses.map((status) => ({ label: status, value: status }));
+const formatUseCaseName = (name) => {
+    if (!name) {
+        return '';
+    }
+
+    const agencyAgentsPrefix = 'Agency Agents / ';
+
+    if (!name.startsWith(agencyAgentsPrefix)) {
+        return name;
+    }
+
+    return `${name.slice(agencyAgentsPrefix.length)} / Agency Agents`;
+};
+
 const useCaseLabel = computed(() =>
-    props.useCases.find((useCase) => `${useCase.id}` === `${filterForm.use_case_id}`)?.name ?? '',
+    formatUseCaseName(props.useCases.find((useCase) => `${useCase.id}` === `${filterForm.use_case_id}`)?.name ?? ''),
 );
 const taskTypeLabel = computed(() =>
     taskTypeOptions.find((item) => item.value === filterForm.task_type)?.label ?? '',
@@ -71,41 +103,100 @@ const hasFilters = computed(() =>
     Object.values(filterForm).some((value) => `${value ?? ''}`.trim() !== ''),
 );
 
-const selectedTemplate = computed(() =>
-    props.templates.find((template) => template.id === selectedTemplateId.value) ?? props.templates[0] ?? null,
+const libraryReadyCount = computed(() =>
+    props.templates.filter((template) => template.approval_state === 'approved').length,
 );
-const selectedTemplateRunHref = computed(() => {
-    if (!selectedTemplate.value) {
-        return route('playground');
-    }
+const pendingApprovalCount = computed(() => props.templates.length - libraryReadyCount.value);
+const collectionOptions = computed(() => props.collections);
+const collectionTotal = computed(() =>
+    collectionOptions.value.reduce((total, collection) => total + (collection.count ?? 0), 0),
+);
 
-    const latestVersionId = selectedTemplate.value.versions?.at(-1)?.id ?? '';
+const activeFilterSummary = computed(() =>
+    [
+        filterForm.search ? `Search: ${filterForm.search}` : null,
+        useCaseLabel.value ? `Task: ${useCaseLabel.value}` : null,
+        taskTypeLabel.value ? `Type: ${taskTypeLabel.value}` : null,
+        statusLabel.value ? `Status: ${statusLabel.value}` : null,
+        filterForm.preferred_model ? `Model: ${filterForm.preferred_model}` : null,
+        filterForm.author ? `Author: ${filterForm.author}` : null,
+    ].filter(Boolean),
+);
+
+const sortedTemplates = computed(() => {
+    const items = [...props.templates];
+
+    switch (sortBy.value) {
+        case 'score':
+            return items.sort((left, right) =>
+                (right.average_score ?? -1) - (left.average_score ?? -1)
+                || left.name.localeCompare(right.name),
+            );
+        case 'reviewed':
+            return items.sort((left, right) =>
+                (right.reviewed_runs ?? 0) - (left.reviewed_runs ?? 0)
+                || left.name.localeCompare(right.name),
+            );
+        case 'versions':
+            return items.sort((left, right) =>
+                (right.versions_count ?? 0) - (left.versions_count ?? 0)
+                || left.name.localeCompare(right.name),
+            );
+        case 'name':
+            return items.sort((left, right) => left.name.localeCompare(right.name));
+        default:
+            return items.sort((left, right) =>
+                Date.parse(right.updated_at ?? right.created_at ?? '') - Date.parse(left.updated_at ?? left.created_at ?? '')
+                || left.name.localeCompare(right.name),
+            );
+    }
+});
+
+const selectedTemplate = computed(() =>
+    sortedTemplates.value.find((template) => template.id === selectedTemplateId.value) ?? sortedTemplates.value[0] ?? null,
+);
+const selectedTemplateLatestVersion = computed(() => selectedTemplate.value?.versions?.at(-1) ?? null);
+const selectedTemplateApprovedVersion = computed(() =>
+    [...(selectedTemplate.value?.versions ?? [])].reverse().find((version) => version.is_library_approved) ?? null,
+);
+const selectedTemplateVersions = computed(() =>
+    [...(selectedTemplate.value?.versions ?? [])].reverse().slice(0, 5),
+);
+
+const templatePrimaryModel = (template) =>
+    template.preferred_model
+    || template.versions?.at(-1)?.preferred_model
+    || template.versions?.find((version) => version.is_library_approved)?.library_entry?.recommended_model
+    || '';
+
+const templateApprovalLabel = (template) =>
+    template.approval_state === 'approved' ? 'Library ready' : template.status;
+
+const templateRunHref = (template) => {
+    const latestVersionId = template.versions?.at(-1)?.id ?? '';
 
     return routeWithQuery('playground', {}, {
         mode: 'single',
-        use_case_id: selectedTemplate.value.use_case_id,
-        prompt_template_id: selectedTemplate.value.id,
+        use_case_id: template.use_case_id,
+        prompt_template_id: template.id,
         prompt_version_id: latestVersionId,
     });
-});
+};
 
-const statusBreakdown = computed(() =>
-    statuses.map((status) => ({
-        status,
-        count: props.templates.filter((template) => template.status === status).length,
-    })),
+const selectedTemplateRunHref = computed(() =>
+    selectedTemplate.value ? templateRunHref(selectedTemplate.value) : route('playground'),
 );
 
 watch(
-    () => props.templates,
-    (items) => {
-        if (!items.length) {
+    () => sortedTemplates.value.map((item) => item.id),
+    (ids) => {
+        if (!ids.length) {
             selectedTemplateId.value = null;
             return;
         }
 
-        if (!items.some((item) => item.id === selectedTemplateId.value)) {
-            selectedTemplateId.value = items[0].id;
+        if (!ids.includes(selectedTemplateId.value)) {
+            selectedTemplateId.value = ids[0];
         }
     },
     { immediate: true },
@@ -126,13 +217,12 @@ const pushFilters = () => {
     router.get(route('prompt-templates.index'), cleanedFilters(), {
         preserveState: true,
         replace: true,
-        only: ['templates', 'filters', 'useCases'],
+        only: ['templates', 'filters', 'useCases', 'collections'],
     });
 };
 
 const updateFilter = (key, value) => {
     filterForm[key] = value;
-
     pushFilters();
 };
 
@@ -154,63 +244,51 @@ const resetFilters = () => {
     router.get(route('prompt-templates.index'), {}, {
         preserveState: true,
         replace: true,
-        only: ['templates', 'filters', 'useCases'],
+        only: ['templates', 'filters', 'useCases', 'collections'],
     });
 };
 
-watch(
-    () => props.filters.search,
-    (value) => {
-        const nextValue = value ?? '';
+watch(() => props.filters.search, (value) => {
+    const nextValue = value ?? '';
 
-        if (filterForm.search !== nextValue) {
-            suspendTextRequests = true;
-            filterForm.search = nextValue;
-            suspendTextRequests = false;
-        }
-    },
-);
+    if (filterForm.search !== nextValue) {
+        suspendTextRequests = true;
+        filterForm.search = nextValue;
+        suspendTextRequests = false;
+    }
+});
 
-watch(
-    () => props.filters.author,
-    (value) => {
-        const nextValue = value ?? '';
+watch(() => props.filters.author, (value) => {
+    const nextValue = value ?? '';
 
-        if (filterForm.author !== nextValue) {
-            suspendTextRequests = true;
-            filterForm.author = nextValue;
-            suspendTextRequests = false;
-        }
-    },
-);
+    if (filterForm.author !== nextValue) {
+        suspendTextRequests = true;
+        filterForm.author = nextValue;
+        suspendTextRequests = false;
+    }
+});
 
-watch(
-    () => filterForm.search,
-    () => {
-        if (suspendTextRequests) {
-            return;
-        }
+watch(() => filterForm.search, () => {
+    if (suspendTextRequests) {
+        return;
+    }
 
-        window.clearTimeout(searchTimer);
-        searchTimer = window.setTimeout(() => {
-            pushFilters();
-        }, 240);
-    },
-);
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+        pushFilters();
+    }, 240);
+});
 
-watch(
-    () => filterForm.author,
-    () => {
-        if (suspendTextRequests) {
-            return;
-        }
+watch(() => filterForm.author, () => {
+    if (suspendTextRequests) {
+        return;
+    }
 
-        window.clearTimeout(authorTimer);
-        authorTimer = window.setTimeout(() => {
-            pushFilters();
-        }, 240);
-    },
-);
+    window.clearTimeout(authorTimer);
+    authorTimer = window.setTimeout(() => {
+        pushFilters();
+    }, 240);
+});
 
 onBeforeUnmount(() => {
     window.clearTimeout(searchTimer);
@@ -219,59 +297,62 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="Prompt Templates" />
+    <Head title="Prompts" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
                 <h1>Prompts</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    Search and narrow the template catalog from a single working view.
+                    Browse the prompt catalog as a working library, not a flat list.
                 </p>
             </div>
         </template>
 
         <div class="page-frame-content">
             <section class="surface-block">
-                    <div class="surface-block-header">
-                        <div>
-                            <h2 class="section-title">Template directory</h2>
-                            <p class="text-sm text-[var(--muted)]">Browse families on the left and inspect the selected template on the right.</p>
+                <div class="surface-block-header">
+                    <div>
+                        <h2 class="section-title">Prompt catalog</h2>
+                        <p class="text-sm text-[var(--muted)]">
+                            Search, narrow, sort, and open reusable prompts from a single library view.
+                        </p>
+                    </div>
+                    <div class="console-page-actions">
+                        <Link v-if="canManageTemplates" :href="route('prompt-templates.create')" class="btn-primary">Add prompt</Link>
+                    </div>
+                </div>
+
+                <div class="surface-block-body space-y-5">
+                    <div class="summary-strip">
+                        <div class="summary-item">
+                            <div class="summary-item-label">Visible prompts</div>
+                            <div class="summary-item-value">{{ sortedTemplates.length }}</div>
                         </div>
-                        <div class="console-page-actions">
-                            <Link v-if="canManageTemplates" :href="route('prompt-templates.create')" class="btn-primary">Add prompt</Link>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Library ready</div>
+                            <div class="summary-item-value">{{ libraryReadyCount }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Pending approval</div>
+                            <div class="summary-item-value">{{ pendingApprovalCount }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Collections</div>
+                            <div class="summary-item-value">{{ collectionOptions.length }}</div>
                         </div>
                     </div>
 
-                    <div class="surface-block-body space-y-6">
-                        <div class="summary-strip">
-                            <div class="summary-item">
-                                <div class="summary-item-label">Templates</div>
-                                <div class="summary-item-value">{{ templates.length }}</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-item-label">Models seen</div>
-                                <div class="summary-item-value">{{ preferredModels.length }}</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-item-label">Active</div>
-                                <div class="summary-item-value">{{ statusBreakdown.find((row) => row.status === 'active')?.count ?? 0 }}</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-item-label">Draft</div>
-                                <div class="summary-item-value">{{ statusBreakdown.find((row) => row.status === 'draft')?.count ?? 0 }}</div>
-                            </div>
-                        </div>
-
+                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
                         <SearchFilterBar
                             :model-value="filterForm.search"
-                            placeholder="Search templates by name or description..."
+                            placeholder="Search prompts by name, description, or notes..."
                             @update:model-value="filterForm.search = $event"
                         >
                             <FilterDropdown
                                 label="Task"
                                 :icon="FolderKanban"
-                                :options="useCases.map((useCase) => ({ label: useCase.name, value: useCase.id }))"
+                                :options="useCases.map((useCase) => ({ label: formatUseCaseName(useCase.name), value: useCase.id }))"
                                 :selected="filterForm.use_case_id"
                                 :selected-label="useCaseLabel"
                                 width="260px"
@@ -334,131 +415,280 @@ onBeforeUnmount(() => {
                                             close();
                                         "
                                     >
-                                        Clear
+                                        <X class="h-4 w-4" />
+                                        <span>Clear</span>
                                     </button>
                                 </template>
                             </FilterDropdown>
-                            <button v-if="hasFilters" type="button" class="filter-toolbar-reset" @click="resetFilters">
-                                Reset
+                            <button
+                                v-if="hasFilters"
+                                type="button"
+                                class="filter-toolbar-reset filter-toolbar-reset-icon"
+                                title="Reset filters"
+                                aria-label="Reset filters"
+                                @click="resetFilters"
+                            >
+                                <RotateCcw class="h-4 w-4" />
                             </button>
                         </SearchFilterBar>
 
-                        <div class="console-page">
-                            <div class="console-page-grid">
-                                <div class="console-list-pane">
-                                    <div class="console-list-head">Templates</div>
+                        <div>
+                            <label class="field-label">Sort</label>
+                            <select v-model="sortBy" class="field-select">
+                                <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
 
-                                    <div v-if="templates.length" class="console-list-scroll">
-                                        <button
-                                            v-for="template in templates"
-                                            :key="template.id"
-                                            type="button"
-                                            class="console-list-item"
-                                            :class="{ 'console-list-item-active': template.id === selectedTemplate?.id }"
-                                            @click="selectedTemplateId = template.id"
-                                        >
-                                            <div class="console-list-title-row">
-                                                <div class="console-list-title">{{ template.name }}</div>
-                                                <span class="status-chip">{{ template.status }}</span>
-                                            </div>
+                    <div v-if="activeFilterSummary.length" class="flex flex-wrap gap-2 text-sm text-[var(--muted)]">
+                        <span v-for="item in activeFilterSummary" :key="item" class="role-badge">
+                            {{ item }}
+                        </span>
+                    </div>
+                </div>
+            </section>
 
-                                            <div class="console-list-meta">
-                                                {{ template.use_case?.name || 'No task assigned' }} | {{ template.task_type }}
-                                            </div>
+            <div class="prompt-library-shell">
+                <aside class="panel p-4 xl:sticky xl:top-4 xl:self-start">
+                    <div class="prompt-library-rail-title">Collections</div>
+                    <div class="mt-3 space-y-2">
+                        <button
+                            type="button"
+                            class="prompt-library-collection"
+                            :class="{ 'prompt-library-collection-active': !filterForm.use_case_id }"
+                            @click="updateFilter('use_case_id', '')"
+                        >
+                            <span>All prompts</span>
+                            <span class="text-sm text-[var(--muted)]">{{ collectionTotal }}</span>
+                        </button>
 
-                                            <div class="console-list-foot">
-                                                <span class="console-list-foot-item">{{ template.versions_count }} versions</span>
-                                                <span class="console-list-foot-item">{{ formatScore(template.average_score) }}</span>
-                                            </div>
-                                        </button>
-                                    </div>
+                        <button
+                            v-for="collection in collectionOptions"
+                            :key="collection.id"
+                            type="button"
+                            class="prompt-library-collection"
+                            :class="{ 'prompt-library-collection-active': `${collection.id}` === `${filterForm.use_case_id}` }"
+                            @click="updateFilter('use_case_id', collection.id)"
+                        >
+                            <span class="truncate text-[13px] leading-5">{{ formatUseCaseName(collection.name) }}</span>
+                            <span class="text-sm text-[var(--muted)]">{{ collection.count }}</span>
+                        </button>
+                    </div>
 
-                                    <div v-else class="console-empty-pane">
-                                        No prompt templates match the current filters.
-                                    </div>
-                                </div>
-
-                                <div class="console-detail-pane">
-                                    <template v-if="selectedTemplate">
-                                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                            <div class="max-w-3xl">
-                                                <div class="text-sm text-[var(--muted)]">Selected template</div>
-                                                <h3 class="mt-2 text-2xl font-semibold tracking-tight text-[var(--ink)]">{{ selectedTemplate.name }}</h3>
-                                                <p class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                                                    {{ selectedTemplate.description || 'No template description has been added yet.' }}
-                                                </p>
-                                            </div>
-
-                                            <div class="console-page-actions">
-                                                <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Open prompt</Link>
-                                                <Link :href="selectedTemplateRunHref" class="btn-secondary">Test this prompt</Link>
-                                            </div>
-                                        </div>
-
-                                        <div class="console-detail-section">
-                                            <div class="key-value-grid">
-                                                <div class="key-value-item">
-                                                    <div class="key-value-label">Task</div>
-                                                    <div class="key-value-value">{{ selectedTemplate.use_case?.name || 'No task assigned' }}</div>
-                                                </div>
-                                                <div class="key-value-item">
-                                                    <div class="key-value-label">Task type</div>
-                                                    <div class="key-value-value capitalize">{{ selectedTemplate.task_type }}</div>
-                                                </div>
-                                                <div class="key-value-item">
-                                                    <div class="key-value-label">Preferred model</div>
-                                                    <div class="key-value-value mono text-sm">{{ selectedTemplate.preferred_model || 'No preferred model' }}</div>
-                                                </div>
-                                                <div class="key-value-item">
-                                                    <div class="key-value-label">Average score</div>
-                                                    <div class="key-value-value">{{ formatScore(selectedTemplate.average_score) }}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="console-detail-section">
-                                            <div class="console-field-label">Approval</div>
-                                            <div class="surface-muted mt-3">
-                                                <div class="font-semibold text-[var(--ink)]">
-                                                    {{ selectedTemplate.approval_state === 'approved' ? 'Approved' : 'Pending approval' }}
-                                                </div>
-                                                <div v-if="selectedTemplate.approved_version_label" class="mt-1 text-sm text-[var(--muted)]">
-                                                    {{ selectedTemplate.approved_version_label }}
-                                                    <span v-if="selectedTemplate.approved_by"> by {{ selectedTemplate.approved_by }}</span>
-                                                </div>
-                                                <div v-if="selectedTemplate.approved_at" class="mt-1 text-sm text-[var(--muted)]">
-                                                    {{ formatDateTime(selectedTemplate.approved_at) }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="console-detail-section">
-                                            <div class="console-field-label">Registry summary</div>
-                                            <div class="surface-muted mt-3">
-                                                <div class="inline-meta">
-                                                    <span class="inline-meta-item">
-                                                        <ClipboardList />
-                                                        {{ selectedTemplate.versions_count }} versions
-                                                    </span>
-                                                    <span v-if="selectedTemplate.created_by" class="inline-meta-item">
-                                                        {{ selectedTemplate.created_by }}
-                                                    </span>
-                                                    <span v-if="selectedTemplate.latest_version_label" class="inline-meta-item">
-                                                        {{ selectedTemplate.latest_version_label }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <div v-else class="console-empty-pane">
-                                        No prompt templates match the current filters.
-                                    </div>
-                                </div>
+                    <div class="mt-5 border-t border-[var(--line)] pt-4">
+                        <div class="prompt-library-rail-title">Status</div>
+                        <div class="mt-3 space-y-2 text-sm text-[var(--muted)]">
+                            <div class="flex items-center justify-between gap-3">
+                                <span>Library ready</span>
+                                <span>{{ libraryReadyCount }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <span>Pending approval</span>
+                                <span>{{ pendingApprovalCount }}</span>
+                            </div>
+                            <div class="flex items-center justify-between gap-3">
+                                <span>Visible now</span>
+                                <span>{{ sortedTemplates.length }}</span>
                             </div>
                         </div>
                     </div>
-            </section>
+                </aside>
+
+                <section class="space-y-4">
+                    <div v-if="sortedTemplates.length" class="prompt-library-card-grid">
+                        <article
+                            v-for="template in sortedTemplates"
+                            :key="template.id"
+                            class="prompt-library-card"
+                            :class="{ 'prompt-library-card-active': template.id === selectedTemplate?.id }"
+                        >
+                            <button type="button" class="w-full text-left" @click="selectedTemplateId = template.id">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-[var(--ink)]">{{ template.name }}</div>
+                                        <div class="mt-1 text-[13px] leading-5 text-[var(--muted)]">
+                                            {{ formatUseCaseName(template.use_case?.name) || 'No task assigned' }}
+                                        </div>
+                                    </div>
+                                    <span class="status-chip">{{ templateApprovalLabel(template) }}</span>
+                                </div>
+
+                                <p class="mt-3 text-sm leading-6 text-[var(--muted)]">
+                                    {{ template.description || 'No prompt description has been added yet.' }}
+                                </p>
+
+                                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <div class="guide-card">
+                                        <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                            <Gauge />
+                                            <span>Score</span>
+                                        </div>
+                                        <div class="mt-1 font-semibold">{{ formatScore(template.average_score) }}</div>
+                                    </div>
+                                    <div class="guide-card">
+                                        <div class="inline-meta-item text-xs text-[var(--muted)]">
+                                            <Layers3 />
+                                            <span>Versions</span>
+                                        </div>
+                                        <div class="mt-1 font-semibold">{{ template.versions_count }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <span
+                                        v-for="tag in (template.tags_json ?? []).slice(0, 4)"
+                                        :key="`${template.id}-${tag}`"
+                                        class="role-badge"
+                                    >
+                                        {{ tag }}
+                                    </span>
+                                    <span v-if="(template.tags_json ?? []).length > 4" class="role-badge">
+                                        +{{ template.tags_json.length - 4 }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-4 flex flex-wrap gap-3 text-xs text-[var(--muted)]">
+                                    <span class="inline-meta-item">
+                                        <Bot />
+                                        {{ templatePrimaryModel(template) || 'No preferred model' }}
+                                    </span>
+                                    <span class="inline-meta-item">
+                                        <BadgeCheck />
+                                        {{ template.reviewer_count || 0 }} reviewers
+                                    </span>
+                                </div>
+                            </button>
+
+                            <div class="prompt-library-card-actions">
+                                <Link :href="route('prompt-templates.show', template.id)" class="app-inline-link">
+                                    Open prompt
+                                </Link>
+                                <Link :href="templateRunHref(template)" class="app-inline-link">
+                                    Test prompt
+                                </Link>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div v-else class="panel p-5 text-sm text-[var(--muted)]">
+                        No prompt templates match the current filters.
+                    </div>
+                </section>
+
+                <aside v-if="selectedTemplate" class="panel p-5 xl:sticky xl:top-4 xl:self-start">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-[13px] leading-5 text-[var(--muted)]">
+                                {{ formatUseCaseName(selectedTemplate.use_case?.name) || 'No task assigned' }}
+                            </div>
+                            <h2 class="mt-2 text-xl font-semibold tracking-tight text-[var(--ink)]">
+                                {{ selectedTemplate.name }}
+                            </h2>
+                        </div>
+                        <span class="status-chip">{{ templateApprovalLabel(selectedTemplate) }}</span>
+                    </div>
+
+                    <p class="mt-3 text-sm leading-6 text-[var(--muted)]">
+                        {{ selectedTemplate.description || 'No prompt description has been added yet.' }}
+                    </p>
+
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Open prompt</Link>
+                        <Link :href="selectedTemplateRunHref" class="btn-secondary">Test prompt</Link>
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                        <div class="key-value-item">
+                            <div class="key-value-label">Task type</div>
+                            <div class="key-value-value capitalize">{{ selectedTemplate.task_type }}</div>
+                        </div>
+                        <div class="key-value-item">
+                            <div class="key-value-label">Preferred model</div>
+                            <div class="key-value-value mono text-sm">{{ templatePrimaryModel(selectedTemplate) || 'No preferred model' }}</div>
+                        </div>
+                        <div class="key-value-item">
+                            <div class="key-value-label">Average score</div>
+                            <div class="key-value-value">{{ formatScore(selectedTemplate.average_score) }}</div>
+                        </div>
+                        <div class="key-value-item">
+                            <div class="key-value-label">Reviewed runs</div>
+                            <div class="key-value-value">{{ selectedTemplate.reviewed_runs || 0 }}</div>
+                        </div>
+                    </div>
+
+                    <div class="console-detail-section">
+                        <div class="console-field-label">Approval</div>
+                        <div class="surface-muted mt-3">
+                            <div class="font-semibold text-[var(--ink)]">
+                                {{ selectedTemplate.approval_state === 'approved' ? 'Approved for library reuse' : 'Still pending approval' }}
+                            </div>
+                            <div v-if="selectedTemplateApprovedVersion" class="mt-2 text-sm leading-6 text-[var(--muted)]">
+                                {{ selectedTemplateApprovedVersion.version_label }}
+                                <span v-if="selectedTemplate.approved_by"> by {{ selectedTemplate.approved_by }}</span>
+                            </div>
+                            <div v-if="selectedTemplate.approved_at" class="mt-1 text-sm text-[var(--muted)]">
+                                {{ formatDateTime(selectedTemplate.approved_at) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-detail-section">
+                        <div class="console-field-label">Tags</div>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <span
+                                v-for="tag in selectedTemplate.tags_json ?? []"
+                                :key="`detail-${selectedTemplate.id}-${tag}`"
+                                class="role-badge"
+                            >
+                                {{ tag }}
+                            </span>
+                            <span v-if="!(selectedTemplate.tags_json ?? []).length" class="text-sm text-[var(--muted)]">
+                                No tags
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="console-detail-section">
+                        <div class="console-field-label">Version shelf</div>
+                        <div class="prompt-library-version-list mt-3">
+                            <div
+                                v-for="version in selectedTemplateVersions"
+                                :key="version.id"
+                                class="guide-card p-3"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="font-semibold text-[var(--ink)]">{{ version.version_label }}</div>
+                                    <div class="text-xs text-[var(--muted)]">{{ formatDateTime(version.created_at) }}</div>
+                                </div>
+                                <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
+                                    {{ version.change_summary || version.notes || 'No version summary yet.' }}
+                                </div>
+                                <div class="mt-3 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
+                                    <span class="inline-meta-item">
+                                        <Bot />
+                                        {{ version.preferred_model || selectedTemplate.preferred_model || 'No model' }}
+                                    </span>
+                                    <span class="inline-meta-item">
+                                        <Gauge />
+                                        {{ formatScore(version.average_score) }}
+                                    </span>
+                                    <span class="inline-meta-item">
+                                        <BadgeCheck />
+                                        {{ version.is_library_approved ? 'Library approved' : 'Not approved' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="selectedTemplateLatestVersion" class="mt-4 text-sm text-[var(--muted)]">
+                            Latest version: {{ selectedTemplateLatestVersion.version_label }}
+                            <span v-if="selectedTemplateLatestVersion.created_by"> by {{ selectedTemplateLatestVersion.created_by }}</span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
         </div>
     </AuthenticatedLayout>
 </template>

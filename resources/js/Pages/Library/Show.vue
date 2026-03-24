@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PanelHeader from '@/Components/PanelHeader.vue';
-import { BookCopy, ClipboardList, FileText } from 'lucide-vue-next';
+import { BookCopy, ClipboardList, FileText, Trash2 } from 'lucide-vue-next';
 import { formatDateTime } from '@/lib/formatters';
 import { routeWithQuery } from '@/lib/urlState';
 
@@ -81,8 +81,9 @@ const revokeEntry = () => {
                     <Link :href="runHref" class="btn-primary">Test saved prompt</Link>
                     <Link :href="sourceVersionHref" class="btn-secondary">View prompt version</Link>
                     <Link :href="approvalHref" class="btn-secondary">Open approval settings</Link>
-                    <button v-if="canManage" type="button" class="btn-ghost text-[var(--danger)]" @click="revokeEntry">
-                        Remove from shared library
+                    <button v-if="canManage" type="button" class="btn-danger" @click="revokeEntry">
+                        <Trash2 class="h-4 w-4" />
+                        <span>Remove from shared library</span>
                     </button>
                     <Link :href="route('library.index')" class="btn-secondary">Back to library</Link>
                 </div>
