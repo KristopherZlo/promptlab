@@ -263,10 +263,10 @@ async function login(context, email, password) {
   await page.locator('#email').fill(email);
   await page.locator('#password').fill(password);
 
-  await Promise.all([
-    page.locator('form button[type="submit"]').click(),
-    page.waitForLoadState('domcontentloaded'),
-  ]);
+  await page.locator('form button[type="submit"]').click();
+  await page.waitForURL((url) => !url.pathname.endsWith('/login'), {
+    timeout: TIMEOUT_MS,
+  });
   await page.waitForTimeout(WAIT_MS);
 
   if (new URL(page.url()).pathname.endsWith('/login')) {
