@@ -314,9 +314,9 @@ const closeMobileMenu = () => {
                                         </div>
                                     </div>
                                     <div class="profile-menu-actions">
-                                        <Link :href="route('profile.edit')" class="profile-menu-link">
-                                            <Settings class="h-4 w-4" />
-                                            <span>Profile</span>
+                                        <Link :href="route('profile.edit')" class="profile-menu-link profile-menu-link-balanced">
+                                            <Settings class="profile-menu-link-icon h-4 w-4" />
+                                            <span class="profile-menu-link-label">Profile</span>
                                         </Link>
                                         <Link :href="route('logout')" method="post" as="button" class="btn-danger w-full">
                                             <LogOut class="h-4 w-4" />

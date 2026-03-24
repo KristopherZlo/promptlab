@@ -1161,7 +1161,22 @@
     }
 
     .profile-menu-link {
-        @apply justify-start;
+        @apply relative w-full justify-start;
+    }
+
+    .profile-menu-link-balanced {
+        justify-content: center;
+    }
+
+    .profile-menu-link-icon {
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        position: absolute;
+    }
+
+    .profile-menu-link-label {
+        @apply block w-full text-center;
     }
 
     .shell-content {
@@ -1726,6 +1741,10 @@
 
     .profile-menu-link {
         justify-content: flex-start;
+    }
+
+    .profile-menu-link-balanced {
+        justify-content: center;
     }
 
     .app-shell {
