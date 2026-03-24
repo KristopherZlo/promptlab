@@ -9,8 +9,13 @@ import { createApp, Fragment, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import AppToasts from '@/Components/AppToasts.vue';
 import ToastRelay from '@/Components/ToastRelay.vue';
+import { applyThemeMode, readThemeMode } from '@/lib/theme';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PromptLab';
+
+if (typeof window !== 'undefined') {
+    applyThemeMode(readThemeMode());
+}
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

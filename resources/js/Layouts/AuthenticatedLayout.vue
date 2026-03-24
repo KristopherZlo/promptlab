@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     BadgeInfo,
@@ -17,17 +17,23 @@ import {
     LayoutDashboard,
     LogOut,
     Menu,
+    Monitor,
+    Moon,
     Settings,
     ShieldCheck,
+    Sun,
     UserRound,
     Users,
 } from 'lucide-vue-next';
 import { formatPlatformRoleLabel, formatRoleLabel } from '@/lib/forms';
+import { applyThemeMode, onSystemThemeChange, readThemeMode } from '@/lib/theme';
 import Dropdown from '@/Components/Dropdown.vue';
 
 const page = usePage();
 const mobileOpen = ref(false);
 const switchingTeam = ref(false);
+const themeMode = ref('system');
+let detachThemeListener = () => {};
 
 const iconMap = {
     dashboard: LayoutDashboard,
@@ -78,6 +84,11 @@ const workspaceTools = computed(() => [
         current: ['acknowledgements.index'],
     },
 ]);
+const themeOptions = [
+    { value: 'light', label: 'Light theme', icon: Sun },
+    { value: 'dark', label: 'Dark theme', icon: Moon },
+    { value: 'system', label: 'System theme', icon: Monitor },
+];
 
 const teamOptions = computed(() => {
     const teams = page.props.auth?.teams ?? [];
@@ -189,9 +200,28 @@ const switchTeam = async (event) => {
     }
 };
 
+const setThemeMode = (mode) => {
+    themeMode.value = mode;
+    applyThemeMode(mode);
+};
+
 const closeMobileMenu = () => {
     mobileOpen.value = false;
 };
+
+onMounted(() => {
+    themeMode.value = readThemeMode();
+    applyThemeMode(themeMode.value);
+    detachThemeListener = onSystemThemeChange(() => {
+        if (themeMode.value === 'system') {
+            applyThemeMode(themeMode.value);
+        }
+    });
+});
+
+onBeforeUnmount(() => {
+    detachThemeListener();
+});
 </script>
 
 <template>
@@ -311,6 +341,23 @@ const closeMobileMenu = () => {
                                         <div class="min-w-0">
                                             <div class="font-semibold text-[var(--ink)]">{{ user?.name }}</div>
                                             <div class="mt-1 text-sm text-[var(--muted)]">{{ userRoleLabel }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="profile-menu-theme" @click.stop>
+                                        <div class="profile-theme-switcher" role="group" aria-label="Theme">
+                                            <button
+                                                v-for="option in themeOptions"
+                                                :key="option.value"
+                                                type="button"
+                                                class="profile-theme-button"
+                                                :class="{ 'profile-theme-button-active': themeMode === option.value }"
+                                                :aria-pressed="themeMode === option.value ? 'true' : 'false'"
+                                                :title="option.label"
+                                                @click.stop="setThemeMode(option.value)"
+                                            >
+                                                <component :is="option.icon" class="h-4 w-4" />
+                                                <span class="sr-only">{{ option.label }}</span>
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="profile-menu-actions">
