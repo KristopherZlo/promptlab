@@ -100,15 +100,38 @@ const currentItem = computed(() =>
     ?? navigationSections.value.flatMap((section) => section.items).find(isActive)
     ?? null,
 );
+const hrefForItem = (item) => {
+    if (! item?.route) {
+        return null;
+    }
+
+    return route(item.route);
+};
+const hrefForSection = (section) => {
+    if (! section) {
+        return null;
+    }
+
+    if (section.id === 'workspace') {
+        return route('dashboard');
+    }
+
+    return hrefForItem(section.items?.[0] ?? null);
+};
 const breadcrumbs = computed(() => {
-    const items = [{ label: currentTeam.value?.name || 'Workspace' }];
+    const items = [{ label: currentTeam.value?.name || 'Workspace', href: homeHref.value }];
 
     if (currentSection.value?.label && currentSection.value.label !== currentItem.value?.label) {
-        items.push({ label: currentSection.value.label });
+        const sectionHref = hrefForSection(currentSection.value);
+
+        items.push({
+            label: currentSection.value.label,
+            href: sectionHref && sectionHref !== hrefForItem(currentItem.value) ? sectionHref : null,
+        });
     }
 
     if (currentItem.value?.label) {
-        items.push({ label: currentItem.value.label });
+        items.push({ label: currentItem.value.label, href: null });
     }
 
     return items;
@@ -256,7 +279,14 @@ const closeMobileMenu = () => {
                             <nav class="app-breadcrumb">
                                 <template v-for="(item, index) in breadcrumbs" :key="`${item.label}-${index}`">
                                     <ChevronRight v-if="index > 0" class="h-3.5 w-3.5" />
-                                    <span :class="{ 'app-breadcrumb-current': index === breadcrumbs.length - 1 }">
+                                    <Link
+                                        v-if="item.href && index < breadcrumbs.length - 1"
+                                        :href="item.href"
+                                        class="app-breadcrumb-link"
+                                    >
+                                        {{ item.label }}
+                                    </Link>
+                                    <span v-else :class="{ 'app-breadcrumb-current': index === breadcrumbs.length - 1 }">
                                         {{ item.label }}
                                     </span>
                                 </template>
