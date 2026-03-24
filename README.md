@@ -18,6 +18,22 @@ Instead of keeping prompts in chats, docs, or random notes, PromptLab gives team
 
 The result is a portfolio project that behaves much closer to a real internal product than a typical AI demo.
 
+## Real Usage Scenarios
+
+PromptLab is easiest to understand through concrete internal workflows:
+
+### 1. Support ticket triage
+
+An operations team defines a task for incoming support tickets, stores representative examples as test cases, iterates on classification prompts, and compares prompt versions before promoting the most reliable one into the shared library.
+
+### 2. Customer email summarization
+
+A service team creates a prompt workflow that turns long customer threads into short internal summaries, tests tone and structure on real examples, and keeps an experiment trail that shows which prompt version actually improved clarity.
+
+### 3. Business-tone rewriting
+
+A communications or back-office team drafts prompts that rewrite rough internal text into a more consistent business tone, reviews outputs manually, and keeps approved versions reusable across the workspace instead of rewriting the same prompt from scratch.
+
 ## Screenshots
 
 The repository currently ships with lightweight preview mockups in [`docs/screenshots`](./docs/screenshots). Replace them with real UI captures when you publish the final public version.
