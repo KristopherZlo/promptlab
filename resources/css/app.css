@@ -1284,17 +1284,6 @@
         justify-content: center;
     }
 
-    .profile-menu-link-icon {
-        left: 0.875rem;
-        top: 50%;
-        transform: translateY(-50%);
-        position: absolute;
-    }
-
-    .profile-menu-link-label {
-        @apply block w-full text-center;
-    }
-
     .shell-content {
         @apply px-5 py-6 lg:px-8 lg:py-8;
     }
