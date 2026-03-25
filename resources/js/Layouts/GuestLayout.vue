@@ -4,6 +4,7 @@
             <aside class="panel hidden p-6 lg:flex lg:flex-col lg:justify-between">
                 <div>
                     <div class="flex items-center gap-3">
+                        <img src="/images/evala-logo-colored.svg" alt="" class="guest-brand-logo">
                         <div>
                             <div class="text-sm font-semibold text-[var(--ink)]">Evala</div>
                             <div class="mt-1 text-sm text-[var(--muted)]">Internal prompt operations</div>

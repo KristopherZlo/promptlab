@@ -1948,6 +1948,20 @@
         text-decoration: none;
     }
 
+    .app-brand-logo {
+        display: block;
+        width: 1.9rem;
+        height: auto;
+        flex-shrink: 0;
+    }
+
+    .guest-brand-logo {
+        display: block;
+        width: 2rem;
+        height: auto;
+        flex-shrink: 0;
+    }
+
     .app-brand-mark,
     .app-avatar {
         display: inline-flex;

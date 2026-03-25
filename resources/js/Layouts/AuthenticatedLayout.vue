@@ -173,16 +173,6 @@ const userInitials = computed(() => {
         .toUpperCase();
 });
 
-const teamInitials = computed(() =>
-    `${currentTeam.value?.name ?? 'Workspace'}`
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part.charAt(0))
-        .join('')
-        .toUpperCase(),
-);
-
 const switchTeam = async (event) => {
     const teamId = Number(event.target.value);
 
@@ -232,7 +222,7 @@ onBeforeUnmount(() => {
             <aside class="app-sidebar" :class="{ 'app-sidebar-open': mobileOpen }">
                 <div class="app-sidebar-head">
                     <Link :href="homeHref" class="app-brand" @click="closeMobileMenu">
-                        <span class="app-brand-mark">{{ teamInitials }}</span>
+                        <img src="/images/evala-logo-colored.svg" alt="" class="app-brand-logo">
                         <div class="min-w-0">
                             <div class="app-brand-title">Evala</div>
                             <div class="app-brand-meta">{{ currentTeam?.name || 'Personal workspace' }}</div>
