@@ -1,4 +1,4 @@
-# PromptLab Plan
+# Evala Plan
 
 ## Product Goal
 
@@ -13,7 +13,7 @@ Without a dedicated internal tool, prompt work usually ends up fragmented:
 - nobody knows which version performs best
 - business stakeholders cannot see measurable results
 
-PromptLab fixes that by giving teams one workflow for experimentation, scoring, and reuse.
+Evala fixes that by giving teams one workflow for experimentation, scoring, and reuse.
 
 ## Target Users
 

@@ -1,4 +1,4 @@
-# PromptFactory User Life Cycle Map
+# Evala User Life Cycle Map
 
 This map is the UX reference for navigation, labels, and CTA cleanup.
 

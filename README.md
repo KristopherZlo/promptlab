@@ -1,12 +1,12 @@
-# PromptLab
+# Evala
 
-PromptLab is an internal AI experimentation workspace for teams that need more than a chat box.
+Evala is an internal AI experimentation workspace for teams that need more than a chat box.
 
 It organizes prompt work around a simple product flow:
 
 **Tasks -> Prompts -> Experiments -> Library**
 
-Instead of keeping prompts in chats, docs, or random notes, PromptLab gives teams one place to:
+Instead of keeping prompts in chats, docs, or random notes, Evala gives teams one place to:
 
 - define business-facing AI tasks
 - version prompt drafts over time
@@ -20,7 +20,7 @@ The result is a portfolio project that behaves much closer to a real internal pr
 
 ## Real Usage Scenarios
 
-PromptLab is easiest to understand through concrete internal workflows:
+Evala is easiest to understand through concrete internal workflows:
 
 ### 1. Support ticket triage
 
@@ -48,7 +48,7 @@ The screenshots below are generated from the actual app UI with Playwright and p
 
 ## Overview
 
-PromptLab is built around the idea that AI work inside a company should be:
+Evala is built around the idea that AI work inside a company should be:
 
 - structured instead of ad hoc
 - testable instead of intuitive-only
@@ -114,7 +114,7 @@ Most prompt work inside teams breaks down quickly:
 - outputs are hard to compare
 - business stakeholders cannot see what improved and why
 
-PromptLab turns that into a proper internal workflow. It is meant to feel like the kind of AI tool a digital unit or product team could actually use for experimentation, demos, and internal learning.
+Evala turns that into a proper internal workflow. It is meant to feel like the kind of AI tool a digital unit or product team could actually use for experimentation, demos, and internal learning.
 
 ## Main Product Flows
 
@@ -199,7 +199,7 @@ Important services:
 ## Repository Notes
 
 - Repository folder name: `PromptFactory`
-- Product name in the app: `PromptLab`
+- Product name in the app: `Evala`
 - Additional planning notes: [`PLAN.md`](./PLAN.md)
 - UX flow reference: [`docs/user-life-cycle-map.md`](./docs/user-life-cycle-map.md)
 
@@ -254,7 +254,7 @@ npm run build
 
 ## Automated UI Screenshots
 
-PromptLab can regenerate its GitHub screenshots directly from the browser UI.
+Evala can regenerate its GitHub screenshots directly from the browser UI.
 
 ```bash
 npm run build

@@ -33,9 +33,9 @@ class DatabaseSeeder extends Seeder
         $admin = User::updateOrCreate([
             'email' => 'admin@promptlab.local',
         ], [
-            'first_name' => 'PromptLab',
+            'first_name' => 'Evala',
             'last_name' => 'Admin',
-            'name' => 'PromptLab Admin',
+            'name' => 'Evala Admin',
             'password' => 'password',
             'role' => User::ROLE_ADMIN,
             'email_verified_at' => now(),
@@ -44,19 +44,19 @@ class DatabaseSeeder extends Seeder
         $teamMember = User::updateOrCreate([
             'email' => 'team@promptlab.local',
         ], [
-            'first_name' => 'PromptLab',
+            'first_name' => 'Evala',
             'last_name' => 'Team',
-            'name' => 'PromptLab Team',
+            'name' => 'Evala Team',
             'password' => 'password',
             'role' => User::ROLE_TEAM_MEMBER,
             'email_verified_at' => now(),
         ]);
 
         $workspace = Team::updateOrCreate(
-            ['slug' => 'promptlab-demo-team'],
+            ['slug' => 'evala-demo-team'],
             [
-                'name' => 'PromptLab Demo Team',
-                'description' => 'Seeded workspace for PromptLab demo flows.',
+                'name' => 'Evala Demo Team',
+                'description' => 'Seeded workspace for Evala demo flows.',
                 'created_by' => $admin->id,
             ]
         );
@@ -136,7 +136,7 @@ class DatabaseSeeder extends Seeder
         $meetingSingle = $experiments->runInteractive($teamMember, [
             'mode' => 'single',
             'prompt_version_ids' => [$meetingVersions['v2']->id],
-            'input_text' => 'Decision: keep PromptLab as an internal tool for the pilot. Action: design a strict JSON validator for categorization outputs. Owner: Olli. Deadline: next Friday. Note: sales team wants a short summary view for demos.',
+            'input_text' => 'Decision: keep Evala as an internal tool for the pilot. Action: design a strict JSON validator for categorization outputs. Owner: Olli. Deadline: next Friday. Note: sales team wants a short summary view for demos.',
             'variables' => [],
             'model_name' => 'mock:team-lab-v1',
             'temperature' => 0.2,

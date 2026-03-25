@@ -133,7 +133,7 @@ return new class extends Migration
         }
 
         $now = now();
-        $baseSlug = 'promptlab-workspace';
+        $baseSlug = 'evala-workspace';
         $slug = $baseSlug;
         $counter = 2;
 
@@ -143,7 +143,7 @@ return new class extends Migration
         }
 
         $teamId = DB::table('teams')->insertGetId([
-            'name' => 'PromptLab Workspace',
+            'name' => 'Evala Workspace',
             'slug' => Str::slug($slug),
             'description' => 'Default workspace migrated from the original single-team setup.',
             'created_by' => DB::table('users')->orderBy('id')->value('id'),
