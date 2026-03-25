@@ -1,10 +1,16 @@
+<script setup>
+import { resolvePublicAsset } from '@/lib/assetUrl';
+
+const evalaLogoUrl = resolvePublicAsset('images/evala-logo-colored.svg');
+</script>
+
 <template>
     <div class="min-h-screen bg-[var(--canvas)] px-4 py-6 lg:px-6 lg:py-8">
         <div class="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside class="panel hidden p-6 lg:flex lg:flex-col lg:justify-between">
                 <div>
                     <div class="flex items-center gap-3">
-                        <img src="/images/evala-logo-colored.svg" alt="" class="guest-brand-logo">
+                        <img :src="evalaLogoUrl" alt="" class="guest-brand-logo">
                         <div>
                             <div class="text-sm font-semibold text-[var(--ink)]">Evala</div>
                             <div class="mt-1 text-sm text-[var(--muted)]">Internal prompt operations</div>

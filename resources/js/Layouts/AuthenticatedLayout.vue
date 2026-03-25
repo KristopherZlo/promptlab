@@ -26,6 +26,7 @@ import {
     Users,
 } from 'lucide-vue-next';
 import { formatPlatformRoleLabel, formatRoleLabel } from '@/lib/forms';
+import { resolvePublicAsset } from '@/lib/assetUrl';
 import { applyThemeMode, onSystemThemeChange, readThemeMode } from '@/lib/theme';
 import Dropdown from '@/Components/Dropdown.vue';
 
@@ -34,6 +35,7 @@ const mobileOpen = ref(false);
 const switchingTeam = ref(false);
 const themeMode = ref('system');
 let detachThemeListener = () => {};
+const evalaLogoUrl = resolvePublicAsset('images/evala-logo-colored.svg');
 
 const iconMap = {
     dashboard: LayoutDashboard,
@@ -222,7 +224,7 @@ onBeforeUnmount(() => {
             <aside class="app-sidebar" :class="{ 'app-sidebar-open': mobileOpen }">
                 <div class="app-sidebar-head">
                     <Link :href="homeHref" class="app-brand" @click="closeMobileMenu">
-                        <img src="/images/evala-logo-colored.svg" alt="" class="app-brand-logo">
+                        <img :src="evalaLogoUrl" alt="" class="app-brand-logo">
                         <div class="min-w-0">
                             <div class="app-brand-title">Evala</div>
                             <div class="app-brand-meta">{{ currentTeam?.name || 'Personal workspace' }}</div>
