@@ -82,7 +82,7 @@ const scheduleAccountDeletion = () => {
             <div>
                 <h1 class="text-2xl font-black tracking-tight">Account</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">
-                    Manage your PromptLab identity, password, and account access from one page.
+                    Manage your Evala identity, password, and account access from one page.
                 </p>
             </div>
         </template>

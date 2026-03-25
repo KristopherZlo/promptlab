@@ -63,7 +63,7 @@ class TeamProvisioningService
 
         if (! $user) {
             throw ValidationException::withMessages([
-                'email' => 'Only existing PromptLab users can be added to a team.',
+                'email' => 'Only existing Evala users can be added to a team.',
             ]);
         }
 

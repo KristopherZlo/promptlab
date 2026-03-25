@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
                     <Link :href="homeHref" class="app-brand" @click="closeMobileMenu">
                         <span class="app-brand-mark">{{ teamInitials }}</span>
                         <div class="min-w-0">
-                            <div class="app-brand-title">PromptFactory</div>
+                            <div class="app-brand-title">Evala</div>
                             <div class="app-brand-meta">{{ currentTeam?.name || 'Personal workspace' }}</div>
                         </div>
                     </Link>

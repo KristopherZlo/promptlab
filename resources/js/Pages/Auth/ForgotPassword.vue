@@ -25,7 +25,7 @@ const submit = () => {
         <div>
             <h1 class="text-2xl font-semibold tracking-tight">Reset access</h1>
             <p class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                Enter the account email and PromptLab will send a password reset link.
+                Enter the account email and Evala will send a password reset link.
             </p>
         </div>
 

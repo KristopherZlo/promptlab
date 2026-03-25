@@ -4,11 +4,8 @@
             <aside class="panel hidden p-6 lg:flex lg:flex-col lg:justify-between">
                 <div>
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--accent-ink)]">
-                            PL
-                        </span>
                         <div>
-                            <div class="text-sm font-semibold text-[var(--ink)]">PromptLab</div>
+                            <div class="text-sm font-semibold text-[var(--ink)]">Evala</div>
                             <div class="mt-1 text-sm text-[var(--muted)]">Internal prompt operations</div>
                         </div>
                     </div>
@@ -33,7 +30,7 @@
                 </div>
 
                 <div class="text-sm text-[var(--muted)]">
-                    Secure access for the current PromptLab instance.
+                    Secure access for the current Evala instance.
                 </div>
             </aside>
 

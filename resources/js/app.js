@@ -11,7 +11,7 @@ import AppToasts from '@/Components/AppToasts.vue';
 import ToastRelay from '@/Components/ToastRelay.vue';
 import { applyThemeMode, readThemeMode } from '@/lib/theme';
 
-const appName = import.meta.env.VITE_APP_NAME || 'PromptLab';
+const appName = 'Evala';
 
 if (typeof window !== 'undefined') {
     applyThemeMode(readThemeMode());

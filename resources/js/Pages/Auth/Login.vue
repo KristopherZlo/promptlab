@@ -41,7 +41,7 @@ const submit = () => {
         <div>
             <h1 class="text-2xl font-semibold tracking-tight">Sign in</h1>
             <p class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                Access the internal PromptLab workspace on this instance.
+                Access the internal Evala workspace on this instance.
             </p>
         </div>
 

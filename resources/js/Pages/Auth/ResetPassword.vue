@@ -34,7 +34,7 @@ const submit = () => {
         <div>
             <h1 class="text-2xl font-semibold tracking-tight">Set new password</h1>
             <p class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                Choose a new password for your PromptLab account.
+                Choose a new password for your Evala account.
             </p>
         </div>
 
