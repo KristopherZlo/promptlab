@@ -1,0 +1,27 @@
+{
+  "baseUrl": "http://localhost/PromptFactory/public/",
+  "generatedAt": "2026-03-26T07-12-46-861Z",
+  "publishedTheme": "dark",
+  "routes": [
+    {
+      "slug": "dashboard",
+      "label": "Dashboard",
+      "file": "dashboard.png"
+    },
+    {
+      "slug": "task-directory",
+      "label": "Task Directory",
+      "file": "task-directory.png"
+    },
+    {
+      "slug": "prompt-catalog",
+      "label": "Prompt Catalog",
+      "file": "prompt-catalog.png"
+    },
+    {
+      "slug": "playground",
+      "label": "Playground",
+      "file": "playground.png"
+    }
+  ]
+}

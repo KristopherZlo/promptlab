@@ -36,15 +36,15 @@ A communications or back-office team drafts prompts that rewrite rough internal 
 
 ## Screenshots
 
-The repository currently ships with lightweight preview mockups in [`docs/screenshots`](./docs/screenshots). Replace them with real UI captures when you publish the final public version.
+The screenshots below are generated from the actual app UI with Playwright and published to [`docs/screenshots/latest`](./docs/screenshots/latest).
 
-| Dashboard | Task Detail |
+| Dashboard | Task Directory |
 |---|---|
-| ![Dashboard preview](docs/screenshots/dashboard.svg) | ![Task detail preview](docs/screenshots/task-detail.svg) |
+| ![Dashboard preview](docs/screenshots/latest/dashboard.png) | ![Task directory preview](docs/screenshots/latest/task-directory.png) |
 
-| Experiment Compare | Prompt Optimization |
+| Prompt Catalog | Playground |
 |---|---|
-| ![Experiment compare preview](docs/screenshots/experiment-compare.svg) | ![Prompt optimization preview](docs/screenshots/prompt-optimization.svg) |
+| ![Prompt catalog preview](docs/screenshots/latest/prompt-catalog.png) | ![Playground preview](docs/screenshots/latest/playground.png) |
 
 ## Overview
 
@@ -251,6 +251,33 @@ Verified locally with:
 php artisan test
 npm run build
 ```
+
+## Automated UI Screenshots
+
+PromptLab can regenerate its GitHub screenshots directly from the browser UI.
+
+```bash
+npm run build
+npm run ui:screenshots:install
+npm run ui:screenshots
+```
+
+Default behavior:
+
+- reads `APP_URL` from `.env` or `.env.example`
+- signs in with `admin@promptlab.local` / `password`
+- captures `login`, `register`, `dashboard`, `use-cases`, `prompts`, and `playground`
+- stores a timestamped run in `interface-screenshots-auto`
+- republishes the dark-theme showcase images into `docs/screenshots/latest`
+
+Useful overrides:
+
+- `SCREENSHOT_BASE_URL`
+- `SCREENSHOT_AUTH_EMAIL`
+- `SCREENSHOT_AUTH_PASSWORD`
+- `SCREENSHOT_VIEWPORT`
+- `SCREENSHOT_OUTPUT_DIR`
+- `SCREENSHOT_PUBLISH_DIR`
 
 ## Roadmap
 
