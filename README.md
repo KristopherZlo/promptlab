@@ -54,6 +54,32 @@ The screenshots below are generated from the actual app UI with Playwright and p
 |---|---|
 | ![Prompt catalog preview](docs/screenshots/latest/prompt-catalog.png) | ![Playground preview](docs/screenshots/latest/playground.png) |
 
+## Architecture At A Glance
+
+```mermaid
+flowchart LR
+    UI[Vue 3 + Inertia UI] --> HTTP[Laravel controllers + form requests]
+    HTTP --> Services[Workflow services]
+    Services --> DB[(Workspace data)]
+    Services --> Jobs[Queued experiment jobs]
+    Jobs --> Providers[LLM providers]
+    Jobs --> Gepa[GEPA optimizer]
+    Jobs --> Events[Reverb updates]
+    Events --> UI
+```
+
+This is a workflow-driven Laravel app rather than a thin wrapper around one model API. A more detailed breakdown lives in [`docs/architecture.md`](./docs/architecture.md).
+
+Key engineering decisions:
+
+- experiments are created first and executed asynchronously after commit
+- models are validated against a workspace-specific whitelist on the server
+- realtime channels are authorized with workspace membership rules
+- experiment retries are limited to transient upstream failures
+- evaluation data is stored next to prompt versions and experiment runs
+- provider integrations live behind contracts instead of leaking into controllers
+- optimization still returns to a human review flow
+
 ## Overview
 
 Evala is built around the idea that AI work inside a company should be:
@@ -181,34 +207,12 @@ These scenarios make the system easier to demo to both technical and non-technic
 - OpenAI-compatible provider integration
 - Python-backed GEPA runtime for prompt optimization
 
-## Architecture
-
-The backend is split into clear layers instead of pushing all logic into controllers or models.
-
-| Layer | Responsibility |
-|---|---|
-| Controllers | request/response coordination |
-| Form Requests | validation and access-aware request rules |
-| Resources | stable payload shaping for UI and API |
-| Services | business workflows, analytics, provider orchestration, optimization |
-| Jobs | async execution and failure handling |
-| Provider contracts | model integration boundaries |
-
-Important services:
-
-- `app/Services/ExperimentService.php`
-- `app/Services/AnalyticsService.php`
-- `app/Services/PromptCompiler.php`
-- `app/Services/StructuredOutputValidator.php`
-- `app/Services/LLMProviderManager.php`
-- `app/Services/PromptOptimizationService.php`
-- `app/Services/GepaPromptOptimizer.php`
-
 ## Repository Notes
 
 - Repository folder name: `PromptFactory`
 - Product name in the app: `Evala`
 - Additional planning notes: [`PLAN.md`](./PLAN.md)
+- Architecture notes: [`docs/architecture.md`](./docs/architecture.md)
 - UX flow reference: [`docs/user-life-cycle-map.md`](./docs/user-life-cycle-map.md)
 
 ## Local Setup
