@@ -34,6 +34,14 @@ A service team creates a prompt workflow that turns long customer threads into s
 
 A communications or back-office team drafts prompts that rewrite rough internal text into a more consistent business tone, reviews outputs manually, and keeps approved versions reusable across the workspace instead of rewriting the same prompt from scratch.
 
+## Featured Case Study
+
+The strongest seeded example is a customer support email summarization workflow that starts with a weak baseline prompt and ends with a reusable handoff prompt promoted into the internal library.
+
+- full write-up: [`docs/case-study.md`](./docs/case-study.md)
+- quality lift in the seeded compare run: average score improved from `3.0` to `4.5`
+- business outcome: faster support triage, clearer urgency handling, and more consistent ownership
+
 ## Screenshots
 
 The screenshots below are generated from the actual app UI with Playwright and published to [`docs/screenshots/latest`](./docs/screenshots/latest).
