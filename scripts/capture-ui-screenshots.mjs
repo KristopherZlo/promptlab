@@ -480,8 +480,8 @@ async function loadShowcaseLookup(page) {
 }
 
 async function fetchJson(page, uri) {
-  return page.evaluate(async (relativeUri) => {
-    const nextUrl = new URL(String(relativeUri ?? '').replace(/^\/+/, ''), window.location.href).toString();
+  return page.evaluate(async ({ relativeUri, baseUrl }) => {
+    const nextUrl = new URL(String(relativeUri ?? '').replace(/^\/+/, ''), baseUrl).toString();
     const response = await fetch(nextUrl, {
       headers: {
         Accept: 'application/json',
@@ -494,7 +494,7 @@ async function fetchJson(page, uri) {
     }
 
     return response.json();
-  }, uri);
+  }, { relativeUri: uri, baseUrl: BASE_URL });
 }
 
 function parseViewport(raw) {
