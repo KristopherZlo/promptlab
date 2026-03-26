@@ -14,81 +14,223 @@ const WAIT_MS = parsePositiveInt(process.env.SCREENSHOT_WAIT_MS, 900);
 const TIMEOUT_MS = parsePositiveInt(process.env.SCREENSHOT_TIMEOUT_MS, 30000);
 const AUTH_EMAIL = process.env.SCREENSHOT_AUTH_EMAIL ?? 'showcase@evala.local';
 const AUTH_PASSWORD = process.env.SCREENSHOT_AUTH_PASSWORD ?? 'password';
+const UNVERIFIED_EMAIL = process.env.SCREENSHOT_UNVERIFIED_EMAIL ?? 'unverified@evala.local';
+const UNVERIFIED_PASSWORD = process.env.SCREENSHOT_UNVERIFIED_PASSWORD ?? 'password';
+const SHOWCASE_INVITATION_TOKEN = process.env.SCREENSHOT_INVITATION_TOKEN ?? 'evala-showcase-invite';
 const USE_HMR = process.env.SCREENSHOT_USE_HMR === '1';
 const SHOWCASE_USE_CASE_SLUG = 'customer-email-summarization';
 const SHOWCASE_PROMPT_NAME = 'Customer email summarizer';
 const SHOWCASE_PROMPT_VERSION = 'v3';
 
 const THEMES = ['light', 'dark'];
+const SCREENSHOT_SESSIONS = {
+  guest: {
+    id: 'guest',
+    label: 'Guest visitor',
+    initialPath: '/login',
+    requiresLogin: false,
+    requiresShowcaseLookup: false,
+  },
+  showcase: {
+    id: 'showcase',
+    label: 'Showcase workspace',
+    initialPath: '/dashboard',
+    requiresLogin: true,
+    requiresShowcaseLookup: true,
+    credentials: {
+      email: AUTH_EMAIL,
+      password: AUTH_PASSWORD,
+    },
+  },
+  unverified: {
+    id: 'unverified',
+    label: 'Unverified user',
+    initialPath: '/verify-email',
+    requiresLogin: true,
+    requiresShowcaseLookup: false,
+    credentials: {
+      email: UNVERIFIED_EMAIL,
+      password: UNVERIFIED_PASSWORD,
+    },
+  },
+};
 const SCREENSHOT_TARGETS = [
   {
-    uri: '/login',
+    category: 'Authentication',
     slug: 'login',
     label: 'Login',
-    mode: 'guest',
-    publish: false,
+    session: 'guest',
+    publish: true,
+    uri: '/login',
   },
   {
-    uri: '/register',
+    category: 'Authentication',
     slug: 'register',
     label: 'Register',
-    mode: 'guest',
-    publish: false,
+    session: 'guest',
+    publish: true,
+    uri: '/register',
   },
   {
-    uri: '/dashboard',
+    category: 'Authentication',
+    slug: 'forgot-password',
+    label: 'Forgot password',
+    session: 'guest',
+    publish: true,
+    uri: '/forgot-password',
+  },
+  {
+    category: 'Authentication',
+    slug: 'reset-password',
+    label: 'Reset password',
+    session: 'guest',
+    publish: true,
+    uri: '/reset-password/evala-demo-reset-token?email=showcase%40evala.local',
+  },
+  {
+    category: 'Authentication',
+    slug: 'verify-email',
+    label: 'Verify email',
+    session: 'unverified',
+    publish: true,
+    uri: '/verify-email',
+  },
+  {
+    category: 'Authentication',
+    slug: 'confirm-password',
+    label: 'Confirm password',
+    session: 'showcase',
+    publish: true,
+    uri: '/confirm-password',
+  },
+  {
+    category: 'Invitations',
+    slug: 'invitation',
+    label: 'Invitation landing',
+    session: 'guest',
+    publish: true,
+    path: ({ invitationToken }) => `/join/${invitationToken}`,
+  },
+  {
+    category: 'Invitations',
+    slug: 'invitation-login',
+    label: 'Invitation login',
+    session: 'guest',
+    publish: true,
+    path: ({ invitationToken }) => `/login?invitation=${encodeURIComponent(invitationToken)}`,
+  },
+  {
+    category: 'Invitations',
+    slug: 'invitation-register',
+    label: 'Invitation register',
+    session: 'guest',
+    publish: true,
+    path: ({ invitationToken }) => `/register?invitation=${encodeURIComponent(invitationToken)}`,
+  },
+  {
+    category: 'Workspace',
+    slug: 'getting-started',
+    label: 'Getting started',
+    session: 'showcase',
+    publish: true,
+    uri: '/start-here',
+  },
+  {
+    category: 'Workspace',
     slug: 'dashboard',
     label: 'Dashboard',
-    mode: 'auth',
+    session: 'showcase',
     publish: true,
+    uri: '/dashboard',
   },
   {
-    uri: '/use-cases',
+    category: 'Workspace',
     slug: 'task-directory',
-    label: 'Task Directory',
-    mode: 'auth',
+    label: 'Task directory',
+    session: 'showcase',
     publish: true,
+    uri: '/use-cases',
   },
   {
+    category: 'Workspace',
     slug: 'task-detail',
-    label: 'Task Detail',
-    mode: 'auth',
+    label: 'Task detail',
+    session: 'showcase',
     publish: true,
     path: ({ showcase }) => `/use-cases/${showcase.useCase.id}`,
   },
   {
+    category: 'Prompts',
+    slug: 'prompt-catalog',
+    label: 'Prompt catalog',
+    session: 'showcase',
+    publish: true,
+    uri: '/prompts',
+  },
+  {
+    category: 'Prompts',
+    slug: 'prompt-create',
+    label: 'Prompt create',
+    session: 'showcase',
+    publish: true,
+    uri: '/prompts/create',
+  },
+  {
+    category: 'Prompts',
+    slug: 'prompt-details',
+    label: 'Prompt details',
+    session: 'showcase',
+    publish: true,
+    path: ({ showcase }) => `/prompts/${showcase.promptTemplate.id}?tab=template`,
+  },
+  {
+    category: 'Prompts',
     slug: 'prompt-revisions',
-    label: 'Prompt Revisions',
-    mode: 'auth',
+    label: 'Prompt revisions',
+    session: 'showcase',
     publish: true,
     path: ({ showcase }) =>
       `/prompts/${showcase.promptTemplate.id}?tab=versions&prompt_version_id=${showcase.promptVersion.id}`,
   },
   {
-    slug: 'experiment-compare',
-    label: 'Experiment Compare',
-    mode: 'auth',
+    category: 'Prompts',
+    slug: 'prompt-optimize',
+    label: 'Prompt optimize',
+    session: 'showcase',
+    publish: true,
+    path: ({ showcase }) =>
+      `/prompts/${showcase.promptTemplate.id}?tab=optimize&prompt_version_id=${showcase.promptVersion.id}`,
+  },
+  {
+    category: 'Prompts',
+    slug: 'prompt-library',
+    label: 'Prompt library',
+    session: 'showcase',
+    publish: true,
+    path: ({ showcase }) =>
+      `/prompts/${showcase.promptTemplate.id}?tab=library&prompt_version_id=${showcase.promptVersion.id}`,
+  },
+  {
+    category: 'Experiments',
+    slug: 'experiment-results',
+    label: 'Experiment results',
+    session: 'showcase',
     publish: true,
     path: ({ showcase }) => `/experiments/${showcase.compareExperiment.id}?tab=results`,
   },
   {
-    uri: '/library',
-    slug: 'library-catalog',
-    label: 'Library Catalog',
-    mode: 'auth',
+    category: 'Experiments',
+    slug: 'experiment-summary',
+    label: 'Experiment summary',
+    session: 'showcase',
     publish: true,
+    path: ({ showcase }) => `/experiments/${showcase.compareExperiment.id}?tab=summary`,
   },
   {
-    slug: 'library-entry',
-    label: 'Library Entry',
-    mode: 'auth',
-    publish: true,
-    path: ({ showcase }) => `/library/${showcase.libraryEntry.id}`,
-  },
-  {
+    category: 'Experiments',
     slug: 'playground',
-    label: 'Experiment Playground',
-    mode: 'auth',
+    label: 'Experiment playground',
+    session: 'showcase',
     publish: true,
     path: ({ showcase }) => {
       const modelName = encodeURIComponent(
@@ -99,6 +241,102 @@ const SCREENSHOT_TARGETS = [
 
       return `/playground?mode=single&use_case_id=${showcase.useCase.id}&prompt_template_id=${showcase.promptTemplate.id}&prompt_version_id=${showcase.promptVersion.id}&model_name=${modelName}&step=review`;
     },
+  },
+  {
+    category: 'Library',
+    slug: 'library-catalog',
+    label: 'Library catalog',
+    session: 'showcase',
+    publish: true,
+    uri: '/library',
+  },
+  {
+    category: 'Library',
+    slug: 'library-entry',
+    label: 'Library entry',
+    session: 'showcase',
+    publish: true,
+    path: ({ showcase }) => `/library/${showcase.libraryEntry.id}`,
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-members',
+    label: 'Users access members',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/users-access?tab=members',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-invitations',
+    label: 'Users access invitations',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/users-access?tab=invitations',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-roles',
+    label: 'Users access roles',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/users-access?tab=roles',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-workspaces',
+    label: 'Workspaces current',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/workspaces?tab=current',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-workspaces-create',
+    label: 'Workspaces create',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/workspaces?tab=create',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-ai-connections',
+    label: 'AI connections',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/ai-connections?tab=connections',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-ai-connections-editor',
+    label: 'AI connections editor',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/ai-connections?tab=editor',
+  },
+  {
+    category: 'Administration',
+    slug: 'admin-audit-log',
+    label: 'Audit log',
+    session: 'showcase',
+    publish: true,
+    uri: '/admin/audit-log',
+  },
+  {
+    category: 'Account',
+    slug: 'profile',
+    label: 'Profile',
+    session: 'showcase',
+    publish: true,
+    uri: '/profile',
+  },
+  {
+    category: 'Account',
+    slug: 'acknowledgements',
+    label: 'Acknowledgements',
+    session: 'showcase',
+    publish: true,
+    uri: '/acknowledgements',
   },
 ];
 
@@ -115,7 +353,7 @@ async function main() {
     baseUrl: BASE_URL,
     generatedAt: timestamp,
     viewport: VIEWPORT,
-    publishedTheme: 'dark',
+    publishedThemes: THEMES,
     counts: {
       captured: 0,
       failed: 0,
@@ -126,42 +364,33 @@ async function main() {
   };
 
   try {
+    const sessionIds = uniqueSessionIds();
+
     for (const theme of THEMES) {
       const themeDir = path.join(runDir, theme);
       await fs.mkdir(themeDir, { recursive: true });
 
-      const guestResult = await captureGroup({
-        browser,
-        theme,
-        mode: 'guest',
-        routes: SCREENSHOT_TARGETS.filter((target) => target.mode === 'guest'),
-        outputDir: themeDir,
-      });
-      summary.runs.push(guestResult);
-      summary.counts.captured += guestResult.captured.length;
-      summary.counts.failed += guestResult.failed.length;
+      for (const sessionId of sessionIds) {
+        const session = SCREENSHOT_SESSIONS[sessionId];
+        const routes = SCREENSHOT_TARGETS.filter((target) => target.session === sessionId);
 
-      const authResult = await captureGroup({
-        browser,
-        theme,
-        mode: 'auth',
-        routes: SCREENSHOT_TARGETS.filter((target) => target.mode === 'auth'),
-        outputDir: themeDir,
-        credentials: {
-          email: AUTH_EMAIL,
-          password: AUTH_PASSWORD,
-        },
-      });
-      summary.runs.push(authResult);
-      summary.counts.captured += authResult.captured.length;
-      summary.counts.failed += authResult.failed.length;
+        const result = await captureSession({
+          browser,
+          theme,
+          session,
+          routes,
+          outputDir: themeDir,
+        });
 
-      if (theme === 'dark') {
-        const publishSummary = await publishScreenshots(path.join(themeDir, 'auth'), timestamp);
-        summary.counts.published += publishSummary.publishedCount;
-        summary.counts.archived += publishSummary.archivedCount;
+        summary.runs.push(result);
+        summary.counts.captured += result.captured.length;
+        summary.counts.failed += result.failed.length;
       }
     }
+
+    const publishSummary = await publishScreenshots(runDir, timestamp);
+    summary.counts.published += publishSummary.publishedCount;
+    summary.counts.archived += publishSummary.archivedCount;
   } finally {
     await browser.close();
     await restoreHotFile();
@@ -175,18 +404,7 @@ async function main() {
 
   await fs.writeFile(
     path.join(path.resolve(process.cwd(), PUBLISH_ROOT), 'manifest.json'),
-    JSON.stringify({
-      baseUrl: BASE_URL,
-      generatedAt: timestamp,
-      publishedTheme: 'dark',
-      archiveRoot: ARCHIVE_ROOT,
-      screenshotProfile: AUTH_EMAIL,
-      routes: SCREENSHOT_TARGETS.filter((target) => target.publish).map((target) => ({
-        slug: target.slug,
-        label: target.label,
-        file: `${target.slug}.png`,
-      })),
-    }, null, 2),
+    JSON.stringify(buildPublishedManifest(timestamp), null, 2),
     'utf8',
   );
 
@@ -199,16 +417,15 @@ async function main() {
   );
 }
 
-async function captureGroup({
+async function captureSession({
   browser,
   theme,
-  mode,
+  session,
   routes,
   outputDir,
-  credentials = null,
 }) {
-  const groupDir = path.join(outputDir, mode);
-  await fs.mkdir(groupDir, { recursive: true });
+  const sessionDir = path.join(outputDir, session.id);
+  await fs.mkdir(sessionDir, { recursive: true });
 
   const context = await browser.newContext({
     baseURL: BASE_URL,
@@ -231,23 +448,32 @@ async function captureGroup({
   const failed = [];
 
   try {
-    if (mode === 'auth') {
-      await login(context, credentials?.email ?? AUTH_EMAIL, credentials?.password ?? AUTH_PASSWORD);
+    if (session.requiresLogin) {
+      await login(
+        context,
+        session.credentials?.email ?? AUTH_EMAIL,
+        session.credentials?.password ?? AUTH_PASSWORD,
+      );
     }
 
     const page = await context.newPage();
     page.setDefaultTimeout(TIMEOUT_MS);
-    if (mode === 'auth') {
-      await page.goto(toNavigableRoute('/dashboard'), { waitUntil: 'domcontentloaded' });
+
+    if (session.initialPath) {
+      await page.goto(toNavigableRoute(session.initialPath), { waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(WAIT_MS);
     }
-    const showcase = mode === 'auth' ? await loadShowcaseLookup(page) : null;
+
+    const showcase = session.requiresShowcaseLookup ? await loadShowcaseLookup(page) : null;
 
     for (const target of routes) {
-      const outputPath = path.join(groupDir, `${target.slug}.png`);
+      const outputPath = path.join(sessionDir, `${target.slug}.png`);
 
       try {
-        const targetPath = await resolveTargetPath(target, { showcase });
+        const targetPath = await resolveTargetPath(target, {
+          showcase,
+          invitationToken: SHOWCASE_INVITATION_TOKEN,
+        });
         const response = await page.goto(toNavigableRoute(targetPath), { waitUntil: 'domcontentloaded' });
         await page.waitForLoadState('networkidle', { timeout: Math.min(TIMEOUT_MS, 5000) }).catch(() => {});
         await page.waitForTimeout(WAIT_MS);
@@ -272,6 +498,7 @@ async function captureGroup({
         });
 
         captured.push({
+          category: target.category,
           slug: target.slug,
           label: target.label,
           uri: targetPath,
@@ -295,8 +522,10 @@ async function captureGroup({
 
   return {
     theme,
-    mode,
+    session: session.id,
+    label: session.label,
     captured: captured.map((item) => ({
+      category: item.category,
       slug: item.slug,
       label: item.label,
       uri: item.uri,
@@ -329,36 +558,92 @@ async function login(context, email, password) {
   await page.close();
 }
 
-async function publishScreenshots(sourceDir, timestamp) {
+async function publishScreenshots(runDir, timestamp) {
   const publishDir = path.resolve(process.cwd(), PUBLISH_ROOT);
   const archiveDir = path.resolve(process.cwd(), ARCHIVE_ROOT, timestamp);
-  let publishedCount = 0;
   let archivedCount = 0;
-  const existingFiles = existsSync(publishDir)
-    ? (await fs.readdir(publishDir)).filter((file) => file.toLowerCase().endsWith('.png'))
-    : [];
+  let publishedCount = 0;
 
-  if (existingFiles.length > 0) {
-    await fs.mkdir(archiveDir, { recursive: true });
+  if (existsSync(publishDir)) {
+    const existingEntries = await fs.readdir(publishDir, { withFileTypes: true });
 
-    for (const file of existingFiles) {
-      await fs.copyFile(path.join(publishDir, file), path.join(archiveDir, file));
-      await fs.rm(path.join(publishDir, file), { force: true });
-      archivedCount += 1;
+    if (existingEntries.length > 0) {
+      await fs.mkdir(archiveDir, { recursive: true });
+
+      for (const entry of existingEntries) {
+        const sourcePath = path.join(publishDir, entry.name);
+        const archivePath = path.join(archiveDir, entry.name);
+
+        await fs.cp(sourcePath, archivePath, { recursive: true, force: true });
+        archivedCount += await countFiles(archivePath);
+        await fs.rm(sourcePath, { recursive: true, force: true });
+      }
     }
   }
 
-  for (const target of SCREENSHOT_TARGETS.filter((item) => item.publish)) {
-    const source = path.join(sourceDir, `${target.slug}.png`);
-    if (!existsSync(source)) {
-      continue;
-    }
+  for (const theme of THEMES) {
+    const themePublishDir = path.join(publishDir, theme);
+    await fs.mkdir(themePublishDir, { recursive: true });
 
-    await fs.copyFile(source, path.join(publishDir, `${target.slug}.png`));
-    publishedCount += 1;
+    for (const target of SCREENSHOT_TARGETS.filter((item) => item.publish)) {
+      const source = path.join(runDir, theme, target.session, `${target.slug}.png`);
+
+      if (!existsSync(source)) {
+        continue;
+      }
+
+      await fs.copyFile(source, path.join(themePublishDir, `${target.slug}.png`));
+      publishedCount += 1;
+    }
   }
 
   return { publishedCount, archivedCount };
+}
+
+async function countFiles(targetPath) {
+  const stats = await fs.stat(targetPath);
+
+  if (stats.isFile()) {
+    return 1;
+  }
+
+  const entries = await fs.readdir(targetPath, { withFileTypes: true });
+  let count = 0;
+
+  for (const entry of entries) {
+    count += await countFiles(path.join(targetPath, entry.name));
+  }
+
+  return count;
+}
+
+function buildPublishedManifest(timestamp) {
+  return {
+    baseUrl: BASE_URL,
+    generatedAt: timestamp,
+    archiveRoot: ARCHIVE_ROOT,
+    themes: THEMES,
+    screenshotProfiles: {
+      showcase: AUTH_EMAIL,
+      unverified: UNVERIFIED_EMAIL,
+      invitationToken: SHOWCASE_INVITATION_TOKEN,
+    },
+    routes: SCREENSHOT_TARGETS
+      .filter((target) => target.publish)
+      .map((target) => ({
+        slug: target.slug,
+        label: target.label,
+        category: target.category,
+        session: target.session,
+        files: Object.fromEntries(
+          THEMES.map((theme) => [theme, `${theme}/${target.slug}.png`]),
+        ),
+      })),
+  };
+}
+
+function uniqueSessionIds() {
+  return [...new Set(SCREENSHOT_TARGETS.map((target) => target.session))];
 }
 
 async function disableViteHotFileIfNeeded() {
