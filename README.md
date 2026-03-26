@@ -44,15 +44,23 @@ The strongest seeded example is a customer support email summarization workflow 
 
 ## Screenshots
 
-The screenshots below are generated from the actual app UI with Playwright and published to [`docs/screenshots/latest`](./docs/screenshots/latest).
+The screenshots below are generated from the actual app UI with Playwright, using the seeded `showcase@evala.local` profile, and published to [`docs/screenshots/latest`](./docs/screenshots/latest).
 
 | Dashboard | Task Directory |
 |---|---|
 | ![Dashboard preview](docs/screenshots/latest/dashboard.png) | ![Task directory preview](docs/screenshots/latest/task-directory.png) |
 
-| Prompt Catalog | Playground |
+| Task Detail | Prompt Revisions |
 |---|---|
-| ![Prompt catalog preview](docs/screenshots/latest/prompt-catalog.png) | ![Playground preview](docs/screenshots/latest/playground.png) |
+| ![Task detail preview](docs/screenshots/latest/task-detail.png) | ![Prompt revisions preview](docs/screenshots/latest/prompt-revisions.png) |
+
+| Experiment Compare | Library Catalog |
+|---|---|
+| ![Experiment compare preview](docs/screenshots/latest/experiment-compare.png) | ![Library catalog preview](docs/screenshots/latest/library-catalog.png) |
+
+| Library Entry | Experiment Playground |
+|---|---|
+| ![Library entry preview](docs/screenshots/latest/library-entry.png) | ![Playground preview](docs/screenshots/latest/playground.png) |
 
 ## Architecture At A Glance
 
@@ -297,6 +305,7 @@ The demo bootstrap uses built assets. For active frontend work, use `composer ru
 
 ## Demo Accounts
 
+- `showcase@evala.local` / `password`
 - `admin@promptlab.local` / `password`
 - `team@promptlab.local` / `password`
 
@@ -322,9 +331,11 @@ npm run ui:screenshots
 Default behavior:
 
 - reads `APP_URL` from `.env` or `.env.example`
-- signs in with `admin@promptlab.local` / `password`
-- captures `login`, `register`, `dashboard`, `use-cases`, `prompts`, and `playground`
+- signs in with `showcase@evala.local` / `password`
+- resolves the seeded customer-support showcase flow from the app API
+- captures `login`, `register`, `dashboard`, `task-directory`, `task-detail`, `prompt-revisions`, `experiment-compare`, `library-catalog`, `library-entry`, and `playground`
 - stores a timestamped run in `interface-screenshots-auto`
+- archives previously published README screenshots into `docs/screenshots/archive` before replacing them
 - republishes the dark-theme showcase images into `docs/screenshots/latest`
 
 Useful overrides:

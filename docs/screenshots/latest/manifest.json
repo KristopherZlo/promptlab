@@ -1,7 +1,9 @@
 {
   "baseUrl": "http://localhost/PromptFactory/public/",
-  "generatedAt": "2026-03-26T07-42-59-247Z",
+  "generatedAt": "2026-03-26T08-12-38-705Z",
   "publishedTheme": "dark",
+  "archiveRoot": "docs/screenshots/archive",
+  "screenshotProfile": "showcase@evala.local",
   "routes": [
     {
       "slug": "dashboard",
@@ -14,13 +16,33 @@
       "file": "task-directory.png"
     },
     {
-      "slug": "prompt-catalog",
-      "label": "Prompt Catalog",
-      "file": "prompt-catalog.png"
+      "slug": "task-detail",
+      "label": "Task Detail",
+      "file": "task-detail.png"
+    },
+    {
+      "slug": "prompt-revisions",
+      "label": "Prompt Revisions",
+      "file": "prompt-revisions.png"
+    },
+    {
+      "slug": "experiment-compare",
+      "label": "Experiment Compare",
+      "file": "experiment-compare.png"
+    },
+    {
+      "slug": "library-catalog",
+      "label": "Library Catalog",
+      "file": "library-catalog.png"
+    },
+    {
+      "slug": "library-entry",
+      "label": "Library Entry",
+      "file": "library-entry.png"
     },
     {
       "slug": "playground",
-      "label": "Playground",
+      "label": "Experiment Playground",
       "file": "playground.png"
     }
   ]
