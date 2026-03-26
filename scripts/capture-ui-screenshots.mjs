@@ -11,7 +11,7 @@ const PUBLISH_ROOT = process.env.SCREENSHOT_PUBLISH_DIR ?? 'docs/screenshots/lat
 const VIEWPORT = parseViewport(process.env.SCREENSHOT_VIEWPORT ?? '1600x1000');
 const WAIT_MS = parsePositiveInt(process.env.SCREENSHOT_WAIT_MS, 900);
 const TIMEOUT_MS = parsePositiveInt(process.env.SCREENSHOT_TIMEOUT_MS, 30000);
-const AUTH_EMAIL = process.env.SCREENSHOT_AUTH_EMAIL ?? 'admin@promptlab.local';
+const AUTH_EMAIL = process.env.SCREENSHOT_AUTH_EMAIL ?? 'showcase@evala.local';
 const AUTH_PASSWORD = process.env.SCREENSHOT_AUTH_PASSWORD ?? 'password';
 const USE_HMR = process.env.SCREENSHOT_USE_HMR === '1';
 

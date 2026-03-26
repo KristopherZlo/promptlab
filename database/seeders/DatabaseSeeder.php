@@ -52,6 +52,17 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        $showcaseUser = User::updateOrCreate([
+            'email' => 'showcase@evala.local',
+        ], [
+            'first_name' => 'Evala',
+            'last_name' => 'Showcase',
+            'name' => 'Evala Showcase',
+            'password' => 'password',
+            'role' => User::ROLE_TEAM_MEMBER,
+            'email_verified_at' => now(),
+        ]);
+
         $workspace = Team::updateOrCreate(
             ['slug' => 'evala-demo-team'],
             [
@@ -77,8 +88,17 @@ class DatabaseSeeder extends Seeder
             ['role' => 'editor']
         );
 
+        TeamMembership::updateOrCreate(
+            [
+                'team_id' => $workspace->id,
+                'user_id' => $showcaseUser->id,
+            ],
+            ['role' => 'owner']
+        );
+
         $admin->forceFill(['current_team_id' => $workspace->id])->save();
         $teamMember->forceFill(['current_team_id' => $workspace->id])->save();
+        $showcaseUser->forceFill(['current_team_id' => $workspace->id])->save();
 
         [$emailUseCase, $emailTemplate, $emailVersions] = $this->seedCustomerEmailSummaries($admin, $workspace->id);
         [$ticketUseCase, $ticketTemplate, $ticketVersions] = $this->seedTicketCategorization($admin, $workspace->id);
