@@ -7,6 +7,7 @@ use App\Models\Evaluation;
 use App\Models\ExperimentRun;
 use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class EvaluationController extends Controller
 {
@@ -14,6 +15,12 @@ class EvaluationController extends Controller
     {
         $validated = $request->validated();
         $run = ExperimentRun::query()->findOrFail($validated['experiment_run_id']);
+
+        if (! $run->isReviewable()) {
+            throw ValidationException::withMessages([
+                'experiment_run_id' => 'This run is not ready for manual evaluation yet. Wait until it finishes and produces a reviewable output.',
+            ]);
+        }
 
         $evaluation = Evaluation::updateOrCreate(
             [

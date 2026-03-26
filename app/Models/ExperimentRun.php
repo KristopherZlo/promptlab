@@ -13,6 +13,8 @@ class ExperimentRun extends Model
     use BelongsToCurrentTeam;
     use HasFactory;
 
+    public const REVIEWABLE_STATUSES = ['success', 'invalid_format'];
+
     protected $fillable = [
         'team_id',
         'experiment_id',
@@ -60,5 +62,10 @@ class ExperimentRun extends Model
     public function evaluations(): HasMany
     {
         return $this->hasMany(Evaluation::class);
+    }
+
+    public function isReviewable(): bool
+    {
+        return in_array($this->status, self::REVIEWABLE_STATUSES, true);
     }
 }

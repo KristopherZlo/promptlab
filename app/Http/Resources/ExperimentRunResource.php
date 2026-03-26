@@ -25,6 +25,8 @@ class ExperimentRunResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status,
+            'created_at' => optional($this->created_at)->toIso8601String(),
+            'updated_at' => optional($this->updated_at)->toIso8601String(),
             'input_text' => $this->input_text,
             'compiled_prompt' => $this->compiled_prompt,
             'output_text' => $this->output_text,
@@ -33,6 +35,7 @@ class ExperimentRunResource extends JsonResource
             'token_input' => $this->token_input,
             'token_output' => $this->token_output,
             'format_valid' => $this->format_valid,
+            'is_reviewable' => $this->isReviewable(),
             'error_message' => $this->error_message,
             'prompt_version' => $this->whenLoaded('promptVersion', fn () => [
                 'id' => $this->promptVersion?->id,

@@ -24,6 +24,9 @@ class ExperimentResource extends JsonResource
             'failed_runs' => $this->failed_runs,
             'total_runs' => $this->total_runs,
             'created_at' => optional($this->created_at)->toIso8601String(),
+            'updated_at' => optional($this->updated_at)->toIso8601String(),
+            'started_at' => optional($this->started_at)->toIso8601String(),
+            'completed_at' => optional($this->completed_at)->toIso8601String(),
             'runs' => ExperimentRunResource::collection($this->whenLoaded('runs')),
         ];
     }
