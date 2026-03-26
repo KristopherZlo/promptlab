@@ -44,23 +44,133 @@ The strongest seeded example is a customer support email summarization workflow 
 
 ## Screenshots
 
-The screenshots below are generated from the actual app UI with Playwright, using the seeded `showcase@evala.local` profile, and published to [`docs/screenshots/latest`](./docs/screenshots/latest).
+The gallery below is generated from the actual app UI with Playwright and published to [`docs/screenshots/latest`](./docs/screenshots/latest). It covers guest flows, invitations, registration, unverified email verification, the main workspace, prompt iteration, experiments, library views, admin pages, and account screens in both themes.
 
-| Dashboard | Task Directory |
-|---|---|
-| ![Dashboard preview](docs/screenshots/latest/dashboard.png) | ![Task directory preview](docs/screenshots/latest/task-directory.png) |
+<details>
+<summary>Dark theme gallery</summary>
 
-| Task Detail | Prompt Revisions |
-|---|---|
-| ![Task detail preview](docs/screenshots/latest/task-detail.png) | ![Prompt revisions preview](docs/screenshots/latest/prompt-revisions.png) |
+### Authentication
 
-| Experiment Compare | Library Catalog |
-|---|---|
-| ![Experiment compare preview](docs/screenshots/latest/experiment-compare.png) | ![Library catalog preview](docs/screenshots/latest/library-catalog.png) |
+![Login](docs/screenshots/latest/dark/login.png)
+![Register](docs/screenshots/latest/dark/register.png)
+![Forgot password](docs/screenshots/latest/dark/forgot-password.png)
+![Reset password](docs/screenshots/latest/dark/reset-password.png)
+![Verify email](docs/screenshots/latest/dark/verify-email.png)
+![Confirm password](docs/screenshots/latest/dark/confirm-password.png)
 
-| Library Entry | Experiment Playground |
-|---|---|
-| ![Library entry preview](docs/screenshots/latest/library-entry.png) | ![Playground preview](docs/screenshots/latest/playground.png) |
+### Invitations
+
+![Invitation landing](docs/screenshots/latest/dark/invitation.png)
+![Invitation login](docs/screenshots/latest/dark/invitation-login.png)
+![Invitation register](docs/screenshots/latest/dark/invitation-register.png)
+
+### Workspace
+
+![Getting started](docs/screenshots/latest/dark/getting-started.png)
+![Dashboard](docs/screenshots/latest/dark/dashboard.png)
+![Task directory](docs/screenshots/latest/dark/task-directory.png)
+![Task detail](docs/screenshots/latest/dark/task-detail.png)
+
+### Prompts
+
+![Prompt catalog](docs/screenshots/latest/dark/prompt-catalog.png)
+![Prompt create](docs/screenshots/latest/dark/prompt-create.png)
+![Prompt details](docs/screenshots/latest/dark/prompt-details.png)
+![Prompt revisions](docs/screenshots/latest/dark/prompt-revisions.png)
+![Prompt optimize](docs/screenshots/latest/dark/prompt-optimize.png)
+![Prompt library](docs/screenshots/latest/dark/prompt-library.png)
+
+### Experiments
+
+![Experiment results](docs/screenshots/latest/dark/experiment-results.png)
+![Experiment summary](docs/screenshots/latest/dark/experiment-summary.png)
+![Playground](docs/screenshots/latest/dark/playground.png)
+
+### Library
+
+![Library catalog](docs/screenshots/latest/dark/library-catalog.png)
+![Library entry](docs/screenshots/latest/dark/library-entry.png)
+
+### Administration
+
+![Users access members](docs/screenshots/latest/dark/admin-members.png)
+![Users access invitations](docs/screenshots/latest/dark/admin-invitations.png)
+![Users access roles](docs/screenshots/latest/dark/admin-roles.png)
+![Workspaces current](docs/screenshots/latest/dark/admin-workspaces.png)
+![Workspaces create](docs/screenshots/latest/dark/admin-workspaces-create.png)
+![AI connections](docs/screenshots/latest/dark/admin-ai-connections.png)
+![AI connections editor](docs/screenshots/latest/dark/admin-ai-connections-editor.png)
+![Audit log](docs/screenshots/latest/dark/admin-audit-log.png)
+
+### Account
+
+![Profile](docs/screenshots/latest/dark/profile.png)
+![Acknowledgements](docs/screenshots/latest/dark/acknowledgements.png)
+
+</details>
+
+<details>
+<summary>Light theme gallery</summary>
+
+### Authentication
+
+![Login](docs/screenshots/latest/light/login.png)
+![Register](docs/screenshots/latest/light/register.png)
+![Forgot password](docs/screenshots/latest/light/forgot-password.png)
+![Reset password](docs/screenshots/latest/light/reset-password.png)
+![Verify email](docs/screenshots/latest/light/verify-email.png)
+![Confirm password](docs/screenshots/latest/light/confirm-password.png)
+
+### Invitations
+
+![Invitation landing](docs/screenshots/latest/light/invitation.png)
+![Invitation login](docs/screenshots/latest/light/invitation-login.png)
+![Invitation register](docs/screenshots/latest/light/invitation-register.png)
+
+### Workspace
+
+![Getting started](docs/screenshots/latest/light/getting-started.png)
+![Dashboard](docs/screenshots/latest/light/dashboard.png)
+![Task directory](docs/screenshots/latest/light/task-directory.png)
+![Task detail](docs/screenshots/latest/light/task-detail.png)
+
+### Prompts
+
+![Prompt catalog](docs/screenshots/latest/light/prompt-catalog.png)
+![Prompt create](docs/screenshots/latest/light/prompt-create.png)
+![Prompt details](docs/screenshots/latest/light/prompt-details.png)
+![Prompt revisions](docs/screenshots/latest/light/prompt-revisions.png)
+![Prompt optimize](docs/screenshots/latest/light/prompt-optimize.png)
+![Prompt library](docs/screenshots/latest/light/prompt-library.png)
+
+### Experiments
+
+![Experiment results](docs/screenshots/latest/light/experiment-results.png)
+![Experiment summary](docs/screenshots/latest/light/experiment-summary.png)
+![Playground](docs/screenshots/latest/light/playground.png)
+
+### Library
+
+![Library catalog](docs/screenshots/latest/light/library-catalog.png)
+![Library entry](docs/screenshots/latest/light/library-entry.png)
+
+### Administration
+
+![Users access members](docs/screenshots/latest/light/admin-members.png)
+![Users access invitations](docs/screenshots/latest/light/admin-invitations.png)
+![Users access roles](docs/screenshots/latest/light/admin-roles.png)
+![Workspaces current](docs/screenshots/latest/light/admin-workspaces.png)
+![Workspaces create](docs/screenshots/latest/light/admin-workspaces-create.png)
+![AI connections](docs/screenshots/latest/light/admin-ai-connections.png)
+![AI connections editor](docs/screenshots/latest/light/admin-ai-connections-editor.png)
+![Audit log](docs/screenshots/latest/light/admin-audit-log.png)
+
+### Account
+
+![Profile](docs/screenshots/latest/light/profile.png)
+![Acknowledgements](docs/screenshots/latest/light/acknowledgements.png)
+
+</details>
 
 ## Architecture At A Glance
 
@@ -251,12 +361,14 @@ These scenarios make the system easier to demo to both technical and non-technic
 
 ## Local Setup
 
-### Prerequisites
+### Requirements
 
-- PHP 8.2+
+- PHP 8.2+ with SQLite support for the default local demo
 - Composer
-- Node.js + npm
-- optional MySQL / MariaDB for a non-demo database
+- Node.js 20+ and npm
+- optional MySQL / MariaDB if you do not want to use the SQLite demo database
+- optional Playwright Chromium if you want to regenerate the README screenshots
+- optional Python 3.11+ only if you want to run the local GEPA optimization runtime
 
 ### Quick Demo Bootstrap
 
@@ -308,14 +420,34 @@ The demo bootstrap uses built assets. For active frontend work, use `composer ru
 - `showcase@evala.local` / `password`
 - `admin@promptlab.local` / `password`
 - `team@promptlab.local` / `password`
+- `unverified@evala.local` / `password`
 
-## Verification
+The seeded invitation flow is available at `/join/evala-showcase-invite`.
 
-Verified locally with:
+## Testing and Verification
+
+### Run the backend test suite
 
 ```bash
 php artisan test
+```
+
+You can also use:
+
+```bash
+composer test
+```
+
+### Validate the production frontend build
+
+```bash
 npm run build
+```
+
+### Regenerate the browser screenshot gallery
+
+```bash
+npm run ui:screenshots
 ```
 
 ## Automated UI Screenshots
@@ -331,18 +463,24 @@ npm run ui:screenshots
 Default behavior:
 
 - reads `APP_URL` from `.env` or `.env.example`
-- signs in with `showcase@evala.local` / `password`
+- signs in with the seeded `showcase@evala.local` and `unverified@evala.local` accounts where needed
+- uses the seeded `evala-showcase-invite` token for invitation flows
 - resolves the seeded customer-support showcase flow from the app API
-- captures `login`, `register`, `dashboard`, `task-directory`, `task-detail`, `prompt-revisions`, `experiment-compare`, `library-catalog`, `library-entry`, and `playground`
+- captures guest auth, invitation, verification, workspace, prompt, experiment, library, admin, and account pages
+- publishes both light and dark theme galleries
 - stores a timestamped run in `interface-screenshots-auto`
-- archives previously published README screenshots into `docs/screenshots/archive` before replacing them
-- republishes the dark-theme showcase images into `docs/screenshots/latest`
+- archives the previous `docs/screenshots/latest` bundle into `docs/screenshots/archive` before replacing it
+- keeps `docs/screenshots/archive` out of the public repository via `.gitignore`
+- republishes the current README gallery into `docs/screenshots/latest/light` and `docs/screenshots/latest/dark`
 
 Useful overrides:
 
 - `SCREENSHOT_BASE_URL`
 - `SCREENSHOT_AUTH_EMAIL`
 - `SCREENSHOT_AUTH_PASSWORD`
+- `SCREENSHOT_UNVERIFIED_EMAIL`
+- `SCREENSHOT_UNVERIFIED_PASSWORD`
+- `SCREENSHOT_INVITATION_TOKEN`
 - `SCREENSHOT_VIEWPORT`
 - `SCREENSHOT_OUTPUT_DIR`
 - `SCREENSHOT_PUBLISH_DIR`
