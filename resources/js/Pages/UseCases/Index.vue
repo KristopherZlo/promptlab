@@ -195,7 +195,7 @@ const activeTab = useUrlState({
             <div>
                 <h1>Tasks</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    Separate the task directory from task creation so the main working view stays focused on navigation and review.
+                    Separate the task directory from task creation so the main view stays focused on navigation and next steps.
                 </p>
             </div>
         </template>
@@ -296,11 +296,11 @@ const activeTab = useUrlState({
                                             <div class="console-list-foot">
                                                 <span class="console-list-foot-item">
                                                     <FileStack class="h-3.5 w-3.5" />
-                                                    {{ item.prompt_templates_count }} templates
+                                                    {{ item.prompt_templates_count }} prompts
                                                 </span>
                                                 <span class="console-list-foot-item">
                                                     <FolderKanban class="h-3.5 w-3.5" />
-                                                    {{ item.test_cases_count }} tests
+                                                    {{ item.test_cases_count }} scenarios
                                                 </span>
                                             </div>
                                         </button>
@@ -331,11 +331,11 @@ const activeTab = useUrlState({
                                         <div class="console-detail-section">
                                             <div class="key-value-grid">
                                                 <div class="key-value-item">
-                                                    <div class="key-value-label">Prompt templates</div>
+                                                    <div class="key-value-label">Prompts</div>
                                                     <div class="key-value-value">{{ selectedUseCase.prompt_templates_count }}</div>
                                                 </div>
                                                 <div class="key-value-item">
-                                                    <div class="key-value-label">Saved tests</div>
+                                                    <div class="key-value-label">Saved scenarios</div>
                                                     <div class="key-value-value">{{ selectedUseCase.test_cases_count }}</div>
                                                 </div>
                                                 <div class="key-value-item">

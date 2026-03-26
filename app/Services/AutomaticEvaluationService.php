@@ -41,8 +41,8 @@ class AutomaticEvaluationService
             'passed_checks' => $passedChecks,
             'total_checks' => $totalChecks,
             'summary' => $passed
-                ? "All {$totalChecks} automatic checks passed."
-                : "{$passedChecks} of {$totalChecks} automatic checks passed.",
+                ? "All {$totalChecks} quality checks passed."
+                : "{$passedChecks} of {$totalChecks} quality checks passed.",
             'checks' => $checks,
         ];
     }
@@ -63,10 +63,10 @@ class AutomaticEvaluationService
             'expected_preview' => trim($expected),
             'actual_preview' => trim($actual),
             'message' => $passed
-                ? 'Output contains the expected reference text.'
+                ? 'Result contains the expected reference text.'
                 : ($normalizedActual === ''
-                    ? 'No output was generated for text comparison.'
-                    : 'Output does not contain the expected reference text.'),
+                    ? 'No result was generated for text comparison.'
+                    : 'Result does not contain the expected reference text.'),
         ];
     }
 
@@ -92,7 +92,7 @@ class AutomaticEvaluationService
                 'passed' => false,
                 'expected_preview' => $expected,
                 'actual_preview' => $actualPreview ?? ($run->output_text ?? ''),
-                'message' => 'Output is not valid JSON, so the expected JSON check could not pass.',
+                'message' => 'The result is not valid JSON, so the expected JSON check could not pass.',
             ];
         }
 
@@ -105,7 +105,7 @@ class AutomaticEvaluationService
             'passed' => $mismatch === null,
             'expected_preview' => $expected,
             'actual_preview' => $actual,
-            'message' => $mismatch ?? 'Output JSON contains the expected keys and values.',
+            'message' => $mismatch ?? 'Result JSON contains the expected keys and values.',
         ];
     }
 

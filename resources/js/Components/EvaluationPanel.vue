@@ -44,26 +44,37 @@ const teamReviewSummary = computed(() => {
     };
 });
 const isReviewable = computed(() => props.run.is_reviewable ?? ['success', 'invalid_format'].includes(props.run.status));
+const riskLabel = (value) => {
+    if (value === 'high') {
+        return 'High risk';
+    }
+
+    if (value === 'medium') {
+        return 'Medium risk';
+    }
+
+    return 'Low risk';
+};
 const reviewBlocker = computed(() => {
     switch (props.run.status) {
     case 'queued':
         return {
-            title: 'Manual review unlocks after execution starts',
-            description: 'This run has not produced an output yet. Wait until the queue worker picks it up and the run finishes before saving reviewer scores.',
+            title: 'Human review unlocks after the run starts',
+            description: 'This run has not produced an output yet. Wait until the queue worker finishes it before saving review scores.',
         };
     case 'running':
         return {
-            title: 'Manual review is temporarily locked',
-            description: 'This run is still executing. Reviewer scores should be saved only after the final output appears on the page.',
+            title: 'Human review is temporarily locked',
+            description: 'This run is still executing. Save review scores only after the final output appears on the page.',
         };
     case 'failed':
         return {
-            title: 'Manual review is unavailable for failed runs',
-            description: 'This run stopped before it produced a reviewable output. Use the runtime error and experiment status to diagnose the failure first.',
+            title: 'Human review is unavailable for failed runs',
+            description: 'This run stopped before it produced a usable output. Use the runtime error and result status to diagnose the failure first.',
         };
     default:
         return {
-            title: 'Manual review is not available yet',
+            title: 'Human review is not available yet',
             description: 'This run is not in a reviewable state.',
         };
     }
@@ -122,9 +133,9 @@ const submit = async () => {
     <div class="panel-muted p-4">
         <div class="flex items-center justify-between gap-4">
             <div>
-                <h3 class="text-sm font-medium">Manual evaluation</h3>
+                <h3 class="text-sm font-medium">Human review</h3>
                 <p class="mt-1 text-xs text-[var(--muted)]">
-                    Save a reviewer score for clarity, correctness, completeness, tone, and format.
+                    Save a quick team review for clarity, correctness, completeness, tone, and expected format.
                 </p>
             </div>
             <div v-if="saved" class="text-xs text-[var(--success)]">Saved</div>
@@ -140,7 +151,7 @@ const submit = async () => {
                 <div class="summary-item-value">{{ formatScore(teamReviewSummary.averageScore) }}</div>
             </div>
             <div class="summary-item">
-                <div class="summary-item-label">Format confirmed</div>
+                <div class="summary-item-label">Expected format confirmed</div>
                 <div class="summary-item-value">{{ teamReviewSummary.formatVotes }}/{{ teamReviewSummary.count }}</div>
             </div>
             <div class="summary-item">
@@ -148,17 +159,17 @@ const submit = async () => {
                 <div class="summary-item-value">
                     {{ teamReviewSummary.latestEvaluation?.evaluator_name || 'Unknown reviewer' }}
                     <span v-if="teamReviewSummary.latestEvaluation?.updated_at" class="text-[var(--muted)]">
-                        · {{ formatDateTime(teamReviewSummary.latestEvaluation.updated_at) }}
+                        Updated {{ formatDateTime(teamReviewSummary.latestEvaluation.updated_at) }}
                     </span>
                 </div>
             </div>
         </div>
         <div v-else class="mt-4 text-sm text-[var(--muted)]">
-            {{ isReviewable ? 'No team reviews saved for this run yet.' : reviewBlocker.description }}
+            {{ isReviewable ? 'No human reviews saved for this result yet.' : reviewBlocker.description }}
         </div>
 
         <div v-if="sortedEvaluations.length" class="mt-4 space-y-3">
-            <div class="text-sm font-medium">Team review history</div>
+            <div class="text-sm font-medium">Review history</div>
 
             <div
                 v-for="evaluation in sortedEvaluations"
@@ -177,7 +188,9 @@ const submit = async () => {
                     </div>
                     <div class="text-right">
                         <div class="font-medium">{{ formatScore(evaluation.average_score) }}</div>
-                        <div class="mt-1 text-xs text-[var(--muted)]">{{ evaluation.hallucination_risk || 'Risk not set' }}</div>
+                        <div class="mt-1 text-xs text-[var(--muted)]">
+                            {{ evaluation.hallucination_risk ? riskLabel(evaluation.hallucination_risk) : 'Risk not set' }}
+                        </div>
                     </div>
                 </div>
 
@@ -199,8 +212,8 @@ const submit = async () => {
                         <span>{{ evaluation.tone_score ?? 'Not scored' }}</span>
                     </div>
                     <div class="summary-row">
-                        <span>Format</span>
-                        <span>{{ evaluation.format_valid_manual ? 'Valid' : 'Invalid' }}</span>
+                        <span>Expected format</span>
+                        <span>{{ evaluation.format_valid_manual ? 'Matched' : 'Needs fix' }}</span>
                     </div>
                 </div>
 
@@ -241,7 +254,7 @@ const submit = async () => {
                     </select>
                 </div>
                 <div>
-                    <label class="field-label">Hallucination risk</label>
+                    <label class="field-label">Made-up detail risk</label>
                     <select v-model="form.hallucination_risk" class="field-select">
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -251,8 +264,8 @@ const submit = async () => {
                 <label class="check-row">
                     <input v-model="form.format_valid_manual" type="checkbox">
                     <div>
-                        <div class="text-sm font-medium">Format valid</div>
-                        <div class="mt-1 text-xs text-[var(--muted)]">Reviewer confirms that the output follows the expected format.</div>
+                        <div class="text-sm font-medium">Matches expected format</div>
+                        <div class="mt-1 text-xs text-[var(--muted)]">Confirm that the output follows the expected structure or format.</div>
                     </div>
                 </label>
             </div>
@@ -265,10 +278,10 @@ const submit = async () => {
 
             <div class="mt-4 flex items-center justify-between gap-4">
                 <div class="text-xs text-[var(--muted)]">
-                    Existing evaluations: {{ evaluations.length }}
+                    Reviews saved: {{ evaluations.length }}
                 </div>
                 <button type="button" class="btn-secondary" :disabled="saving" @click="submit">
-                    {{ saving ? 'Saving...' : 'Save evaluation' }}
+                    {{ saving ? 'Saving...' : 'Save review' }}
                 </button>
             </div>
         </div>

@@ -147,7 +147,7 @@ const stageCopy = computed(() => {
             eyebrow: 'Activation step',
             title: canManagePrompts.value ? 'Add the first prompt' : 'Review the current task',
             body: canManagePrompts.value
-                ? 'The task exists. Next add the first prompt so the team can start testing versions against it.'
+                ? 'The task exists. Next add the first prompt so the team can start testing it on real scenarios.'
                 : 'The task is already defined. Open it to review the scope before prompt work starts.',
         },
         prompting: {
@@ -175,12 +175,12 @@ const stageCopy = computed(() => {
 const stageOrder = ['empty', 'task_defined', 'prompting', 'testing', 'operating'];
 const stageRank = computed(() => stageOrder.indexOf(journeyStage.value));
 const flowSteps = computed(() => [
-    {
-        id: 'tasks',
-        title: '1. Tasks',
-        body: 'Define the business problem and collect saved test cases.',
-        state: stageRank.value >= 1 ? 'Done' : 'Now',
-    },
+        {
+            id: 'tasks',
+            title: '1. Tasks',
+            body: 'Define the business problem and collect saved scenarios.',
+            state: stageRank.value >= 1 ? 'Done' : 'Now',
+        },
     {
         id: 'prompts',
         title: '2. Prompts',

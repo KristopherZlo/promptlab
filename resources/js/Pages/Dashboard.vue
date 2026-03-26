@@ -18,6 +18,17 @@ const props = defineProps({
 });
 
 const topModel = computed(() => props.overview.top_models[0] ?? null);
+const modeLabel = (value) => {
+    if (value === 'compare') {
+        return 'Compare prompts';
+    }
+
+    if (value === 'batch') {
+        return 'Scenario batch';
+    }
+
+    return 'Single test';
+};
 
 const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -124,14 +135,14 @@ const recentExperimentHref = (experiment) =>
                                 <div class="summary-item-label">Experiment runs</div>
                                 <div class="summary-item-value">{{ overview.counts.runs }}</div>
                             </div>
-                            <div class="summary-item">
-                                <div class="summary-item-label">Tasks</div>
-                                <div class="summary-item-value">{{ overview.counts.use_cases }}</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-item-label">Templates</div>
-                                <div class="summary-item-value">{{ overview.counts.prompt_templates }}</div>
-                            </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Tasks</div>
+                            <div class="summary-item-value">{{ overview.counts.use_cases }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-item-label">Prompts</div>
+                            <div class="summary-item-value">{{ overview.counts.prompt_templates }}</div>
+                        </div>
                             <div class="summary-item">
                                 <div class="summary-item-label">Approved prompts</div>
                                 <div class="summary-item-value">{{ overview.counts.library_entries }}</div>
@@ -160,7 +171,7 @@ const recentExperimentHref = (experiment) =>
                                                 {{ experiment.use_case || 'Ad hoc' }}
                                             </Link>
                                         </td>
-                                        <td class="capitalize">{{ experiment.mode }}</td>
+                                        <td>{{ modeLabel(experiment.mode) }}</td>
                                         <td class="mono text-xs">{{ experiment.model_name }}</td>
                                         <td><span class="status-chip">{{ experiment.status }}</span></td>
                                     </tr>
@@ -298,8 +309,8 @@ const recentExperimentHref = (experiment) =>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ item.use_case }}</div>
                                     <div class="mt-2 text-sm">{{ item.failed_count }} failed or invalid runs</div>
                                     <div class="mt-3 flex flex-wrap gap-3 text-sm">
-                                        <Link :href="problemCaseHref(item)" class="app-inline-link">View test cases</Link>
-                                        <Link :href="problemCaseRunHref(item)" class="app-inline-link">Test this case</Link>
+                                        <Link :href="problemCaseHref(item)" class="app-inline-link">View scenarios</Link>
+                                        <Link :href="problemCaseRunHref(item)" class="app-inline-link">Test this scenario</Link>
                                     </div>
                                 </div>
                                 <div v-if="overview.problem_cases.length === 0" class="record-list-item text-sm text-[var(--muted)]">

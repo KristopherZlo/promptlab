@@ -38,6 +38,17 @@ const props = defineProps({
     },
 });
 const page = usePage();
+const modeLabel = (value) => {
+    if (value === 'compare') {
+        return 'Compare prompts';
+    }
+
+    if (value === 'batch') {
+        return 'Scenario batch';
+    }
+
+    return 'Single test';
+};
 
 const editForm = useForm({
     name: props.useCase.name,
@@ -179,7 +190,7 @@ const beginEditTestCase = (testCase) => {
 
 const duplicateTestCase = (testCase) => {
     uiState.editingTestCaseId = null;
-    uiState.testCaseNotice = 'Composer filled from the selected test case. Save to create a duplicate.';
+    uiState.testCaseNotice = 'Form filled from the selected scenario. Save to create a copy.';
     applyTestCaseState({
         ...testCase,
         title: `Copy of ${testCase.title}`,
@@ -269,7 +280,7 @@ const saveTestCase = async () => {
             testCaseForm.setError('metadata_json_text', metadataJson.error || 'Metadata JSON must be valid JSON.');
         }
 
-        uiState.testCaseNotice = 'Fix the JSON fields before saving this test case.';
+        uiState.testCaseNotice = 'Fix the JSON fields before saving this scenario.';
         testCaseForm.processing = false;
         return;
     }
@@ -287,10 +298,10 @@ const saveTestCase = async () => {
     try {
         if (uiState.editingTestCaseId) {
             await axios.put(route('api.test-cases.update', uiState.editingTestCaseId), payload);
-            uiState.testCaseNotice = 'Test case updated.';
+            uiState.testCaseNotice = 'Scenario updated.';
         } else {
             await axios.post(route('api.test-cases.store', props.useCase.id), payload);
-            uiState.testCaseNotice = 'Test case added to this task.';
+            uiState.testCaseNotice = 'Scenario added to this task.';
         }
 
         applyTestCaseState();
@@ -301,7 +312,7 @@ const saveTestCase = async () => {
         applyServerErrors(testCaseForm, error);
         uiState.testCaseNotice = extractServerMessage(
             error,
-            uiState.editingTestCaseId ? 'Test case could not be updated.' : 'Test case could not be created.',
+            uiState.editingTestCaseId ? 'Scenario could not be updated.' : 'Scenario could not be created.',
         );
     } finally {
         testCaseForm.processing = false;
@@ -314,7 +325,7 @@ const archiveTestCase = async (testCase) => {
 
     try {
         await axios.put(route('api.test-cases.update', testCase.id), serializeTestCase(testCase, { status: 'archived' }));
-        uiState.testCaseNotice = 'Test case archived.';
+        uiState.testCaseNotice = 'Scenario archived.';
 
         if (uiState.editingTestCaseId === testCase.id) {
             resetTestCaseComposer();
@@ -322,7 +333,7 @@ const archiveTestCase = async (testCase) => {
 
         router.reload({ only: ['useCase', 'detail'] });
     } catch (error) {
-        uiState.testCaseNotice = extractServerMessage(error, 'Test case could not be archived.');
+        uiState.testCaseNotice = extractServerMessage(error, 'Scenario could not be archived.');
     } finally {
         uiState.testCaseActionId = null;
     }
@@ -338,7 +349,7 @@ const deleteTestCase = async (testCase) => {
 
     try {
         await axios.delete(route('api.test-cases.destroy', testCase.id));
-        uiState.testCaseNotice = 'Test case deleted.';
+        uiState.testCaseNotice = 'Scenario deleted.';
 
         if (uiState.editingTestCaseId === testCase.id) {
             resetTestCaseComposer();
@@ -346,7 +357,7 @@ const deleteTestCase = async (testCase) => {
 
         router.reload({ only: ['useCase', 'detail'] });
     } catch (error) {
-        uiState.testCaseNotice = extractServerMessage(error, 'Test case could not be deleted.');
+        uiState.testCaseNotice = extractServerMessage(error, 'Scenario could not be deleted.');
     } finally {
         uiState.testCaseActionId = null;
     }
@@ -354,9 +365,9 @@ const deleteTestCase = async (testCase) => {
 
 const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'templates', label: 'Templates', icon: FileStack },
+    { id: 'templates', label: 'Prompts', icon: FileStack },
     { id: 'experiments', label: 'Experiments', icon: FlaskConical },
-    { id: 'test-cases', label: 'Test cases', icon: FolderKanban },
+    { id: 'test-cases', label: 'Scenarios', icon: FolderKanban },
     { id: 'settings', label: 'Settings', icon: Settings2, manageOnly: true },
 ];
 const activeTab = useUrlState({
@@ -381,7 +392,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
             <div>
                 <h1>{{ useCase.name }}</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    One task, split into separate views for overview, prompt work, experiments, reusable cases, and configuration.
+                    One task with separate views for overview, prompts, experiments, saved scenarios, and settings.
                 </p>
                 <div class="mt-3 inline-meta">
                     <span class="inline-meta-item">
@@ -427,7 +438,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                     <div class="surface-block-header lg:flex-row lg:items-start lg:justify-between">
                         <div>
                             <h2 class="section-title">Task status</h2>
-                            <p class="text-sm text-[var(--muted)]">Keep high-level maturity signals in one stable area while the detailed work happens in tabs.</p>
+                            <p class="text-sm text-[var(--muted)]">Keep the high-level picture here while the detailed work happens in the tabs below.</p>
                         </div>
                         <div class="console-page-actions lg:flex-none">
                             <Link
@@ -444,15 +455,15 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                     <div class="surface-block-body">
                         <div class="summary-strip">
                             <div class="summary-item">
-                                <div class="summary-item-label">Prompt templates</div>
+                                <div class="summary-item-label">Prompts</div>
                                 <div class="summary-item-value">{{ detail.prompt_templates_count }}</div>
                             </div>
                             <div class="summary-item">
-                                <div class="summary-item-label">Test cases</div>
+                                <div class="summary-item-label">Scenarios</div>
                                 <div class="summary-item-value">{{ detail.test_cases_count }}</div>
                             </div>
                             <div class="summary-item">
-                                <div class="summary-item-label">Runs</div>
+                                <div class="summary-item-label">Experiments</div>
                                 <div class="summary-item-value">{{ detail.runs_count }}</div>
                             </div>
                             <div class="summary-item">
@@ -467,7 +478,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">Overview</h2>
-                            <p class="text-sm text-[var(--muted)]">Reference information that defines the task and its current best reusable prompt.</p>
+                            <p class="text-sm text-[var(--muted)]">Reference information that defines the task and points to the strongest reusable prompt so far.</p>
                         </div>
                     </div>
 
@@ -492,7 +503,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                         </div>
 
                         <div class="surface-muted">
-                            <div class="console-field-label">Best prompt</div>
+                            <div class="console-field-label">Best prompt so far</div>
                             <div class="mt-3">
                                 <template v-if="useCase.best_prompt">
                                     <div class="font-semibold text-[var(--ink)]">
@@ -511,8 +522,8 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                 <section v-else-if="activeTab === 'templates'" class="surface-block">
                     <div class="surface-block-header">
                         <div>
-                            <h2 class="section-title">Prompt templates</h2>
-                            <p class="text-sm text-[var(--muted)]">Keep all prompt families for this task in their own view.</p>
+                            <h2 class="section-title">Prompts</h2>
+                            <p class="text-sm text-[var(--muted)]">Keep all prompt options for this task in one place.</p>
                         </div>
                         <Link v-if="canManage" :href="createTemplateHref" class="btn-primary">Add prompt</Link>
                     </div>
@@ -521,7 +532,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Task</th>
+                                <th>Category</th>
                                 <th>Versions</th>
                                 <th>Score</th>
                             </tr>
@@ -534,12 +545,12 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     </Link>
                                     <div class="mt-1 text-sm text-[var(--muted)]">{{ template.description }}</div>
                                 </td>
-                                <td class="capitalize">{{ template.task_type }}</td>
+                                <td>{{ template.task_type || 'No category' }}</td>
                                 <td>{{ template.versions_count }}</td>
                                 <td>{{ template.average_score?.toFixed(1) || 'N/A' }}</td>
                             </tr>
                             <tr v-if="useCase.prompt_templates.length === 0">
-                                <td colspan="4" class="text-[var(--muted)]">No prompt templates attached to this task yet.</td>
+                                <td colspan="4" class="text-[var(--muted)]">No prompts attached to this task yet.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -549,7 +560,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">Recent experiments</h2>
-                            <p class="text-sm text-[var(--muted)]">Review execution history separately from task definition.</p>
+                            <p class="text-sm text-[var(--muted)]">Review recent runs without mixing them into the task definition.</p>
                         </div>
                     </div>
 
@@ -558,7 +569,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                             <div class="flex items-start justify-between gap-4">
                                 <div>
                                     <Link :href="route('experiments.show', experiment.id)" class="font-bold hover:underline">
-                                        {{ experiment.mode }} experiment
+                                        {{ modeLabel(experiment.mode) }}
                                     </Link>
                                     <div class="mt-2 inline-meta text-xs">
                                         <span class="inline-meta-item">
@@ -579,7 +590,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                             </div>
                         </div>
                         <div v-if="recentExperiments.length === 0" class="record-list-item text-sm text-[var(--muted)]">
-                            No recent experiments for this task.
+                            No recent experiments for this task yet.
                         </div>
                     </div>
                 </section>
@@ -587,8 +598,8 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                 <section v-else-if="activeTab === 'test-cases'" class="surface-block">
                     <div class="surface-block-header">
                         <div>
-                            <h2 class="section-title">Saved test cases</h2>
-                            <p class="text-sm text-[var(--muted)]">Keep reusable inputs and the form for adding new cases in their own layer.</p>
+                            <h2 class="section-title">Saved scenarios</h2>
+                            <p class="text-sm text-[var(--muted)]">Keep reusable real-world examples and the form for adding new ones in their own area.</p>
                         </div>
                         <div v-if="canRunExperiments" class="console-page-actions">
                             <Link
@@ -596,17 +607,17 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                 :href="batchRunHref"
                                 class="btn-secondary"
                             >
-                                Test selected cases
+                                Test selected scenarios
                             </Link>
-                            <button v-else type="button" class="btn-secondary" disabled>Test selected cases</button>
+                            <button v-else type="button" class="btn-secondary" disabled>Test selected scenarios</button>
                             <Link
                                 v-if="selectedTestCases.length === 1"
                                 :href="singleRunHref"
                                 class="btn-primary"
                             >
-                                Test selected case
+                                Test selected scenario
                             </Link>
-                            <button v-else type="button" class="btn-primary" disabled>Test selected case</button>
+                            <button v-else type="button" class="btn-primary" disabled>Test selected scenario</button>
                         </div>
                     </div>
 
@@ -614,7 +625,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                         <div class="surface-muted">
                             <SearchFilterBar
                                 :model-value="testCaseSearch"
-                                placeholder="Search test cases by title, input, expected output, or JSON..."
+                                placeholder="Search scenarios by title, input, expected output, or JSON..."
                                 @update:model-value="testCaseSearch = $event"
                             >
                                 <FilterDropdown
@@ -651,7 +662,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                         <td>
                                             <div class="font-bold">{{ testCase.title }}</div>
                                             <div class="mt-2 inline-meta text-xs text-[var(--muted)]">
-                                                <span class="inline-meta-item">Expected JSON {{ Object.keys(testCase.expected_json ?? {}).length ? 'configured' : 'empty' }}</span>
+                                                <span class="inline-meta-item">Expected JSON {{ Object.keys(testCase.expected_json ?? {}).length ? 'ready' : 'empty' }}</span>
                                                 <span class="inline-meta-item">Variables {{ Object.keys(testCase.variables_json ?? {}).length }}</span>
                                                 <span class="inline-meta-item">Metadata {{ Object.keys(testCase.metadata_json ?? {}).length }}</span>
                                             </div>
@@ -659,7 +670,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                         <td>
                                             <div class="text-sm text-[var(--muted)]">{{ truncateText(testCase.input_text, 180) }}</div>
                                             <div v-if="testCase.expected_output" class="mt-2 text-xs text-[var(--muted)]">
-                                                Expected: {{ truncateText(testCase.expected_output, 140) }}
+                                                Expected response: {{ truncateText(testCase.expected_output, 140) }}
                                             </div>
                                         </td>
                                         <td><span class="status-chip">{{ testCase.status }}</span></td>
@@ -705,7 +716,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     </tr>
                                     <tr v-if="filteredTestCases.length === 0">
                                         <td :colspan="(canRunExperiments ? 1 : 0) + (canManage ? 4 : 3)" class="text-[var(--muted)]">
-                                            {{ useCase.test_cases.length === 0 ? 'No saved test cases yet.' : 'No test cases match the current search or filter.' }}
+                                            {{ useCase.test_cases.length === 0 ? 'No saved scenarios yet.' : 'No scenarios match the current search or filter.' }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -713,7 +724,7 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                         </div>
 
                         <div v-if="canManage" class="surface-muted">
-                            <div class="section-title">{{ editingTestCase ? 'Edit test case' : 'Add test case' }}</div>
+                            <div class="section-title">{{ editingTestCase ? 'Edit scenario' : 'Add scenario' }}</div>
                             <p class="mt-2 text-sm text-[var(--muted)]">
                                 {{ editingTestCase
                                     ? 'Update the reusable example without leaving the task page.'
@@ -732,8 +743,8 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     <div v-if="testCaseForm.errors.input_text" class="field-error">{{ testCaseForm.errors.input_text }}</div>
                                 </div>
                                 <div>
-                                    <label class="field-label">Expected output</label>
-                                    <textarea v-model="testCaseForm.expected_output" class="field-textarea" placeholder="Optional reference output for reviewers."></textarea>
+                                    <label class="field-label">Expected response</label>
+                                    <textarea v-model="testCaseForm.expected_output" class="field-textarea" placeholder="Optional reference response for reviewers."></textarea>
                                 </div>
                                 <div>
                                     <label class="field-label">Status</label>
@@ -745,26 +756,26 @@ const runUseCaseHref = routeWithQuery('playground', {}, {
                                     <div v-if="testCaseForm.errors.status" class="field-error">{{ testCaseForm.errors.status }}</div>
                                 </div>
                                 <div>
-                                    <label class="field-label">Expected JSON</label>
+                                    <label class="field-label">Expected JSON format</label>
                                     <textarea v-model="testCaseForm.expected_json_text" class="field-textarea mono" placeholder="{}"></textarea>
-                                    <div class="field-help">Optional JSON structure expected from the run.</div>
+                                    <div class="field-help">Optional JSON structure expected from the result.</div>
                                     <div v-if="testCaseForm.errors.expected_json_text" class="field-error">{{ testCaseForm.errors.expected_json_text }}</div>
                                 </div>
                                 <div>
-                                    <label class="field-label">Variables JSON</label>
+                                    <label class="field-label">Scenario variables (JSON)</label>
                                     <textarea v-model="testCaseForm.variables_json_text" class="field-textarea mono" placeholder="{}"></textarea>
-                                    <div class="field-help">Variables passed into the prompt for this case.</div>
+                                    <div class="field-help">Optional variables passed into the prompt for this scenario.</div>
                                     <div v-if="testCaseForm.errors.variables_json_text" class="field-error">{{ testCaseForm.errors.variables_json_text }}</div>
                                 </div>
                                 <div>
-                                    <label class="field-label">Metadata JSON</label>
+                                    <label class="field-label">Scenario notes (JSON)</label>
                                     <textarea v-model="testCaseForm.metadata_json_text" class="field-textarea mono" placeholder="{}"></textarea>
-                                    <div class="field-help">Optional notes, tags, or source metadata for this case.</div>
+                                    <div class="field-help">Optional notes, tags, or source metadata for this scenario.</div>
                                     <div v-if="testCaseForm.errors.metadata_json_text" class="field-error">{{ testCaseForm.errors.metadata_json_text }}</div>
                                 </div>
                                 <div class="flex flex-wrap gap-3">
                                     <button class="btn-primary self-start" :disabled="testCaseForm.processing">
-                                        {{ testCaseForm.processing ? 'Saving...' : editingTestCase ? 'Save changes' : 'Add test case' }}
+                                        {{ testCaseForm.processing ? 'Saving...' : editingTestCase ? 'Save changes' : 'Add scenario' }}
                                     </button>
                                     <button
                                         v-if="editingTestCase"

@@ -77,7 +77,7 @@ class PromptOptimizationService
 
         if ($eligibleCases->isEmpty()) {
             throw ValidationException::withMessages([
-                'source_prompt_version_id' => 'Add at least one active test case with expected output or expected JSON before running GEPA.',
+                'source_prompt_version_id' => 'Add at least one active scenario with expected output or expected JSON before starting improvement.',
             ]);
         }
 

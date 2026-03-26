@@ -27,7 +27,7 @@ class TestCaseController extends Controller
             return response()->json(['data' => $testCase], 201);
         }
 
-        return to_route('use-cases.show', $useCase)->with('success', 'Test case created.');
+        return to_route('use-cases.show', $useCase)->with('success', 'Scenario created.');
     }
 
     public function update(TestCaseRequest $request, TestCase $testCase, ActivityLogService $activity): RedirectResponse|JsonResponse
@@ -42,7 +42,7 @@ class TestCaseController extends Controller
             return response()->json(['data' => $testCase]);
         }
 
-        return to_route('use-cases.show', $testCase->useCase)->with('success', 'Test case updated.');
+        return to_route('use-cases.show', $testCase->useCase)->with('success', 'Scenario updated.');
     }
 
     public function destroy(Request $request, TestCase $testCase, ActivityLogService $activity): RedirectResponse|JsonResponse
@@ -60,6 +60,6 @@ class TestCaseController extends Controller
             return response()->json(status: 204);
         }
 
-        return to_route('use-cases.show', $useCase)->with('success', 'Test case removed.');
+        return to_route('use-cases.show', $useCase)->with('success', 'Scenario removed.');
     }
 }

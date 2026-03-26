@@ -66,7 +66,7 @@ class ExperimentRequest extends TeamAwareRequest
 
         if ($validated['mode'] === 'batch' && empty($validated['test_case_ids'] ?? [])) {
             throw ValidationException::withMessages([
-                'test_case_ids' => 'Batch mode requires at least one saved test case.',
+                'test_case_ids' => 'Batch mode requires at least one saved scenario.',
             ]);
         }
     }

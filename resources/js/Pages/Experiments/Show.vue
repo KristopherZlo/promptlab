@@ -81,6 +81,17 @@ watch(
 const runs = computed(() => normalizeRuns(experimentState.value));
 const summary = computed(() => experimentState.value.summary ?? {});
 const isRunning = computed(() => ['queued', 'running'].includes(experimentState.value.status));
+const modeLabel = (value) => {
+    if (value === 'compare') {
+        return 'Compare prompts';
+    }
+
+    if (value === 'batch') {
+        return 'Scenario batch';
+    }
+
+    return 'Single test';
+};
 const experimentStatusMeta = computed(() => {
     switch (experimentState.value.status) {
     case 'queued':
@@ -91,7 +102,7 @@ const experimentStatusMeta = computed(() => {
     case 'running':
         return {
             title: 'Execution is in progress',
-            description: 'At least one run has started. Output, latency, token counts, and automatic checks will fill in as the worker finishes each run.',
+            description: 'At least one run has started. Output, latency, token counts, and quality checks will fill in as the worker finishes each run.',
         };
     case 'failed':
         return {
@@ -101,7 +112,7 @@ const experimentStatusMeta = computed(() => {
     default:
         return {
             title: 'Execution finished',
-            description: 'All runs reached a final state. Compare outputs, review format checks, and save manual evaluations where needed.',
+            description: 'All runs reached a final state. Compare outputs, review quality checks, and save human review where needed.',
         };
     }
 });
@@ -125,7 +136,7 @@ const formatStatusLabel = (run) => {
         return run.status === 'failed' ? 'Not checked' : 'Pending';
     }
 
-    return run.format_valid ? 'Valid' : 'Invalid';
+    return run.format_valid ? 'Matched' : 'Needs fix';
 };
 const runStatusMeta = (run) => {
     switch (run.status) {
@@ -142,17 +153,17 @@ const runStatusMeta = (run) => {
     case 'failed':
         return {
             title: 'Run failed before producing a reviewable result',
-            description: 'Check the runtime error below first. Manual evaluation is locked for failed runs because there is no final output to score.',
+            description: 'Check the runtime error below first. Human review stays locked for failed runs because there is no final output to score.',
         };
     case 'invalid_format':
         return {
-            title: 'Output was generated, but format validation failed',
-            description: 'The model responded, but the result did not satisfy the expected structure. Compare the raw output with the automatic checks before revising the prompt.',
+            title: 'Output was generated, but the expected format did not match',
+            description: 'The model responded, but the result did not satisfy the expected structure. Compare the raw output with the quality checks before revising the prompt.',
         };
     default:
         return {
             title: 'Run completed successfully',
-            description: 'The output and metrics below are ready for review, comparison, and manual scoring.',
+            description: 'The output and metrics below are ready for review, comparison, and human scoring.',
         };
     }
 };
@@ -277,7 +288,7 @@ const promoteRun = async (run) => {
                     <div class="mt-2 inline-meta">
                         <span class="inline-meta-item">
                             <ListChecks />
-                            {{ experimentState.mode }}
+                            {{ modeLabel(experimentState.mode) }}
                         </span>
                         <span class="inline-meta-item">
                             <Bot />
@@ -290,7 +301,7 @@ const promoteRun = async (run) => {
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <button type="button" class="btn-secondary" @click="loadExperiment">Update results</button>
+                    <button type="button" class="btn-secondary" @click="loadExperiment">Refresh results</button>
                     <Link :href="route('playground')" class="btn-primary">Start new test</Link>
                 </div>
             </div>
@@ -314,7 +325,7 @@ const promoteRun = async (run) => {
             <div class="page-frame-content">
             <section class="panel p-5">
                 <PanelHeader
-                    title="Experiment snapshot"
+                    title="Results summary"
                     description="Current progress, quality, and runtime signals for this experiment."
                     help="Shows the high-level progress and quality metrics for the experiment so reviewers can understand overall status before drilling into individual runs."
                 />
@@ -329,7 +340,7 @@ const promoteRun = async (run) => {
                         <div class="summary-item-value">{{ formatScore(summary.average_manual_score) }}</div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-item-label">Format pass rate</div>
+                        <div class="summary-item-label">Expected format matched</div>
                         <div class="summary-item-value">
                             {{ summary.format_pass_rate != null ? `${summary.format_pass_rate}%` : 'N/A' }}
                         </div>
@@ -341,7 +352,7 @@ const promoteRun = async (run) => {
                         </div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-item-label">Automatic pass rate</div>
+                        <div class="summary-item-label">Quality checks passed</div>
                         <div class="summary-item-value">
                             {{ summary.automatic_pass_rate != null ? `${summary.automatic_pass_rate}%` : 'N/A' }}
                         </div>
@@ -388,8 +399,8 @@ const promoteRun = async (run) => {
             <section v-if="activeTab === 'results' && experimentState.mode !== 'batch'" class="space-y-4">
                 <section v-if="experimentState.mode === 'compare'" class="panel p-5">
                     <PanelHeader
-                        title="Compare board"
-                        description="Review the candidate revisions side by side before deciding which one should move forward."
+                        title="Side-by-side comparison"
+                        description="Review the candidate prompt versions side by side before deciding which one should move forward."
                         :icon="ClipboardList"
                         help="Compare mode keeps every candidate visible at once so you can inspect outputs, prompts, and evaluations without scrolling through separate pages."
                     />
@@ -414,7 +425,7 @@ const promoteRun = async (run) => {
                                     <span>{{ formatScore(run.manual_average_score) }}</span>
                                 </div>
                                 <div class="summary-row">
-                                    <span>Format</span>
+                                    <span>Expected format</span>
                                     <span>{{ formatStatusLabel(run) }}</span>
                                 </div>
                                 <div class="summary-row">
@@ -437,7 +448,7 @@ const promoteRun = async (run) => {
                             </div>
                             <div class="flex items-center gap-3">
                                 <HelpHint
-                                    text="This run card contains one prompt version output, its compiled prompt, runtime metrics, and evaluation controls."
+                                    text="This run card contains one prompt version output, its compiled prompt, runtime metrics, quality checks, and human review controls."
                                     :label="`Help for run ${run.id}`"
                                 />
                                 <span class="status-chip">{{ run.status }}</span>
@@ -462,14 +473,14 @@ const promoteRun = async (run) => {
                             <div class="guide-card">
                                 <div class="inline-meta-item text-xs text-[var(--muted)]">
                                     <BadgeCheck />
-                                    <span>Format</span>
+                                    <span>Expected format</span>
                                 </div>
                                 <div class="mt-1">{{ formatStatusLabel(run) }}</div>
                             </div>
                             <div class="guide-card">
                                 <div class="inline-meta-item text-xs text-[var(--muted)]">
                                     <Gauge />
-                                    <span>Manual average</span>
+                                    <span>Human review</span>
                                 </div>
                                 <div class="mt-1">{{ formatScore(run.manual_average_score) }}</div>
                             </div>
@@ -540,8 +551,8 @@ const promoteRun = async (run) => {
             <div v-else-if="activeTab === 'results'" class="space-y-6">
                 <section v-if="problemRuns.length" class="panel p-5">
                     <PanelHeader
-                        title="Problem queue"
-                        description="Jump straight into failed or invalid cases first."
+                        title="Attention first"
+                        description="Jump straight into failed or invalid scenarios first."
                         :icon="TriangleAlert"
                         help="Surfaces the runs that need immediate review so batch experiments do not require scanning the full table for failures."
                     />
@@ -562,16 +573,16 @@ const promoteRun = async (run) => {
                 <section class="panel overflow-hidden">
                     <div class="border-b border-[var(--line)] px-5 py-4">
                         <PanelHeader
-                            title="Batch runs"
+                            title="Scenario results"
                             description="Open a row to inspect the strongest or weakest outputs first."
                             :icon="ListChecks"
-                            help="Lists every batch result so reviewers can pick a saved case and inspect its output in detail."
+                            help="Lists every batch result so reviewers can pick a saved scenario and inspect its output in detail."
                         />
                     </div>
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Test case</th>
+                                <th>Scenario</th>
                                 <th>Status</th>
                                 <th>Score</th>
                                 <th>Latency</th>
@@ -608,7 +619,7 @@ const promoteRun = async (run) => {
                             :title="batchActiveRun.test_case?.title || `Run #${batchActiveRun.id}`"
                             :description="`${batchActiveRun.prompt_version?.name} ${batchActiveRun.prompt_version?.version_label}`"
                             :icon="ClipboardList"
-                            help="Shows the currently selected batch result, including the input, output, compiled prompt, and evaluation tools for that case."
+                            help="Shows the currently selected batch result, including the input, output, compiled prompt, quality checks, and human review tools for that scenario."
                         />
                         <span class="status-chip">{{ batchActiveRun.status }}</span>
                     </div>
@@ -670,7 +681,7 @@ const promoteRun = async (run) => {
 
             <section v-if="activeTab === 'summary'" class="panel p-5">
                 <PanelHeader
-                    title="Experiment context and summary"
+                    title="Experiment settings and summary"
                     description="Use this section to understand what settings were used and how the run behaved overall."
                     :icon="Activity"
                     help="Explains the experiment configuration and aggregates the most important result signals after execution."
@@ -680,12 +691,12 @@ const promoteRun = async (run) => {
                     <div class="panel-muted p-4">
                         <div class="text-block-title">
                             <ClipboardList />
-                            <span>Run metadata</span>
+                            <span>Experiment settings</span>
                         </div>
                         <div class="summary-list mt-4">
                             <div class="summary-row">
                                 <span>Mode</span>
-                                <span class="capitalize">{{ experimentState.mode }}</span>
+                                <span>{{ modeLabel(experimentState.mode) }}</span>
                             </div>
                             <div class="summary-row">
                                 <span>Provider</span>
@@ -713,7 +724,7 @@ const promoteRun = async (run) => {
                     <div class="panel-muted p-4">
                         <div class="text-block-title">
                             <Gauge />
-                            <span>Experiment summary</span>
+                            <span>Results summary</span>
                         </div>
                         <div class="summary-list mt-4">
                             <div class="summary-row">

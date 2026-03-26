@@ -167,7 +167,7 @@ const runButtonLabel = computed(() => {
     }
 
     if (form.mode === 'batch') {
-        return 'Start batch test';
+        return 'Start scenario batch';
     }
 
     if (form.mode === 'compare') {
@@ -180,21 +180,21 @@ const runButtonLabel = computed(() => {
 const modeGuide = computed(() => {
     if (form.mode === 'compare') {
         return {
-            title: 'Compare mode',
-            body: 'Run the same input through two or three prompt versions before the team decides which wording is stronger.',
+            title: 'Side-by-side compare',
+            body: 'Send the same real input through two or three saved prompt versions so the team can choose the stronger option.',
         };
     }
 
     if (form.mode === 'batch') {
         return {
-            title: 'Batch mode',
-            body: 'Run one version against a saved set of test cases when a candidate version needs broader validation.',
+            title: 'Saved scenario batch',
+            body: 'Run one saved prompt across a batch of saved scenarios when you need broader confidence before reuse.',
         };
     }
 
     return {
-        title: 'Single mode',
-        body: 'Run one version on one realistic input when you want the fastest read on prompt behavior.',
+        title: 'Single test',
+        body: 'Run one saved prompt on one realistic example when you want the fastest read on prompt behavior.',
     };
 });
 
@@ -209,6 +209,17 @@ const modeGuideIcon = computed(() => {
 
     return Play;
 });
+const modeLabel = (value) => {
+    if (value === 'compare') {
+        return 'Compare prompts';
+    }
+
+    if (value === 'batch') {
+        return 'Scenario batch';
+    }
+
+    return 'Single test';
+};
 
 const selectionStats = computed(() => ({
     promptCount: form.prompt_version_ids.length,
@@ -325,7 +336,7 @@ const validateInput = () => {
 
     if (form.mode === 'batch') {
         if (form.test_case_ids.length === 0) {
-            errors.test_case_ids = 'Batch mode requires at least one saved test case.';
+            errors.test_case_ids = 'Batch mode requires at least one saved scenario.';
             valid = false;
         }
     } else if (`${form.input_text ?? ''}`.trim() === '') {
@@ -492,11 +503,11 @@ const submit = async () => {
 
                 <Link :href="route('admin.ai-connections')" class="page-tab">
                     <Bot class="h-4 w-4 shrink-0" />
-                    <span>AI connections</span>
+                    <span>Model connections</span>
                 </Link>
                 <Link :href="route('prompt-templates.index')" class="page-tab">
                     <FileCode2 class="h-4 w-4 shrink-0" />
-                    <span>Prompt templates</span>
+                    <span>Prompts</span>
                 </Link>
             </div>
 
@@ -505,9 +516,9 @@ const submit = async () => {
             <section v-if="activeStep === 'setup'" class="panel p-5">
                 <PanelHeader
                     title="1. Experiment setup"
-                    description="Choose the task, the experiment mode, and the runtime settings first."
+                    description="Choose the task, run style, and model settings first."
                     :icon="Settings2"
-                    help="Defines the business task, experiment mode, model, and runtime settings that will apply to the run."
+                    help="Defines the business task, run style, model, and runtime settings that will apply to the experiment."
                 />
 
                 <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -525,9 +536,9 @@ const submit = async () => {
                     <div>
                         <label class="field-label">Mode</label>
                         <select v-model="form.mode" class="field-select">
-                            <option value="single">Single</option>
-                            <option value="compare">Compare</option>
-                            <option value="batch">Batch</option>
+                            <option value="single">Single test</option>
+                            <option value="compare">Compare prompts</option>
+                            <option value="batch">Scenario batch</option>
                         </select>
                     </div>
 
@@ -540,8 +551,8 @@ const submit = async () => {
                             </option>
                         </select>
                         <div class="field-help">
-                            Real API models come from
-                            <Link :href="route('admin.ai-connections')" class="font-bold text-[var(--accent)] hover:underline">AI Connections</Link>.
+                            Available models come from
+                            <Link :href="route('admin.ai-connections')" class="font-bold text-[var(--accent)] hover:underline">Model Connections</Link>.
                         </div>
                         <div v-if="errors.model_name" class="field-help text-[var(--danger)]">{{ errors.model_name }}</div>
                     </div>
@@ -585,12 +596,12 @@ const submit = async () => {
             <section v-if="activeStep === 'versions'" class="panel p-5">
                 <div class="flex items-center justify-between gap-4">
                     <PanelHeader
-                        title="2. Prompt versions"
+                        title="2. Choose prompt versions"
                         :description="form.mode === 'compare'
                             ? 'Select two or three versions for side-by-side review.'
                             : 'Select the version this experiment should execute.'"
                         :icon="ListChecks"
-                        help="Selects the prompt versions this experiment will execute. In compare mode this is where the candidates are chosen side by side."
+                        help="Choose the saved prompt versions this experiment should run. In compare mode this is where the candidates are chosen side by side."
                     />
                     <div class="text-sm text-[var(--muted)]">
                         {{ selectionStats.promptCount }}/{{ maxPromptCount }} selected
@@ -619,7 +630,7 @@ const submit = async () => {
                             </div>
 
                             <div class="mt-2 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-                                <span class="inline-meta-item">
+                                <span v-if="version.task_type" class="inline-meta-item">
                                     <ListChecks />
                                     {{ version.task_type }}
                                 </span>
@@ -637,7 +648,7 @@ const submit = async () => {
                 </div>
 
                 <div v-else-if="selectedUseCase" class="empty-state mt-4">
-                    This task does not have prompt versions yet. Create one in Prompt Templates first.
+                    This task does not have saved prompt versions yet. Create one in Prompts first.
                 </div>
 
                 <div v-else class="empty-state mt-4">
@@ -663,12 +674,12 @@ const submit = async () => {
 
             <section v-if="activeStep === 'input'" class="panel p-5">
                 <PanelHeader
-                    :title="form.mode === 'batch' ? '3. Batch cases' : '3. Input and variables'"
+                    :title="form.mode === 'batch' ? '3. Saved scenarios' : '3. Input and variables'"
                     :description="form.mode === 'batch'
-                        ? 'Select the saved cases that should be included in the batch run.'
+                        ? 'Select the saved scenarios that should be included in this batch.'
                         : 'Paste a realistic business example and fill the variables required by the selected version.'"
                     :icon="Variable"
-                    help="Provides the real business input or the saved batch cases that will be sent to the selected prompt version."
+                    help="Provides the real business input or the saved scenarios that will be sent to the selected prompt version."
                 />
 
                 <div v-if="form.mode !== 'batch'" class="mt-4">
@@ -696,11 +707,11 @@ const submit = async () => {
                 </div>
 
                 <div v-else-if="form.mode === 'batch' && selectedUseCase" class="empty-state mt-4">
-                    This task does not have saved test cases yet.
+                    This task does not have saved scenarios yet.
                 </div>
 
                 <div v-else-if="form.mode === 'batch'" class="empty-state mt-4">
-                    Select a task first to load saved test cases.
+                    Select a task first to load saved scenarios.
                 </div>
 
                 <div v-if="errors.test_case_ids" class="field-help mt-4 text-[var(--danger)]">{{ errors.test_case_ids }}</div>
@@ -744,12 +755,12 @@ const submit = async () => {
             </section>
 
             <section v-if="activeStep === 'review'" class="panel p-5">
-                <PanelHeader
-                    title="4. Preview and run"
-                    description="Review the selection summary and assembled prompt before launching the experiment."
-                    :icon="Play"
-                    help="Final checkpoint before execution. Review selections, compiled prompt content, and batch scope here before starting the run."
-                />
+                    <PanelHeader
+                        title="4. Preview and run"
+                        description="Review the selection summary and assembled prompt before launching the experiment."
+                        :icon="Play"
+                        help="Final checkpoint before execution. Review selections, compiled prompt content, and batch scope here before starting the run."
+                    />
 
                 <div
                     v-if="errors.use_case_id || errors.model_name || errors.temperature || errors.max_tokens || errors.prompt_version_ids || errors.input_text || errors.test_case_ids || errors.variables"
@@ -785,8 +796,8 @@ const submit = async () => {
                                                 <span>{{ selectedModel?.label || 'Not selected' }}</span>
                                             </div>
                                             <div class="summary-row">
-                                                <span>Templates</span>
-                                                <span>{{ selectedTemplateNames.join(', ') || 'No templates selected' }}</span>
+                                                <span>Prompts</span>
+                                                <span>{{ selectedTemplateNames.join(', ') || 'No prompts selected' }}</span>
                                             </div>
                                             <div class="summary-row">
                                                 <span>Versions</span>
@@ -816,7 +827,7 @@ const submit = async () => {
                                     <div v-if="primaryVersion?.output_type === 'json'">
                                         <div class="flex items-center gap-2 text-sm font-bold text-[var(--muted)]">
                                             <FileJson class="h-4 w-4" />
-                                            Expected JSON shape
+                                            Expected JSON format
                                         </div>
                                         <pre class="code-block mt-2">{{ safeJsonStringify(primaryVersion.output_schema_json, '{}') }}</pre>
                                     </div>
@@ -824,10 +835,10 @@ const submit = async () => {
                                     <div v-if="form.mode === 'batch'">
                                         <div class="inline-meta-item text-sm font-bold text-[var(--muted)]">
                                             <ListChecks />
-                                            <span>Batch scope</span>
+                                            <span>Scenario batch</span>
                                         </div>
                                         <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                                            {{ selectedTestCases.length }} saved cases selected.
+                                            {{ selectedTestCases.length }} saved scenarios selected.
                                         </div>
                                     </div>
                                 </div>
@@ -838,9 +849,9 @@ const submit = async () => {
                     <div class="panel-muted p-4">
                         <div class="text-block-title">
                             <FileCode2 />
-                            <span>Assembled prompt preview</span>
+                            <span>Prompt preview</span>
                         </div>
-                        <pre class="code-block mt-3">{{ promptPreview || 'Select a prompt version to preview the compiled prompt.' }}</pre>
+                        <pre class="code-block mt-3">{{ promptPreview || 'Select a prompt version to preview the final prompt.' }}</pre>
                     </div>
                 </div>
 
@@ -873,13 +884,13 @@ const submit = async () => {
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <Link :href="route('experiments.show', experiment.id)" class="font-bold hover:underline">
-                                    {{ experiment.use_case?.name || 'Ad hoc experiment' }}
-                                </Link>
-                                <div class="mt-2 inline-meta text-xs">
-                                    <span class="inline-meta-item">
-                                        <ListChecks />
-                                        {{ experiment.mode }}
-                                    </span>
+                                        {{ experiment.use_case?.name || 'Ad hoc experiment' }}
+                                    </Link>
+                                    <div class="mt-2 inline-meta text-xs">
+                                        <span class="inline-meta-item">
+                                            <ListChecks />
+                                        {{ modeLabel(experiment.mode) }}
+                                        </span>
                                     <span class="inline-meta-item">
                                         <Bot />
                                         {{ experiment.model_name }}

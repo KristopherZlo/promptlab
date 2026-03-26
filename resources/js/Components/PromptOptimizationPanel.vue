@@ -227,10 +227,10 @@ const refreshRuns = () => {
         <section class="panel p-5">
             <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                 <PanelHeader
-                    title="GEPA optimization"
-                    description="Run background prompt search against saved test cases and keep the best candidate as a new draft."
+                    title="Prompt improvement"
+                    description="Try better prompt wording against saved scenarios and keep the best draft."
                     :icon="Target"
-                    help="This uses saved prompt versions plus active test cases with expected output or expected JSON. GEPA proposes revisions, runs them through the existing workspace model connections, and writes the best candidate back as a new prompt draft."
+                    help="This uses saved prompt versions plus active scenarios with expected output or expected JSON. GEPA proposes revisions, runs them through the existing workspace model connections, and writes the best candidate back as a new prompt draft."
                 />
 
                 <button
@@ -241,7 +241,7 @@ const refreshRuns = () => {
                 >
                     <LoaderCircle v-if="isStarting" class="h-4 w-4 animate-spin" />
                     <WandSparkles v-else class="h-4 w-4" />
-                    <span>{{ isStarting ? 'Starting...' : 'Start GEPA run' }}</span>
+                    <span>{{ isStarting ? 'Starting...' : 'Start improvement run' }}</span>
                 </button>
             </div>
 
@@ -287,7 +287,7 @@ const refreshRuns = () => {
                             </div>
                             <div>
                                 <div class="prompt-optimize-stat-value">{{ optimizationContext?.eligible_test_case_count ?? 0 }}</div>
-                                <div class="prompt-optimize-stat-label">Eligible test cases</div>
+                                <div class="prompt-optimize-stat-label">Eligible scenarios</div>
                             </div>
                         </div>
 
@@ -325,11 +325,11 @@ const refreshRuns = () => {
                         </div>
                     </div>
                     <div v-else class="prompt-optimize-empty-note">
-                        Add active test cases with expected output or expected JSON to make optimization runnable.
+                        Add active scenarios with expected output or expected JSON to make improvement runnable.
                     </div>
 
                     <div class="prompt-optimize-footnote">
-                        Optimization runs against saved revisions only. Save the current draft first if you want those edits included.
+                        Improvement runs use saved revisions only. Save the current draft first if you want those edits included.
                     </div>
                 </div>
             </div>
@@ -338,8 +338,8 @@ const refreshRuns = () => {
         <section class="panel p-5">
             <div class="flex items-center justify-between gap-4">
                 <PanelHeader
-                    title="Optimization runs"
-                    description="Recent GEPA runs, current status, and the best candidate returned by each run."
+                    title="Improvement runs"
+                    description="Recent improvement runs, current status, and the best draft returned by each run."
                     :icon="Clock3"
                     help="Queued and running jobs are polled automatically. Completed runs keep their best prompt candidate and, when the candidate changed, produce a new saved draft in version history."
                 />
@@ -490,9 +490,9 @@ const refreshRuns = () => {
                     <LoaderCircle class="h-4 w-4" />
                 </div>
                 <div>
-                    <div class="font-medium text-[var(--ink)]">No optimization runs yet</div>
+                    <div class="font-medium text-[var(--ink)]">No improvement runs yet</div>
                     <div class="mt-1 text-sm leading-6 text-[var(--muted)]">
-                        Start with a saved prompt version and active expected test cases. The best candidate will land here as soon as the first GEPA run completes.
+                        Start with a saved prompt version and active expected scenarios. The best candidate will land here as soon as the first run completes.
                     </div>
                 </div>
             </div>

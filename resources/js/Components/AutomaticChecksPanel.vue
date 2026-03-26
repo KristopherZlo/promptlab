@@ -32,20 +32,20 @@ const previewValue = (value) => {
     <div v-if="automaticEvaluation.configured" class="mt-4">
         <div class="label-with-icon">
             <ScanSearch />
-            <span>Automatic checks</span>
+            <span>Quality checks</span>
         </div>
 
         <div class="mt-2 grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)]">
             <div class="guide-card">
                 <div class="inline-meta-item text-xs text-[var(--muted)]">
                     <BadgeCheck />
-                    <span>Result</span>
+                    <span>Overall result</span>
                 </div>
                 <div class="mt-1 font-bold">
-                    {{ automaticEvaluation.passed ? 'Pass' : 'Needs review' }}
+                    {{ automaticEvaluation.passed ? 'Passed' : 'Needs attention' }}
                 </div>
                 <div class="mt-2 text-sm text-[var(--muted)]">
-                    {{ automaticEvaluation.passed_checks }}/{{ automaticEvaluation.total_checks }} checks passed
+                    {{ automaticEvaluation.passed_checks }}/{{ automaticEvaluation.total_checks }} checks matched
                 </div>
                 <div class="mt-3 text-xs leading-5 text-[var(--muted)]">
                     {{ automaticEvaluation.summary }}
@@ -64,14 +64,14 @@ const previewValue = (value) => {
                     <div class="flex items-start justify-between gap-3">
                         <div class="font-bold">{{ check.label }}</div>
                         <span class="text-xs font-semibold" :class="check.passed ? 'text-[var(--success)]' : 'text-[var(--danger)]'">
-                            {{ check.passed ? 'Pass' : 'Fail' }}
+                            {{ check.passed ? 'Pass' : 'Check again' }}
                         </span>
                     </div>
 
-                    <div class="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Expected</div>
+                    <div class="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Expected result</div>
                     <pre class="code-block mt-2 text-xs">{{ previewValue(check.expected_preview) }}</pre>
 
-                    <div class="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Actual</div>
+                    <div class="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--muted)]">Actual result</div>
                     <pre class="code-block mt-2 text-xs">{{ previewValue(check.actual_preview) }}</pre>
 
                     <div class="mt-3 flex items-start gap-2 text-xs leading-5" :class="check.passed ? 'text-[var(--muted)]' : 'text-[var(--danger)]'">
