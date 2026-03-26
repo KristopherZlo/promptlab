@@ -104,8 +104,8 @@ class HandleInertiaRequests extends Middleware
                 'label' => 'Administration',
                 'items' => array_values(array_filter([
                     $this->navigationItem('users-access', 'Users & Access', 'admin.users-access', ['admin.users-access'], in_array('manage_members', $abilities, true)),
-                    $this->navigationItem('ai-connections', 'AI Connections', 'admin.ai-connections', ['admin.ai-connections'], in_array('manage_connections', $abilities, true)),
-                    $this->navigationItem('audit-log', 'Audit Log', 'admin.audit-log', ['admin.audit-log'], in_array('view_audit', $abilities, true)),
+                    $this->navigationItem('ai-connections', 'Model Connections', 'admin.ai-connections', ['admin.ai-connections'], in_array('manage_connections', $abilities, true)),
+                    $this->navigationItem('audit-log', 'Audit History', 'admin.audit-log', ['admin.audit-log'], in_array('view_audit', $abilities, true)),
                 ])),
             ] : null,
             [

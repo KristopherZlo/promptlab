@@ -66,7 +66,7 @@ const currentTeam = computed(() => page.props.auth?.current_team);
 const navigationSections = computed(() => page.props.navigation?.sections ?? []);
 const homeHref = computed(() => page.props.navigation?.home_url ?? route('use-cases.index'));
 
-const workspaceTools = computed(() => [
+const helperLinks = [
     {
         id: 'guide',
         label: 'How to Start',
@@ -75,7 +75,7 @@ const workspaceTools = computed(() => [
     },
     {
         id: 'team-workspace',
-        label: 'Workspace Setup',
+        label: 'Workspace Settings',
         route: 'admin.workspaces',
         current: ['admin.workspaces', 'team-workspace.index'],
     },
@@ -85,7 +85,7 @@ const workspaceTools = computed(() => [
         route: 'acknowledgements.index',
         current: ['acknowledgements.index'],
     },
-]);
+];
 const themeOptions = [
     { value: 'light', label: 'Light theme', icon: Sun },
     { value: 'dark', label: 'Dark theme', icon: Moon },
@@ -106,11 +106,28 @@ const isActive = (item) => item.current.some((pattern) => route().current(patter
 const iconFor = (item) => iconMap[item.id] ?? LayoutDashboard;
 const dataTourFor = (item) => dataTourMap[item.id] ?? null;
 
-const currentSection = computed(() => navigationSections.value.find((section) => section.items.some(isActive)) ?? null);
+const sidebarSections = computed(() => {
+    const sectionsById = new Map(navigationSections.value.map((section) => [section.id, section]));
+    const dailyItems = [
+        helperLinks[0],
+        ...((sectionsById.get('workspace')?.items ?? [])),
+    ];
+    const supportItems = [
+        helperLinks[1],
+        ...((sectionsById.get('administration')?.items ?? [])),
+        ...((sectionsById.get('account')?.items ?? [])),
+        helperLinks[2],
+    ];
+
+    return [
+        { id: 'daily-work', label: 'Daily work', items: dailyItems.filter(Boolean) },
+        { id: 'support', label: 'Support & setup', items: supportItems.filter(Boolean) },
+    ].filter((section) => section.items.length > 0);
+});
+const currentSection = computed(() => sidebarSections.value.find((section) => section.items.some(isActive)) ?? null);
 const currentItem = computed(() =>
     currentSection.value?.items.find(isActive)
-    ?? workspaceTools.value.find(isActive)
-    ?? navigationSections.value.flatMap((section) => section.items).find(isActive)
+    ?? sidebarSections.value.flatMap((section) => section.items).find(isActive)
     ?? null,
 );
 const hrefForItem = (item) => {
@@ -251,29 +268,11 @@ onBeforeUnmount(() => {
                 </div>
 
                 <nav class="app-sidebar-nav">
-                    <div v-for="section in navigationSections" :key="section.id" class="app-nav-group">
+                    <div v-for="section in sidebarSections" :key="section.id" class="app-nav-group">
                         <div class="app-nav-group-label">{{ section.label }}</div>
                         <div class="space-y-1">
                             <Link
                                 v-for="item in section.items"
-                                :key="item.id"
-                                :href="route(item.route)"
-                                class="app-nav-item"
-                                :class="{ 'app-nav-item-active': isActive(item) }"
-                                :data-tour="dataTourFor(item)"
-                                @click="closeMobileMenu"
-                            >
-                                <component :is="iconFor(item)" class="h-4 w-4 shrink-0" />
-                                <span>{{ item.label }}</span>
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div class="app-nav-group">
-                        <div class="app-nav-group-label">Tools</div>
-                        <div class="space-y-1">
-                            <Link
-                                v-for="item in workspaceTools"
                                 :key="item.id"
                                 :href="route(item.route)"
                                 class="app-nav-item"

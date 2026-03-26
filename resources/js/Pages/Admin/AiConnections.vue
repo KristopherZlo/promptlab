@@ -365,12 +365,12 @@ const scheduleConnectionRemoval = (connection) => {
 </script>
 
 <template>
-    <Head title="AI Connections" />
+    <Head title="Model Connections" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1>AI Connections</h1>
+                <h1>Model Connections</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
                     Choose a provider preset, paste the API key, keep the suggested model or replace it, and save the connection once for the whole workspace.
                 </p>
@@ -489,7 +489,7 @@ const scheduleConnectionRemoval = (connection) => {
                                         </td>
                                     </tr>
                                     <tr v-if="connections.length === 0">
-                                        <td colspan="6" class="text-[var(--muted)]">No AI connections configured for this workspace yet.</td>
+                                        <td colspan="6" class="text-[var(--muted)]">No model connections have been configured for this workspace yet.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -500,7 +500,7 @@ const scheduleConnectionRemoval = (connection) => {
                 <section v-else class="surface-block">
                     <div class="surface-block-header">
                         <div>
-                            <h2 class="section-title">{{ editingConnectionId ? 'Edit AI connection' : 'Add AI connection' }}</h2>
+                            <h2 class="section-title">{{ editingConnectionId ? 'Edit model connection' : 'Add model connection' }}</h2>
                             <p class="text-sm text-[var(--muted)]">Use a provider preset for the common setup, then keep only the model names your workspace should see.</p>
                         </div>
                     </div>

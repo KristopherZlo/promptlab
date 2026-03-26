@@ -56,14 +56,14 @@ const createWorkspace = async () => {
 </script>
 
 <template>
-    <Head title="Workspace Setup" />
+    <Head title="Workspace Settings" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1>Workspace Setup</h1>
+                <h1>Workspace Settings</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    Manage the current workspace here. Use the left sidebar when you need to switch to a different one.
+                    Review the current workspace and create another one when a separate team or business stream needs its own space.
                 </p>
             </div>
         </template>
@@ -97,7 +97,7 @@ const createWorkspace = async () => {
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">Workspace snapshot</h2>
-                            <p class="text-sm text-[var(--muted)]">Visible totals for the active workspace and the accessible workspace set.</p>
+                            <p class="text-sm text-[var(--muted)]">A quick overview of the active workspace and the full set you can access.</p>
                         </div>
                     </div>
 
@@ -127,14 +127,14 @@ const createWorkspace = async () => {
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">Current workspace</h2>
-                            <p class="text-sm text-[var(--muted)]">Identity and ownership details for the workspace you are managing right now.</p>
+                            <p class="text-sm text-[var(--muted)]">Name, ownership, and scope details for the workspace you are managing right now.</p>
                         </div>
                     </div>
 
                     <div class="surface-block-body space-y-4">
                         <div class="surface-muted">
                             <div class="text-sm text-[var(--muted)]">
-                                Switching between workspaces now happens only in the left sidebar. This page is kept for setup and creation, not for changing context.
+                                Switch between workspaces from the left sidebar. This page is for setup and creation, not for changing context.
                             </div>
                         </div>
 
@@ -171,7 +171,7 @@ const createWorkspace = async () => {
                     <div class="surface-block-header">
                         <div>
                             <h2 class="section-title">Add workspace</h2>
-                            <p class="text-sm text-[var(--muted)]">Add a separate workspace for another business stream or team.</p>
+                            <p class="text-sm text-[var(--muted)]">Create a separate workspace when another team or business stream should not share prompts, people, or models.</p>
                         </div>
                     </div>
 

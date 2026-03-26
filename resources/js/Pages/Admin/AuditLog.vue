@@ -188,12 +188,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="Audit Log" />
+    <Head title="Audit History" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="page-lead">
-                <h1 class="text-2xl font-semibold tracking-tight">Audit Log</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">Audit History</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">
                     Trace administrative changes inside {{ team.name }}.
                 </p>

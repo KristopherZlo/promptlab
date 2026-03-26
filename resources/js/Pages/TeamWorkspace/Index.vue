@@ -62,16 +62,16 @@ const memberRemoval = useUndoableAction();
 const connectionRemoval = useUndoableAction();
 const tabs = computed(() => {
     const items = [
-        { id: 'members', label: 'Members', icon: Users },
-        { id: 'roles', label: 'Access Levels', icon: Shield },
+        { id: 'members', label: 'People', icon: Users },
+        { id: 'roles', label: 'Roles', icon: Shield },
     ];
 
     if (canManageConnections.value) {
-        items.push({ id: 'connections', label: 'AI connections', icon: Bot });
+        items.push({ id: 'connections', label: 'Model connections', icon: Bot });
     }
 
     if (canViewAudit.value) {
-        items.push({ id: 'audit', label: 'Audit', icon: History });
+        items.push({ id: 'audit', label: 'Audit history', icon: History });
     }
 
     items.push({ id: 'team', label: 'Workspace', icon: Settings2 });
@@ -80,10 +80,10 @@ const tabs = computed(() => {
 });
 
 const roleDescriptions = {
-    owner: 'Full control over the team, people, AI connections, and approvals.',
+    owner: 'Full control over the workspace, people, model connections, and library handoff.',
     admin: 'Administrative control inside the team without being the original owner.',
-    editor: 'Can create and update tasks, prompts, test cases, and run experiments.',
-    reviewer: 'Can run experiments and save evaluations, but cannot change workspace setup.',
+    editor: 'Can create and update tasks, prompts, scenarios, and experiments.',
+    reviewer: 'Can run experiments and save reviews, but cannot change workspace setup.',
     viewer: 'Read-only access to the workspace.',
 };
 
@@ -249,14 +249,14 @@ const scheduleConnectionRemoval = (connection) => {
 </script>
 
 <template>
-    <Head title="Team Workspace" />
+    <Head title="Workspace Setup" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="text-2xl font-black tracking-tight">Team Workspace</h1>
+                <h1 class="text-2xl font-black tracking-tight">Workspace Setup</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">
-                    Manage access, AI connections, and audit history for <span class="font-bold text-[var(--ink)]">{{ team.name }}</span>.
+                    Manage people, model connections, and workspace history for <span class="font-bold text-[var(--ink)]">{{ team.name }}</span>.
                 </p>
             </div>
         </template>
@@ -304,7 +304,7 @@ const scheduleConnectionRemoval = (connection) => {
 
                     <div class="flex flex-wrap gap-3">
                         <Link :href="route('dashboard')" class="btn-secondary">Back to dashboard</Link>
-                        <Link :href="route('playground')" class="btn-primary">Start test</Link>
+                        <Link :href="route('playground')" class="btn-primary">Run experiments</Link>
                     </div>
                 </div>
             </section>
@@ -348,8 +348,8 @@ const scheduleConnectionRemoval = (connection) => {
 
             <section v-if="activeTab === 'members'" class="panel p-5">
                 <PanelHeader
-                    title="Team members"
-                    description="Add people, adjust their role, or remove access."
+                    title="People and access"
+                    description="Add people, adjust their role, or remove workspace access."
                     :icon="Users"
                 />
 
@@ -437,8 +437,8 @@ const scheduleConnectionRemoval = (connection) => {
 
             <section v-if="activeTab === 'roles'" class="panel p-5">
                 <PanelHeader
-                    title="Team roles"
-                    description="Roles separate administration from prompt authoring and review."
+                    title="Workspace roles"
+                    description="Roles separate daily work from setup and administration."
                     :icon="Users"
                 />
 
@@ -457,8 +457,8 @@ const scheduleConnectionRemoval = (connection) => {
 
             <section v-if="activeTab === 'connections'" class="panel p-5">
                 <PanelHeader
-                    title="Real AI connections"
-                    description="Store OpenAI-compatible API settings once for this team. Connected models appear in Prompt Templates and Playground."
+                    title="Model connections"
+                    description="Store provider credentials once for this workspace. Connected models then appear across prompts and experiments."
                     :icon="Bot"
                 />
 
@@ -589,8 +589,8 @@ const scheduleConnectionRemoval = (connection) => {
 
             <section v-if="canViewAudit && activeTab === 'audit'" class="panel p-5">
                 <PanelHeader
-                    title="Audit trail"
-                    description="See who changed what and when inside this team."
+                    title="Audit history"
+                    description="See who changed what and when inside this workspace."
                     :icon="History"
                 />
 
