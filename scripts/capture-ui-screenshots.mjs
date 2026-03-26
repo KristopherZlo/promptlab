@@ -237,6 +237,10 @@ async function captureGroup({
 
     const page = await context.newPage();
     page.setDefaultTimeout(TIMEOUT_MS);
+    if (mode === 'auth') {
+      await page.goto(toNavigableRoute('/dashboard'), { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(WAIT_MS);
+    }
     const showcase = mode === 'auth' ? await loadShowcaseLookup(page) : null;
 
     for (const target of routes) {
@@ -483,6 +487,7 @@ async function fetchJson(page, uri) {
   return page.evaluate(async ({ relativeUri, baseUrl }) => {
     const nextUrl = new URL(String(relativeUri ?? '').replace(/^\/+/, ''), baseUrl).toString();
     const response = await fetch(nextUrl, {
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
