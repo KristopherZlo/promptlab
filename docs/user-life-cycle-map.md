@@ -19,7 +19,7 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 - Primary action:
   - empty workspace: `Create first task`
   - task only: `Add first prompt`
-  - prompt ready: `Start first test`
+  - prompt ready: `Run first experiment`
   - runs exist: `View latest result` or `Open last task`
 - Secondary actions: at most two context links to the last task, prompt, result, or library entry.
 - Next step: move into the core workflow.
@@ -34,7 +34,7 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 
 ### Task Detail
 
-- Why people come here: review scope, test cases, prompts, and recent runs for one task.
+- Why people come here: review scope, scenarios, prompts, and recent runs for one task.
 - Frequency: highest.
 - Primary action: depends on state, but should usually point to the next unfinished step.
 - Secondary actions: edit the task, open prompts, run tests on saved cases.
@@ -42,7 +42,7 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 
 ### Prompts List
 
-- Why people come here: find the right prompt family for a task.
+- Why people come here: find the right saved prompt for a task.
 - Frequency: highest.
 - Primary action: `Open prompt`.
 - Secondary actions: `Add prompt`, `Test this prompt`.
@@ -50,17 +50,17 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 
 ### Prompt Editor
 
-- Why people come here: change wording, variables, versions, and approval state.
+- Why people come here: change wording, input fields, saved versions, and library handoff state.
 - Frequency: high.
-- Primary action: `Save changes` or `Test this version`.
-- Secondary actions: create version, open task, open library approval view.
+- Primary action: `Save changes` or `Run experiments`.
+- Secondary actions: create version, open task, open library handoff.
 - Next step: experiments or library.
 
 ### Experiments Wizard
 
 - Why people come here: run a single test, compare versions, or run a batch.
 - Frequency: high.
-- Primary action: `Start test`.
+- Primary action: `Run experiment`.
 - Secondary actions: go back to task or prompt context.
 - Next step: experiment result.
 
@@ -68,24 +68,24 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 
 - Why people come here: review output, compare candidates, and decide what to keep.
 - Frequency: high.
-- Primary action: `View result` or `Save to library` when appropriate.
+- Primary action: `View result` or `Add to library` when appropriate.
 - Secondary actions: open source task, open source prompt.
-- Next step: prompt revision or library reuse.
+- Next step: prompt changes or library reuse.
 
 ### Library List
 
 - Why people come here: reuse an already approved prompt.
 - Frequency: medium.
 - Primary action: `Open saved prompt` at the entry level.
-- Secondary actions: `Test saved prompt`, `Open source prompt`.
+- Secondary actions: `Run experiments`, `Open source prompt`.
 - Next step: experiments or source prompt.
 
 ### Library Entry
 
 - Why people come here: inspect one approved prompt in detail.
 - Frequency: medium.
-- Primary action: `Test saved prompt`.
-- Secondary actions: `View prompt version`, `Open approval settings`.
+- Primary action: `Run experiments`.
+- Secondary actions: `View prompt version`, `Open library handoff`.
 - Next step: experiments or prompt editor.
 
 ### Dashboard
@@ -104,7 +104,7 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 - Secondary actions: `Edit access`, `Revoke invitation`.
 - Next step: return to workflow screens.
 
-### AI Connections
+### Model Connections
 
 - Why people come here: configure model providers for the workspace.
 - Frequency: low.
@@ -112,7 +112,7 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 - Secondary actions: `Test connection`, `Edit connection`.
 - Next step: return to workflow screens.
 
-### Workspace Setup
+### Workspace Settings
 
 - Why people come here: create a workspace or inspect the current one.
 - Frequency: low.
@@ -125,9 +125,9 @@ This map is the UX reference for navigation, labels, and CTA cleanup.
 - Prefer result-based labels:
   - `Open task`
   - `Add prompt`
-  - `Start test`
+  - `Run experiment`
   - `View result`
-  - `Save to library`
+  - `Add to library`
 - Avoid abstract labels:
   - `Open`
   - `Manage`

@@ -26,7 +26,7 @@ Evala is easiest to understand through concrete internal workflows:
 
 ### 1. Support ticket triage
 
-An operations team defines a task for incoming support tickets, stores representative examples as test cases, iterates on classification prompts, and compares prompt versions before promoting the most reliable one into the shared library.
+An operations team defines a task for incoming support tickets, stores representative examples as scenarios, iterates on classification prompts, and compares prompt versions before promoting the most reliable one into the shared library.
 
 ### 2. Customer email summarization
 
@@ -75,10 +75,10 @@ The gallery below is generated from the actual app UI with Playwright and publis
 
 ### Prompts
 
-![Prompt catalog](docs/screenshots/latest/dark/prompt-catalog.png)
+![Prompt library](docs/screenshots/latest/dark/prompt-catalog.png)
 ![Prompt create](docs/screenshots/latest/dark/prompt-create.png)
 ![Prompt details](docs/screenshots/latest/dark/prompt-details.png)
-![Prompt revisions](docs/screenshots/latest/dark/prompt-revisions.png)
+![Prompt history](docs/screenshots/latest/dark/prompt-revisions.png)
 ![Prompt optimize](docs/screenshots/latest/dark/prompt-optimize.png)
 ![Prompt library](docs/screenshots/latest/dark/prompt-library.png)
 
@@ -100,9 +100,9 @@ The gallery below is generated from the actual app UI with Playwright and publis
 ![Users access roles](docs/screenshots/latest/dark/admin-roles.png)
 ![Workspaces current](docs/screenshots/latest/dark/admin-workspaces.png)
 ![Workspaces create](docs/screenshots/latest/dark/admin-workspaces-create.png)
-![AI connections](docs/screenshots/latest/dark/admin-ai-connections.png)
-![AI connections editor](docs/screenshots/latest/dark/admin-ai-connections-editor.png)
-![Audit log](docs/screenshots/latest/dark/admin-audit-log.png)
+![Model connections](docs/screenshots/latest/dark/admin-ai-connections.png)
+![Model connections editor](docs/screenshots/latest/dark/admin-ai-connections-editor.png)
+![Audit history](docs/screenshots/latest/dark/admin-audit-log.png)
 
 ### Account
 
@@ -138,10 +138,10 @@ The gallery below is generated from the actual app UI with Playwright and publis
 
 ### Prompts
 
-![Prompt catalog](docs/screenshots/latest/light/prompt-catalog.png)
+![Prompt library](docs/screenshots/latest/light/prompt-catalog.png)
 ![Prompt create](docs/screenshots/latest/light/prompt-create.png)
 ![Prompt details](docs/screenshots/latest/light/prompt-details.png)
-![Prompt revisions](docs/screenshots/latest/light/prompt-revisions.png)
+![Prompt history](docs/screenshots/latest/light/prompt-revisions.png)
 ![Prompt optimize](docs/screenshots/latest/light/prompt-optimize.png)
 ![Prompt library](docs/screenshots/latest/light/prompt-library.png)
 
@@ -163,9 +163,9 @@ The gallery below is generated from the actual app UI with Playwright and publis
 ![Users access roles](docs/screenshots/latest/light/admin-roles.png)
 ![Workspaces current](docs/screenshots/latest/light/admin-workspaces.png)
 ![Workspaces create](docs/screenshots/latest/light/admin-workspaces-create.png)
-![AI connections](docs/screenshots/latest/light/admin-ai-connections.png)
-![AI connections editor](docs/screenshots/latest/light/admin-ai-connections-editor.png)
-![Audit log](docs/screenshots/latest/light/admin-audit-log.png)
+![Model connections](docs/screenshots/latest/light/admin-ai-connections.png)
+![Model connections editor](docs/screenshots/latest/light/admin-ai-connections-editor.png)
+![Audit history](docs/screenshots/latest/light/admin-audit-log.png)
 
 ### Account
 
@@ -239,8 +239,8 @@ In the UI, business workflows are called **Tasks**. In the backend model, they a
 
 Each task can have:
 
-- test cases with expected output
-- prompt templates
+- scenarios with expected output
+- prompts
 - multiple prompt versions
 - experiment history
 - evaluations
@@ -250,8 +250,8 @@ Each task can have:
 
 ### Prompt workflow
 
-- Create prompt templates with an initial version in one request
-- Maintain revision history with change summaries and model preferences
+- Create prompts with an initial version in one request
+- Maintain prompt history with change summaries and model preferences
 - Run quick draft tests without creating a full experiment
 - Promote approved prompt versions into a shared prompt library
 
@@ -259,7 +259,7 @@ Each task can have:
 
 - `single` experiments for one prompt on one input
 - `compare` experiments for multiple prompt versions on the same input
-- `batch` experiments across saved test cases
+- `batch` experiments across saved scenarios
 - queued execution with progress tracking and retry classification
 - realtime experiment updates via Laravel Reverb
 
@@ -280,7 +280,7 @@ Each task can have:
 ### Optimization workflow
 
 - start a prompt optimization run from a saved prompt version
-- reuse eligible test cases as train/validation examples
+- reuse eligible scenarios as train/validation examples
 - run a GEPA-backed optimization job
 - create a derived prompt draft from the best candidate
 
@@ -304,7 +304,7 @@ Start from a business task, not a model picker. The task defines the context, go
 
 ### 2. Prompt versioning
 
-Prompt templates behave like prompt families. Each family can evolve through multiple versions with explicit metadata, notes, and a preferred model.
+Prompts can evolve through multiple saved versions with explicit metadata, notes, and a preferred model.
 
 ### 3. Controlled experimentation
 
@@ -316,7 +316,7 @@ Good prompt versions are not just "saved". They are reviewed, scored, and then m
 
 ### 5. Optimization from data
 
-Prompt optimization is treated as another workflow step, not magic. It starts from a real prompt version and real test cases, then produces a derived draft that can still be reviewed by a human.
+Prompt optimization is treated as another workflow step, not magic. It starts from a real prompt version and real scenarios, then produces a derived draft that can still be reviewed by a human.
 
 ## Demo Use Cases
 

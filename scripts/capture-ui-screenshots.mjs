@@ -162,7 +162,7 @@ const SCREENSHOT_TARGETS = [
   {
     category: 'Prompts',
     slug: 'prompt-catalog',
-    label: 'Prompt catalog',
+    label: 'Prompt library',
     session: 'showcase',
     publish: true,
     uri: '/prompts',
@@ -186,7 +186,7 @@ const SCREENSHOT_TARGETS = [
   {
     category: 'Prompts',
     slug: 'prompt-revisions',
-    label: 'Prompt revisions',
+    label: 'Prompt history',
     session: 'showcase',
     publish: true,
     path: ({ showcase }) =>
@@ -301,7 +301,7 @@ const SCREENSHOT_TARGETS = [
   {
     category: 'Administration',
     slug: 'admin-ai-connections',
-    label: 'AI connections',
+    label: 'Model connections',
     session: 'showcase',
     publish: true,
     uri: '/admin/ai-connections?tab=connections',
@@ -309,7 +309,7 @@ const SCREENSHOT_TARGETS = [
   {
     category: 'Administration',
     slug: 'admin-ai-connections-editor',
-    label: 'AI connections editor',
+    label: 'Model connections editor',
     session: 'showcase',
     publish: true,
     uri: '/admin/ai-connections?tab=editor',
@@ -317,7 +317,7 @@ const SCREENSHOT_TARGETS = [
   {
     category: 'Administration',
     slug: 'admin-audit-log',
-    label: 'Audit log',
+    label: 'Audit history',
     session: 'showcase',
     publish: true,
     uri: '/admin/audit-log',
