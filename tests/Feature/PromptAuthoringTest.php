@@ -76,6 +76,41 @@ class PromptAuthoringTest extends TestCase
         ]);
     }
 
+    public function test_team_editor_can_create_prompt_without_category(): void
+    {
+        [$user, $team, $useCase] = $this->promptFixture('Optional Category Team');
+
+        $this->actingAs($user)
+            ->postJson(route('api.prompts.store'), [
+                'use_case_id' => $useCase->id,
+                'name' => 'No category prompt',
+                'description' => 'Prompt without forced category.',
+                'task_type' => '',
+                'status' => 'active',
+                'preferred_model' => 'mock:team-lab-v1',
+                'tags_json' => ['support'],
+                'initial_version' => [
+                    'version_label' => '',
+                    'change_summary' => 'Initial draft.',
+                    'system_prompt' => 'Help the customer.',
+                    'user_prompt_template' => 'Reply to {{input_text}}.',
+                    'variables_schema' => [],
+                    'output_type' => 'text',
+                    'output_schema_json' => [],
+                    'notes' => null,
+                    'preferred_model' => 'mock:team-lab-v1',
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.task_type', null);
+
+        $this->assertDatabaseHas('prompt_templates', [
+            'team_id' => $team->id,
+            'name' => 'No category prompt',
+            'task_type' => null,
+        ]);
+    }
+
     public function test_team_editor_can_run_quick_test_from_prompt_draft(): void
     {
         $user = User::factory()->create([
@@ -126,6 +161,29 @@ class PromptAuthoringTest extends TestCase
             'Key decisions:',
             $response->json('data.output_text')
         );
+    }
+
+    public function test_team_editor_can_run_quick_test_without_category(): void
+    {
+        [$user, , $useCase] = $this->promptFixture('Quick Test Without Category Team');
+
+        $this->actingAs($user)
+            ->postJson(route('api.prompts.quick-test'), [
+                'use_case_id' => $useCase->id,
+                'task_type' => '',
+                'model_name' => 'mock:team-lab-v1',
+                'temperature' => 0.2,
+                'max_tokens' => 500,
+                'system_prompt' => 'Respond clearly.',
+                'user_prompt_template' => 'Summarize {{input_text}}',
+                'variables_schema' => [],
+                'variables' => [],
+                'output_type' => 'text',
+                'output_schema_json' => [],
+                'input_text' => 'We need a clear recap.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.model_name', 'mock:team-lab-v1');
     }
 
     public function test_prompt_version_update_keeps_existing_label_when_request_sends_blank_value(): void

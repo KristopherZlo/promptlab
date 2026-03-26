@@ -35,7 +35,6 @@ const canManageLibrary = computed(() => (page.props.auth.abilities ?? []).includ
 const requestedUseCaseId = Number.parseInt(readQueryParam('use_case_id'), 10);
 const requestedVersionId = Number.parseInt(readQueryParam('prompt_version_id'), 10);
 
-const taskTypes = ['summarization', 'classification', 'rewrite', 'extraction', 'generation'];
 const statuses = ['active', 'draft', 'archived'];
 
 const availableModels = computed(() =>
@@ -53,7 +52,7 @@ const templateDefaults = () => ({
         ?? (props.useCases.some((useCase) => useCase.id === requestedUseCaseId) ? requestedUseCaseId : props.useCases[0]?.id ?? ''),
     name: props.promptTemplate?.name ?? '',
     description: props.promptTemplate?.description ?? '',
-    task_type: props.promptTemplate?.task_type ?? 'summarization',
+    task_type: props.promptTemplate?.task_type ?? '',
     status: props.promptTemplate?.status ?? 'active',
     preferred_model: props.promptTemplate?.preferred_model ?? '',
     tags_text: (props.promptTemplate?.tags_json ?? []).join(', '),
@@ -382,7 +381,7 @@ const saveTemplate = async () => {
         use_case_id: templateForm.use_case_id,
         name: templateForm.name,
         description: templateForm.description || null,
-        task_type: templateForm.task_type,
+        task_type: templateForm.task_type || null,
         status: templateForm.status,
         preferred_model: templateForm.preferred_model || null,
         tags_json: parseTagList(templateForm.tags_text),
@@ -641,12 +640,16 @@ const promoteToLibrary = async () => {
                     </div>
 
                     <div>
-                        <label class="field-label">Task type</label>
-                        <select v-model="templateForm.task_type" class="field-select">
-                            <option v-for="taskType in taskTypes" :key="taskType" :value="taskType">
-                                {{ taskType }}
-                            </option>
-                        </select>
+                        <label class="field-label">Category (optional)</label>
+                        <input
+                            v-model="templateForm.task_type"
+                            type="text"
+                            class="field-input"
+                            placeholder="Examples: Support triage, Meeting notes, Billing replies"
+                        >
+                        <div class="field-help">
+                            Use a plain business label only if it helps the team group similar prompts later.
+                        </div>
                     </div>
 
                     <div>

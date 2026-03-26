@@ -13,7 +13,7 @@ const props = defineProps({
     },
     taskType: {
         type: String,
-        required: true,
+        default: '',
     },
     modelName: {
         type: String,
@@ -153,7 +153,7 @@ const send = async () => {
     try {
         const response = await axios.post(route('api.prompts.quick-test'), {
             use_case_id: props.useCaseId || null,
-            task_type: props.taskType,
+            task_type: props.taskType || null,
             model_name: selectedModel.value,
             system_prompt: props.systemPrompt || null,
             user_prompt_template: props.userPromptTemplate,

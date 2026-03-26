@@ -34,7 +34,7 @@ class PromptTemplateResource extends JsonResource
             'use_case_id' => $this->use_case_id,
             'name' => $this->name,
             'description' => $this->description,
-            'task_type' => $this->task_type,
+            'task_type' => filled($this->task_type) ? $this->task_type : null,
             'status' => $this->status,
             'preferred_model' => $this->preferred_model,
             'tags_json' => $this->tags_json ?? [],

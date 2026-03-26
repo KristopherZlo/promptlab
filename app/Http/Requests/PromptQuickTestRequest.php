@@ -7,6 +7,15 @@ use Illuminate\Validation\Rule;
 
 class PromptQuickTestRequest extends TeamAwareRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $taskType = trim((string) $this->input('task_type', ''));
+
+        $this->merge([
+            'task_type' => $taskType !== '' ? $taskType : null,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return $this->authorizeAbility('manage_prompts');
@@ -16,7 +25,7 @@ class PromptQuickTestRequest extends TeamAwareRequest
     {
         return [
             'use_case_id' => ['nullable', $this->teamScopedExists('use_cases')],
-            'task_type' => ['required', Rule::in(['summarization', 'classification', 'rewrite', 'extraction', 'generation'])],
+            'task_type' => ['nullable', 'string', 'max:80'],
             'model_name' => ['required', 'string', 'max:255', $this->allowedWorkspaceModel()],
             'temperature' => ['required', 'numeric', 'min:0', 'max:2'],
             'max_tokens' => ['required', 'integer', 'min:64', 'max:4096'],

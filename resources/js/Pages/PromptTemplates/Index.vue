@@ -32,6 +32,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    categories: {
+        type: Array,
+        required: true,
+    },
     collections: {
         type: Array,
         required: true,
@@ -39,7 +43,6 @@ const props = defineProps({
 });
 
 const page = usePage();
-const taskTypes = ['summarization', 'classification', 'rewrite', 'extraction', 'generation'];
 const statuses = ['active', 'draft', 'archived'];
 const sortOptions = [
     { label: 'Recently updated', value: 'recent' },
@@ -62,7 +65,9 @@ const filterForm = reactive({
 });
 
 const canManageTemplates = computed(() => (page.props.auth?.abilities ?? []).includes('manage_prompts'));
-const taskTypeOptions = taskTypes.map((taskType) => ({ label: taskType, value: taskType }));
+const categoryOptions = computed(() =>
+    props.categories.map((category) => ({ label: category, value: category })),
+);
 const statusOptions = statuses.map((status) => ({ label: status, value: status }));
 const formatUseCaseName = (name) => {
     if (!name) {
@@ -82,7 +87,7 @@ const useCaseLabel = computed(() =>
     formatUseCaseName(props.useCases.find((useCase) => `${useCase.id}` === `${filterForm.use_case_id}`)?.name ?? ''),
 );
 const taskTypeLabel = computed(() =>
-    taskTypeOptions.find((item) => item.value === filterForm.task_type)?.label ?? '',
+    categoryOptions.value.find((item) => item.value === filterForm.task_type)?.label ?? '',
 );
 const statusLabel = computed(() =>
     statusOptions.find((item) => item.value === filterForm.status)?.label ?? '',
@@ -116,7 +121,7 @@ const activeFilterSummary = computed(() =>
     [
         filterForm.search ? `Search: ${filterForm.search}` : null,
         useCaseLabel.value ? `Task: ${useCaseLabel.value}` : null,
-        taskTypeLabel.value ? `Type: ${taskTypeLabel.value}` : null,
+        taskTypeLabel.value ? `Category: ${taskTypeLabel.value}` : null,
         statusLabel.value ? `Status: ${statusLabel.value}` : null,
         filterForm.preferred_model ? `Model: ${filterForm.preferred_model}` : null,
         filterForm.author ? `Author: ${filterForm.author}` : null,
@@ -217,7 +222,7 @@ const pushFilters = () => {
     router.get(route('prompt-templates.index'), cleanedFilters(), {
         preserveState: true,
         replace: true,
-        only: ['templates', 'filters', 'useCases', 'collections'],
+        only: ['templates', 'filters', 'useCases', 'categories', 'collections'],
     });
 };
 
@@ -244,7 +249,7 @@ const resetFilters = () => {
     router.get(route('prompt-templates.index'), {}, {
         preserveState: true,
         replace: true,
-        only: ['templates', 'filters', 'useCases', 'collections'],
+        only: ['templates', 'filters', 'useCases', 'categories', 'collections'],
     });
 };
 
@@ -360,9 +365,9 @@ onBeforeUnmount(() => {
                                 @clear="updateFilter('use_case_id', '')"
                             />
                             <FilterDropdown
-                                label="Task type"
+                                label="Category"
                                 :icon="ClipboardList"
-                                :options="taskTypeOptions"
+                                :options="categoryOptions"
                                 :selected="filterForm.task_type"
                                 :selected-label="taskTypeLabel"
                                 width="220px"
@@ -601,8 +606,8 @@ onBeforeUnmount(() => {
 
                     <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                         <div class="key-value-item">
-                            <div class="key-value-label">Task type</div>
-                            <div class="key-value-value capitalize">{{ selectedTemplate.task_type }}</div>
+                            <div class="key-value-label">Category</div>
+                            <div class="key-value-value">{{ selectedTemplate.task_type || 'No category' }}</div>
                         </div>
                         <div class="key-value-item">
                             <div class="key-value-label">Preferred model</div>

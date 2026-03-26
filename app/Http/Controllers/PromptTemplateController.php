@@ -58,6 +58,14 @@ class PromptTemplateController extends Controller
             ->pluck('aggregate', 'use_case_id');
 
         $useCases = UseCase::orderBy('name')->get(['id', 'name']);
+        $categories = PromptTemplate::query()
+            ->select('task_type')
+            ->whereNotNull('task_type')
+            ->where('task_type', '!=', '')
+            ->distinct()
+            ->orderBy('task_type')
+            ->pluck('task_type')
+            ->values();
         $collections = $useCases
             ->map(fn (UseCase $useCase) => [
                 'id' => $useCase->id,
@@ -72,6 +80,7 @@ class PromptTemplateController extends Controller
             'templates' => PromptTemplateResource::collection($templates)->resolve(),
             'filters' => $request->only(['search', 'use_case_id', 'task_type', 'status', 'author', 'preferred_model']),
             'useCases' => $useCases,
+            'categories' => $categories,
             'collections' => $collections,
         ]);
     }
@@ -205,7 +214,7 @@ class PromptTemplateController extends Controller
         $template = new PromptTemplate([
             'team_id' => $team->id,
             'use_case_id' => $validated['use_case_id'] ?? null,
-            'task_type' => $validated['task_type'],
+            'task_type' => $validated['task_type'] ?? null,
             'preferred_model' => $validated['preferred_model'] ?? $validated['model_name'],
         ]);
         $template->setRelation('useCase', $useCase);
@@ -240,7 +249,7 @@ class PromptTemplateController extends Controller
             'model' => $validated['model_name'],
             'temperature' => $validated['temperature'],
             'max_tokens' => $validated['max_tokens'],
-            'task_type' => $validated['task_type'],
+            'task_type' => $validated['task_type'] ?? 'general',
             'use_case_slug' => $useCase?->slug,
             'output_type' => $validated['output_type'],
             'output_schema' => $validated['output_schema_json'] ?? [],
