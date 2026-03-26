@@ -175,7 +175,7 @@ const templatePrimaryModel = (template) =>
     || '';
 
 const templateApprovalLabel = (template) =>
-    template.approval_state === 'approved' ? 'Library ready' : template.status;
+    template.approval_state === 'approved' ? 'In library' : template.status;
 
 const templateRunHref = (template) => {
     const latestVersionId = template.versions?.at(-1)?.id ?? '';
@@ -309,7 +309,7 @@ onBeforeUnmount(() => {
             <div>
                 <h1>Prompts</h1>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
-                    Browse the prompt catalog as a working library, not a flat list.
+                    Browse, compare, and reopen prompts from one shared working library.
                 </p>
             </div>
         </template>
@@ -318,9 +318,9 @@ onBeforeUnmount(() => {
             <section class="surface-block">
                 <div class="surface-block-header lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                        <h2 class="section-title">Prompt catalog</h2>
+                        <h2 class="section-title">Prompt library</h2>
                         <p class="text-sm text-[var(--muted)]">
-                            Search, narrow, sort, and open reusable prompts from a single library view.
+                            Search, filter, sort, and open saved prompts from one place.
                         </p>
                     </div>
                     <div class="console-page-actions">
@@ -335,15 +335,15 @@ onBeforeUnmount(() => {
                             <div class="summary-item-value">{{ sortedTemplates.length }}</div>
                         </div>
                         <div class="summary-item">
-                            <div class="summary-item-label">Library ready</div>
+                            <div class="summary-item-label">In library</div>
                             <div class="summary-item-value">{{ libraryReadyCount }}</div>
                         </div>
                         <div class="summary-item">
-                            <div class="summary-item-label">Pending approval</div>
+                            <div class="summary-item-label">Not in library yet</div>
                             <div class="summary-item-value">{{ pendingApprovalCount }}</div>
                         </div>
                         <div class="summary-item">
-                            <div class="summary-item-label">Collections</div>
+                            <div class="summary-item-label">Tasks</div>
                             <div class="summary-item-value">{{ collectionOptions.length }}</div>
                         </div>
                     </div>
@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
 
             <div class="prompt-library-shell">
                 <aside class="panel p-4 xl:sticky xl:top-4 xl:self-start">
-                    <div class="prompt-library-rail-title">Collections</div>
+                    <div class="prompt-library-rail-title">Tasks</div>
                     <div class="mt-3 space-y-2">
                         <button
                             type="button"
@@ -486,11 +486,11 @@ onBeforeUnmount(() => {
                         <div class="prompt-library-rail-title">Status</div>
                         <div class="mt-3 space-y-2 text-sm text-[var(--muted)]">
                             <div class="flex items-center justify-between gap-3">
-                                <span>Library ready</span>
+                                <span>In library</span>
                                 <span>{{ libraryReadyCount }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3">
-                                <span>Pending approval</span>
+                                <span>Not in library yet</span>
                                 <span>{{ pendingApprovalCount }}</span>
                             </div>
                             <div class="flex items-center justify-between gap-3">
@@ -571,14 +571,14 @@ onBeforeUnmount(() => {
                                     Open prompt
                                 </Link>
                                 <Link :href="templateRunHref(template)" class="app-inline-link">
-                                    Test prompt
+                                    Run experiments
                                 </Link>
                             </div>
                         </article>
                     </div>
 
                     <div v-else class="panel p-5 text-sm text-[var(--muted)]">
-                        No prompt templates match the current filters.
+                        No prompts match the current filters.
                     </div>
                 </section>
 
@@ -601,7 +601,7 @@ onBeforeUnmount(() => {
 
                     <div class="mt-4 flex flex-wrap gap-3">
                         <Link :href="route('prompt-templates.show', selectedTemplate.id)" class="btn-primary">Open prompt</Link>
-                        <Link :href="selectedTemplateRunHref" class="btn-secondary">Test prompt</Link>
+                        <Link :href="selectedTemplateRunHref" class="btn-secondary">Run experiments</Link>
                     </div>
 
                     <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
@@ -627,7 +627,7 @@ onBeforeUnmount(() => {
                         <div class="console-field-label">Approval</div>
                         <div class="surface-muted mt-3">
                             <div class="font-semibold text-[var(--ink)]">
-                                {{ selectedTemplate.approval_state === 'approved' ? 'Approved for library reuse' : 'Still pending approval' }}
+                                {{ selectedTemplate.approval_state === 'approved' ? 'Already in the shared library' : 'Not in the shared library yet' }}
                             </div>
                             <div v-if="selectedTemplateApprovedVersion" class="mt-2 text-sm leading-6 text-[var(--muted)]">
                                 {{ selectedTemplateApprovedVersion.version_label }}
@@ -656,7 +656,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div class="console-detail-section">
-                        <div class="console-field-label">Version shelf</div>
+                        <div class="console-field-label">Recent versions</div>
                         <div class="prompt-library-version-list mt-3">
                             <div
                                 v-for="version in selectedTemplateVersions"
@@ -668,7 +668,7 @@ onBeforeUnmount(() => {
                                     <div class="text-xs text-[var(--muted)]">{{ formatDateTime(version.created_at) }}</div>
                                 </div>
                                 <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                                    {{ version.change_summary || version.notes || 'No version summary yet.' }}
+                                    {{ version.change_summary || version.notes || 'No summary yet.' }}
                                 </div>
                                 <div class="mt-3 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
                                     <span class="inline-meta-item">

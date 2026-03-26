@@ -92,7 +92,7 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
             <div class="page-lead">
                 <h1 class="text-2xl font-semibold tracking-tight">Library</h1>
                 <p class="mt-1 text-sm text-[var(--muted)]">
-                    Approved prompt versions ready for controlled reuse.
+                    Reusable prompt versions that the team has already approved for wider use.
                 </p>
             </div>
         </template>
@@ -101,14 +101,14 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
             <section class="panel p-5">
                 <PanelHeader
                     title="Library snapshot"
-                    description="Coverage, visibility, and quick actions for the approved prompt catalog."
-                    help="Shows how many approved prompt entries exist, how broadly they cover tasks, and what portion is currently visible in the catalog."
+                    description="Coverage, visibility, and quick actions for the shared prompt library."
+                    help="Shows how many shared prompt entries exist, how broadly they cover tasks, and what portion is currently visible."
                 />
 
                 <div class="toolbar mt-4">
                     <div class="summary-strip library-snapshot-strip">
                         <div class="summary-item">
-                            <div class="summary-item-label">Approved entries</div>
+                            <div class="summary-item-label">Shared entries</div>
                             <div class="summary-item-value">{{ entries.length }}</div>
                         </div>
                         <div class="summary-item">
@@ -131,10 +131,10 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
             <section class="panel overflow-hidden">
                 <div class="border-b border-[var(--line)] px-5 py-4">
                     <PanelHeader
-                        title="Approved prompt catalog"
-                        description="Dense operational catalog instead of card-based browsing."
+                        title="Shared prompt catalog"
+                        description="A dense, searchable list of prompt versions ready for reuse."
                         :icon="BookCopy"
-                        help="Provides the shared catalog of approved prompt versions that teams can reuse with less review overhead."
+                        help="Provides the shared catalog of prompt versions that teams can reuse with less review overhead."
                     />
                 </div>
 
@@ -168,8 +168,8 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                                 </div>
                                 <div class="mt-3 flex flex-wrap gap-3 text-sm">
                                     <Link :href="entrySourceHref(entry)" class="app-inline-link">View prompt version</Link>
-                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Open approval settings</Link>
-                                    <Link :href="entryRunHref(entry)" class="app-inline-link">Test saved prompt</Link>
+                                    <Link :href="entryApprovalHref(entry)" class="app-inline-link">Open library handoff</Link>
+                                    <Link :href="entryRunHref(entry)" class="app-inline-link">Run experiments</Link>
                                 </div>
                             </td>
                             <td>{{ entry.prompt_version?.use_case || 'No task' }}</td>
@@ -182,7 +182,7 @@ const entryDetailHref = (entry) => route('library.show', entry.id);
                 </table>
 
                 <div v-else class="empty-state mx-5 mb-5">
-                    No approved prompts match the current search.
+                    No shared prompts match the current search.
                 </div>
             </section>
         </div>

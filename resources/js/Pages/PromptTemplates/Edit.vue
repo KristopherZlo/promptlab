@@ -1242,10 +1242,10 @@ const promoteToLibrary = async () => {
 
             <section v-else-if="promptTemplate && activeTab === 'library'" class="panel p-5">
                 <PanelHeader
-                    title="Approval and library handoff"
-                    description="Approve one revision when the team is ready to reuse it in the shared library."
+                    title="Shared library handoff"
+                    description="Choose one saved version when the team is ready to reuse it more broadly."
                     :icon="BookCopy"
-                    help="This is the final handoff area where one revision is promoted into the approved library for broader reuse."
+                    help="Use this handoff area when one saved version is ready for controlled reuse in the shared library."
                 />
 
                 <div v-if="currentVersion" class="summary-strip mt-4">
@@ -1278,7 +1278,7 @@ const promoteToLibrary = async () => {
                 <div v-if="currentVersion" class="guide-card mt-5">
                     <div class="font-bold">How approval works</div>
                     <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                        Select one revision, fill the handoff fields below, and click the approval button. Approved revisions appear in the shared library for the whole team.
+                        Select one saved version, fill the handoff details below, and add it to the shared library when the team is ready to reuse it.
                     </div>
                 </div>
 
@@ -1326,7 +1326,7 @@ const promoteToLibrary = async () => {
                                 Select approved version
                             </button>
                             <Link :href="versionLibraryHref(currentApprovedVersion)" class="app-inline-link">Open saved version</Link>
-                            <Link :href="versionRunHref(currentApprovedVersion)" class="app-inline-link">Test saved version</Link>
+                            <Link :href="versionRunHref(currentApprovedVersion)" class="app-inline-link">Run experiments</Link>
                         </div>
                     </div>
 
@@ -1366,7 +1366,7 @@ const promoteToLibrary = async () => {
                 </div>
 
                 <div v-else class="empty-state mt-5">
-                    No versions from this template have been approved for library reuse yet.
+                    No saved version from this prompt has been added to the shared library yet.
                 </div>
 
                 <div v-if="canManageLibrary && currentVersion" class="mt-5 grid gap-4 md:grid-cols-2">
@@ -1419,7 +1419,7 @@ const promoteToLibrary = async () => {
             </section>
 
             <div v-else-if="activeTab !== 'template'" class="empty-state">
-                Save the template first. After that, version work and approval will unlock below.
+                Save the prompt first. After that, history, improvement, and library handoff will unlock here.
             </div>
             </div>
         </div>
