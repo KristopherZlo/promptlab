@@ -80,6 +80,32 @@ Key engineering decisions:
 - provider integrations live behind contracts instead of leaking into controllers
 - optimization still returns to a human review flow
 
+## One-Command Demo
+
+On a fresh clone, the fastest way to see the project working is:
+
+```bash
+php scripts/demo.php
+```
+
+What this command does:
+
+- installs Composer dependencies if `vendor/` is missing
+- installs frontend dependencies if `node_modules/` is missing
+- creates `.env` from `.env.example`
+- switches a fresh local install to SQLite demo defaults
+- runs migrations and seeds the workspace demo data
+- builds production assets
+- starts the Laravel server, queue worker, and Reverb websocket server
+
+The local app opens at `http://127.0.0.1:8000`.
+
+Useful variants:
+
+- `php scripts/demo.php --setup-only` to prepare the project without starting services
+- `php scripts/demo.php --run-only` to start the services after setup
+- `php scripts/demo.php --with-gepa` to also install the local GEPA optimization runtime
+
 ## Overview
 
 Evala is built around the idea that AI work inside a company should be:
@@ -222,14 +248,31 @@ These scenarios make the system easier to demo to both technical and non-technic
 - PHP 8.2+
 - Composer
 - Node.js + npm
-- MySQL / MariaDB
-- optional XAMPP workflow for local hosting
+- optional MySQL / MariaDB for a non-demo database
 
-### Install
+### Quick Demo Bootstrap
+
+```bash
+php scripts/demo.php
+```
+
+This is the intended portfolio demo path. It uses SQLite by default on a fresh install, seeds the workspace with business-facing examples, builds the frontend, and starts the app.
+
+### Setup Only
+
+```bash
+composer setup
+```
+
+That command prepares dependencies, `.env`, database schema, seeded data, and built assets without launching the long-running processes.
+
+### Manual Setup
+
+If you want to manage the environment yourself:
 
 ```bash
 composer install
-npm install
+npm ci
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
@@ -249,6 +292,8 @@ Realtime experiment updates:
 ```bash
 php artisan reverb:start
 ```
+
+The demo bootstrap uses built assets. For active frontend work, use `composer run dev` instead of the one-command demo launcher.
 
 ## Demo Accounts
 
