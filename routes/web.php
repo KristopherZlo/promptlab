@@ -25,6 +25,13 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+Route::get('/up', function () {
+    return response()->json([
+        'status' => 'ok',
+        'app' => 'Evala',
+    ]);
+})->name('health');
+
 Route::get('/join/{token}', [TeamInvitationController::class, 'show'])->name('team-invitations.show');
 
 Route::middleware('auth')->group(function () {
