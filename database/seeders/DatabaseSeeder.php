@@ -2,12 +2,15 @@
 
 namespace Database\Seeders;
 
+use App\Models\ActivityLog;
 use App\Models\Evaluation;
 use App\Models\Experiment;
 use App\Models\LibraryEntry;
+use App\Models\LlmConnection;
 use App\Models\PromptTemplate;
 use App\Models\PromptVersion;
 use App\Models\Team;
+use App\Models\TeamInvitation;
 use App\Models\TeamMembership;
 use App\Models\TestCase;
 use App\Models\UseCase;
@@ -21,14 +24,19 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
+    private const SHOWCASE_INVITATION_TOKEN = 'evala-showcase-invite';
+
     public function run(): void
     {
         Config::set('queue.default', 'sync');
         Config::set('broadcasting.default', 'log');
 
+        ActivityLog::query()->delete();
         Evaluation::query()->delete();
         Experiment::query()->delete();
         LibraryEntry::query()->delete();
+        LlmConnection::query()->delete();
+        TeamInvitation::query()->delete();
 
         $admin = User::updateOrCreate([
             'email' => 'admin@promptlab.local',
@@ -63,11 +71,31 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        $unverifiedUser = User::updateOrCreate([
+            'email' => 'unverified@evala.local',
+        ], [
+            'first_name' => 'Evala',
+            'last_name' => 'Pending',
+            'name' => 'Evala Pending',
+            'password' => 'password',
+            'role' => User::ROLE_TEAM_MEMBER,
+            'email_verified_at' => null,
+        ]);
+
         $workspace = Team::updateOrCreate(
             ['slug' => 'evala-demo-team'],
             [
                 'name' => 'Evala Demo Team',
                 'description' => 'Seeded workspace for Evala demo flows.',
+                'created_by' => $admin->id,
+            ]
+        );
+
+        $pilotWorkspace = Team::updateOrCreate(
+            ['slug' => 'evala-ops-pilot'],
+            [
+                'name' => 'Evala Ops Pilot',
+                'description' => 'Secondary workspace for screenshot coverage and admin previews.',
                 'created_by' => $admin->id,
             ]
         );
@@ -96,9 +124,60 @@ class DatabaseSeeder extends Seeder
             ['role' => 'owner']
         );
 
+        TeamMembership::updateOrCreate(
+            [
+                'team_id' => $pilotWorkspace->id,
+                'user_id' => $admin->id,
+            ],
+            ['role' => 'owner']
+        );
+
+        TeamMembership::updateOrCreate(
+            [
+                'team_id' => $pilotWorkspace->id,
+                'user_id' => $showcaseUser->id,
+            ],
+            ['role' => 'reviewer']
+        );
+
         $admin->forceFill(['current_team_id' => $workspace->id])->save();
         $teamMember->forceFill(['current_team_id' => $workspace->id])->save();
         $showcaseUser->forceFill(['current_team_id' => $workspace->id])->save();
+        $unverifiedUser->forceFill(['current_team_id' => $workspace->id])->save();
+
+        $showcaseInvitation = TeamInvitation::updateOrCreate(
+            [
+                'team_id' => $workspace->id,
+                'email' => 'invitee@evala.local',
+            ],
+            [
+                'role' => 'reviewer',
+                'token' => hash('sha256', self::SHOWCASE_INVITATION_TOKEN),
+                'token_ciphertext' => self::SHOWCASE_INVITATION_TOKEN,
+                'status' => 'pending',
+                'invited_by' => $admin->id,
+                'accepted_at' => null,
+                'revoked_at' => null,
+                'expires_at' => now()->addDays(10),
+            ],
+        );
+
+        $defaultConnection = LlmConnection::updateOrCreate(
+            [
+                'team_id' => $workspace->id,
+                'name' => 'Evala OpenAI Sandbox',
+            ],
+            [
+                'driver' => 'openai',
+                'base_url' => 'https://api.openai.com/v1',
+                'api_key' => 'evala-demo-key',
+                'models_json' => ['gpt-5.4-mini', 'gpt-5.2', 'gpt-5.1-codex-mini'],
+                'is_active' => true,
+                'is_default' => true,
+                'created_by' => $admin->id,
+                'updated_by' => $admin->id,
+            ],
+        );
 
         [$emailUseCase, $emailTemplate, $emailVersions] = $this->seedCustomerEmailSummaries($admin, $workspace->id);
         [$ticketUseCase, $ticketTemplate, $ticketVersions] = $this->seedTicketCategorization($admin, $workspace->id);
@@ -188,6 +267,48 @@ class DatabaseSeeder extends Seeder
         $this->promoteToLibrary($emailVersions['v3'], $admin, 'mock:team-lab-v1', 'Best for customer support triage', 'Use for urgent support emails where action ownership matters.');
         $this->promoteToLibrary($ticketVersions['v2'], $admin, 'mock:team-lab-v1', 'Best for ticket routing', 'Use for strict JSON categorization flows.');
         $this->promoteToLibrary($meetingVersions['v2'], $admin, 'mock:team-lab-v1', 'Best for internal sync notes', 'Use for short meeting recaps with owners and deadlines.');
+
+        ActivityLog::query()->create([
+            'team_id' => $workspace->id,
+            'actor_id' => $admin->id,
+            'action' => 'team.invitation_created',
+            'subject_type' => $showcaseInvitation::class,
+            'subject_id' => $showcaseInvitation->id,
+            'subject_label' => $showcaseInvitation->email,
+            'details_json' => [
+                'member_email' => $showcaseInvitation->email,
+                'role' => $showcaseInvitation->role,
+                'team_name' => $workspace->name,
+            ],
+        ]);
+
+        ActivityLog::query()->create([
+            'team_id' => $workspace->id,
+            'actor_id' => $admin->id,
+            'action' => 'llm.connection_saved',
+            'subject_type' => $defaultConnection::class,
+            'subject_id' => $defaultConnection->id,
+            'subject_label' => $defaultConnection->name,
+            'details_json' => [
+                'driver' => $defaultConnection->driver,
+                'base_url' => $defaultConnection->base_url,
+                'models' => $defaultConnection->models_json,
+            ],
+        ]);
+
+        ActivityLog::query()->create([
+            'team_id' => $workspace->id,
+            'actor_id' => $showcaseUser->id,
+            'action' => 'prompt.library_promoted',
+            'subject_type' => $emailVersions['v3']::class,
+            'subject_id' => $emailVersions['v3']->id,
+            'subject_label' => $emailVersions['v3']->version_label,
+            'details_json' => [
+                'prompt_template' => $emailTemplate->name,
+                'use_case' => $emailUseCase->name,
+                'recommended_model' => 'mock:team-lab-v1',
+            ],
+        ]);
     }
 
     private function seedCustomerEmailSummaries(User $admin, int $teamId): array
