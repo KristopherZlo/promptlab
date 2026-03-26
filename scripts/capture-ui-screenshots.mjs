@@ -481,7 +481,8 @@ async function loadShowcaseLookup(page) {
 
 async function fetchJson(page, uri) {
   return page.evaluate(async (relativeUri) => {
-    const response = await fetch(relativeUri, {
+    const nextUrl = new URL(String(relativeUri ?? '').replace(/^\/+/, ''), window.location.href).toString();
+    const response = await fetch(nextUrl, {
       headers: {
         Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
@@ -489,7 +490,7 @@ async function fetchJson(page, uri) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status} for ${relativeUri}`);
+      throw new Error(`HTTP ${response.status} for ${nextUrl}`);
     }
 
     return response.json();
