@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\PromptTemplate;
+use App\Models\PromptVersion;
 use App\Models\UseCase;
 use App\Models\User;
 use App\Services\TeamProvisioningService;
@@ -124,5 +126,85 @@ class PromptAuthoringTest extends TestCase
             'Key decisions:',
             $response->json('data.output_text')
         );
+    }
+
+    public function test_prompt_version_update_keeps_existing_label_when_request_sends_blank_value(): void
+    {
+        [$user, $team, $useCase] = $this->promptFixture('Prompt Version Update Team');
+
+        $template = PromptTemplate::create([
+            'team_id' => $team->id,
+            'use_case_id' => $useCase->id,
+            'name' => 'Update fixture prompt',
+            'description' => 'Prompt version update regression fixture.',
+            'task_type' => 'classification',
+            'status' => 'active',
+            'preferred_model' => 'mock:team-lab-v1',
+            'tags_json' => ['regression'],
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+
+        $version = PromptVersion::create([
+            'team_id' => $team->id,
+            'prompt_template_id' => $template->id,
+            'version_label' => 'v5',
+            'change_summary' => 'Existing prompt revision.',
+            'system_prompt' => 'Classify requests.',
+            'user_prompt_template' => 'Classify {{input_text}}.',
+            'variables_schema' => [],
+            'output_type' => 'text',
+            'output_schema_json' => [],
+            'notes' => 'Original notes.',
+            'preferred_model' => 'mock:team-lab-v1',
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->putJson(route('api.prompt-versions.update', $version), [
+                'version_label' => '',
+                'change_summary' => 'Updated without changing the version label.',
+                'system_prompt' => 'Classify requests with a terse tone.',
+                'user_prompt_template' => '{{customer_message}}',
+                'variables_schema' => [],
+                'output_type' => 'text',
+                'output_schema_json' => [],
+                'notes' => 'Updated notes.',
+                'preferred_model' => 'mock:team-lab-v1',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.version_label', 'v5')
+            ->assertJsonPath('data.user_prompt_template', '{{customer_message}}');
+
+        $this->assertDatabaseHas('prompt_versions', [
+            'id' => $version->id,
+            'version_label' => 'v5',
+            'user_prompt_template' => '{{customer_message}}',
+        ]);
+    }
+
+    private function promptFixture(string $teamName): array
+    {
+        $user = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+        ]);
+
+        $team = app(TeamProvisioningService::class)->createTeam($user, [
+            'name' => $teamName,
+            'description' => 'Workspace for prompt authoring tests.',
+        ]);
+
+        $useCase = UseCase::create([
+            'team_id' => $team->id,
+            'name' => 'Prompt authoring fixture',
+            'slug' => strtolower(str_replace(' ', '-', $teamName)),
+            'description' => 'Prompt authoring fixture.',
+            'business_goal' => 'Support prompt authoring tests.',
+            'primary_input_label' => 'Input',
+            'status' => 'active',
+        ]);
+
+        return [$user, $team, $useCase];
     }
 }

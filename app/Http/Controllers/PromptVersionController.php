@@ -42,6 +42,9 @@ class PromptVersionController extends Controller
     {
         $validated = $request->validated();
         $validated['updated_by'] = $request->user()->id;
+        $validated['version_label'] = filled($validated['version_label'] ?? null)
+            ? $validated['version_label']
+            : $promptVersion->version_label;
 
         $promptVersion->update($validated);
         $activity->record('prompt_version.updated', $promptVersion, [
