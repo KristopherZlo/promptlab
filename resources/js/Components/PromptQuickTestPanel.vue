@@ -196,10 +196,10 @@ const send = async () => {
         <ToastRelay :message="errorMessage" tone="error" />
 
         <PanelHeader
-            title="Quick test chat"
-            description="Send a short conversation without leaving the editor. This uses the current draft fields."
+            title="Try this prompt"
+            description="Run a quick back-and-forth without leaving the editor. This uses the current draft fields."
             :icon="MessageSquareText"
-            help="This panel keeps conversation history locally, turns it into transcript text, and runs the current prompt draft against the selected model."
+            help="This preview keeps the chat locally, turns it into one transcript, and runs the current prompt draft against the selected model."
         />
 
         <div class="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
@@ -208,17 +208,17 @@ const send = async () => {
                     <div class="flex items-center justify-between gap-3">
                         <div class="text-block-title">
                             <Sparkles />
-                            <span>Conversation</span>
+                            <span>Preview conversation</span>
                         </div>
                         <button type="button" class="btn-danger" @click="resetConversation">
                             <RotateCcw class="h-4 w-4" />
-                            <span>Reset chat</span>
+                            <span>Clear preview</span>
                         </button>
                     </div>
 
                     <div class="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
                         <div v-if="messages.length === 0" class="empty-state !mx-0 !mb-0 !mt-0">
-                            Write a message below and send it. The current prompt draft will answer here.
+                            Write a realistic example below and send it. The current prompt draft will answer here.
                         </div>
 
                         <div
@@ -236,20 +236,20 @@ const send = async () => {
                 </div>
 
                 <div class="panel-muted p-4">
-                    <label class="field-label">Message</label>
+                    <label class="field-label">Example input</label>
                     <textarea
                         v-model="draftInput"
                         class="field-textarea"
-                        placeholder="Type a short message to test the current prompt..."
+                        placeholder="Paste a realistic customer request, support message, or business example..."
                     />
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
                         <div class="text-sm text-[var(--muted)]">
-                            The full chat transcript is sent as the current input text on each turn.
+                            Each send uses the full preview transcript as the current input.
                         </div>
                         <button type="button" class="btn-primary" :disabled="!canSend" @click="send">
                             <SendHorizonal class="h-4 w-4" />
-                            <span>{{ processing ? 'Sending...' : 'Send test message' }}</span>
+                            <span>{{ processing ? 'Sending...' : 'Run preview' }}</span>
                         </button>
                     </div>
                 </div>
@@ -259,7 +259,7 @@ const send = async () => {
                 <div class="panel-muted p-4">
                     <div class="text-block-title">
                         <Bot />
-                        <span>Runtime</span>
+                        <span>Run settings</span>
                     </div>
 
                     <div class="mt-4 grid gap-4">
@@ -289,7 +289,7 @@ const send = async () => {
                 <div v-if="variableFields.length" class="panel-muted p-4">
                     <div class="text-block-title">
                         <Variable />
-                        <span>Variables</span>
+                        <span>Input fields</span>
                     </div>
 
                     <div class="mt-4 grid gap-4">
@@ -308,15 +308,15 @@ const send = async () => {
                 <div class="panel-muted p-4">
                     <div class="text-block-title">
                         <FileCode2 />
-                        <span>Last compiled prompt</span>
+                        <span>Final prompt sent to the model</span>
                     </div>
 
-                    <pre class="code-block mt-3">{{ lastRun.compiled_prompt || 'Send one message to inspect the compiled prompt here.' }}</pre>
+                    <pre class="code-block mt-3">{{ lastRun.compiled_prompt || 'Run one preview to inspect the final prompt here.' }}</pre>
 
                     <div v-if="lastRun.compiled_prompt" class="summary-strip mt-4">
                         <div class="summary-item">
-                            <div class="summary-item-label">Format</div>
-                            <div class="summary-item-value">{{ lastRun.format_valid ? 'Valid' : 'Check output' }}</div>
+                            <div class="summary-item-label">Expected format</div>
+                            <div class="summary-item-value">{{ lastRun.format_valid ? 'Matched' : 'Needs attention' }}</div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-item-label">Latency</div>

@@ -710,10 +710,10 @@ const promoteToLibrary = async () => {
                 <div v-if="!promptTemplate" class="mt-6 border-t border-[var(--line)] pt-6">
                     <div class="flex items-center justify-between gap-4">
                         <PanelHeader
-                            title="First prompt version"
-                            description="This becomes the first runnable prompt right away. Extra versions can wait until you actually need them."
+                            title="First saved version"
+                            description="This becomes the first working version of the prompt. Extra versions can wait until you have a real change to keep."
                             :icon="Workflow"
-                            help="The initial save creates the prompt and v1 together so writing the first prompt does not require a separate versioning step."
+                            help="The initial save creates the prompt and v1 together so you can start with one useful version instead of splitting setup into multiple steps."
                         />
                         <span class="status-chip">Creates v1</span>
                     </div>
@@ -722,13 +722,13 @@ const promoteToLibrary = async () => {
                         <div>
                             <label class="field-label">Version label</label>
                             <input v-model="versionForm.version_label" type="text" class="field-input" placeholder="v1">
-                            <div class="field-help">Leave empty to create version `v1` automatically.</div>
+                            <div class="field-help">Optional. Leave empty to create `v1` automatically.</div>
                         </div>
 
                         <div>
                             <div class="label-with-icon">
                                 <Bot />
-                                <span>Model override</span>
+                                <span>Model for this version</span>
                             </div>
                             <select v-model="versionForm.preferred_model" class="field-select">
                                 <option value="">Use prompt default</option>
@@ -741,26 +741,27 @@ const promoteToLibrary = async () => {
                         <div class="md:col-span-2">
                             <div class="label-with-icon">
                                 <MessageSquareText />
-                                <span>Change summary</span>
+                                <span>What changed</span>
                             </div>
                             <input
                                 v-model="versionForm.change_summary"
                                 type="text"
                                 class="field-input"
-                                placeholder="What is special about this first version?"
+                                placeholder="Example: Better tone for customer-facing replies"
                             >
                         </div>
 
                         <div class="md:col-span-2">
                             <div class="label-with-icon">
                                 <FileText />
-                                <span>System prompt</span>
+                                <span>System instructions</span>
                             </div>
                             <textarea
                                 v-model="versionForm.system_prompt"
                                 class="field-textarea"
-                                placeholder="Role, boundaries, tone, and output rules"
+                                placeholder="Optional guardrails for role, boundaries, tone, and must-follow rules."
                             />
+                            <div class="field-help">Use this for stable instructions that should apply every time, regardless of the input.</div>
                         </div>
 
                         <div class="md:col-span-2">
@@ -773,6 +774,7 @@ const promoteToLibrary = async () => {
                                 class="field-textarea"
                                 placeholder="Write the actual prompt here. Use variables like {{input_text}} or {{language}} when needed."
                             />
+                            <div class="field-help">This is the main prompt the model will receive. Use variables only when the input changes between runs.</div>
                             <div v-if="versionForm.errors.user_prompt_template" class="field-error">
                                 {{ versionForm.errors.user_prompt_template }}
                             </div>
@@ -781,11 +783,11 @@ const promoteToLibrary = async () => {
                         <div class="md:col-span-2">
                             <div class="label-with-icon">
                                 <Braces />
-                                <span>Variables schema</span>
+                                <span>Input fields (JSON)</span>
                             </div>
                             <textarea v-model="versionForm.variables_schema_text" class="field-textarea"></textarea>
                             <div class="field-help">
-                                JSON array. Example: [{ "name": "language", "required": true, "default": "English" }]
+                                Optional JSON array describing extra fields the prompt needs. Example: [{ "name": "language", "required": true, "default": "English" }]
                             </div>
                             <div v-if="jsonErrors.variables_schema" class="field-error">{{ jsonErrors.variables_schema }}</div>
                         </div>
@@ -799,16 +801,17 @@ const promoteToLibrary = async () => {
                                 <option value="text">Text</option>
                                 <option value="json">JSON</option>
                             </select>
+                            <div class="field-help">Choose JSON only when the answer must follow a structured format.</div>
                         </div>
 
                         <div class="md:col-span-2">
                             <div class="label-with-icon">
                                 <FileJson />
-                                <span>Output schema</span>
+                                <span>Expected JSON format</span>
                             </div>
                             <textarea v-model="versionForm.output_schema_text" class="field-textarea"></textarea>
                             <div class="field-help">
-                                JSON object with optional required keys and primitive types for structured validation.
+                                Optional JSON object used to check structured outputs. Leave `{}` for flexible JSON responses.
                             </div>
                             <div v-if="jsonErrors.output_schema_json" class="field-error">{{ jsonErrors.output_schema_json }}</div>
                         </div>
@@ -821,7 +824,7 @@ const promoteToLibrary = async () => {
                             <textarea
                                 v-model="versionForm.notes"
                                 class="field-textarea"
-                                placeholder="Describe how the team should use this first version."
+                                placeholder="Explain when this version should be used and what it is trying to improve."
                             />
                         </div>
                     </div>
@@ -846,20 +849,20 @@ const promoteToLibrary = async () => {
                     <div class="prompt-history-layout">
                         <aside class="prompt-history-sidebar space-y-4">
                             <PanelHeader
-                                title="Revision history"
-                                description="Commit-style prompt history with quick context for what changed in each revision."
+                                title="Saved versions"
+                                description="A clear timeline of the prompt changes your team decided to keep."
                                 :icon="Workflow"
-                                help="Shows the saved revision timeline so the team can reopen prior changes, branch from a prior version, and inspect revision-by-revision changes like a commit view."
+                                help="Reopen earlier versions, branch from a past version, and inspect what changed before saving something new."
                             />
 
                             <div class="flex flex-wrap gap-3">
                                 <button type="button" class="btn-secondary" @click="beginNewVersion(false)">
                                     <Plus class="h-4 w-4" />
-                                    <span>New revision</span>
+                                    <span>New version</span>
                                 </button>
                                 <button type="button" class="btn-secondary" :disabled="!currentVersion" @click="beginNewVersion(true)">
                                     <Copy class="h-4 w-4" />
-                                    <span>Branch from selected</span>
+                                    <span>Start from selected</span>
                                 </button>
                             </div>
 
@@ -884,7 +887,7 @@ const promoteToLibrary = async () => {
                                             </span>
                                         </div>
                                         <div class="prompt-history-entry-copy">
-                                            Start a fresh revision or branch from the selected commit before saving it into history.
+                                            Start a fresh draft or copy the selected version before saving a new one.
                                         </div>
                                     </div>
                                 </button>
@@ -906,7 +909,7 @@ const promoteToLibrary = async () => {
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
                                                 <div class="prompt-history-entry-title">
-                                                    {{ entry.version.change_summary || `${entry.version.version_label} revision` }}
+                                                    {{ entry.version.change_summary || `${entry.version.version_label} update` }}
                                                 </div>
                                                 <div class="prompt-history-entry-meta">
                                                     <span class="inline-meta-item">
@@ -957,7 +960,7 @@ const promoteToLibrary = async () => {
                             </div>
 
                             <div v-if="!versionHistory.length" class="text-sm text-[var(--muted)]">
-                                No saved revisions yet. Save the draft to create the first history entry.
+                                No saved versions yet. Save the draft to create the first history entry.
                             </div>
                         </aside>
 
@@ -977,16 +980,16 @@ const promoteToLibrary = async () => {
                                     </div>
 
                                     <div class="flex flex-wrap gap-3">
-                                        <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Test this version</Link>
+                                        <Link v-if="currentVersion" :href="experimentsHref" class="btn-secondary">Run experiments</Link>
                                         <button type="button" class="btn-primary" :disabled="versionForm.processing" @click="saveVersion">
-                                            {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save version' : 'Save as new version' }}
+                                            {{ versionForm.processing ? 'Saving...' : currentVersion ? 'Save version' : 'Save new version' }}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div class="summary-strip">
                                     <div class="summary-item">
-                                        <div class="summary-item-label">Revision</div>
+                                        <div class="summary-item-label">Version</div>
                                         <div class="summary-item-value">{{ currentVersion?.version_label || 'Draft' }}</div>
                                     </div>
                                     <div class="summary-item">
@@ -1006,9 +1009,9 @@ const promoteToLibrary = async () => {
                                 <div class="prompt-history-diff">
                                     <div class="prompt-history-diff-header">
                                         <div>
-                                            <div class="section-title">Files changed</div>
+                                            <div class="section-title">What changed</div>
                                             <p class="mt-1 text-sm text-[var(--muted)]">
-                                                Compare this revision with {{ versionComparisonBase?.version_label || 'the initial state' }} before editing further.
+                                                Compare this version with {{ versionComparisonBase?.version_label || 'the initial state' }} before editing further.
                                             </p>
                                         </div>
                                         <div class="prompt-history-entry-count">{{ currentVersionChanges.length }}</div>
@@ -1054,7 +1057,7 @@ const promoteToLibrary = async () => {
                                     </div>
 
                                     <div v-else class="prompt-history-empty">
-                                        No content changes yet. Update the editor below to build a meaningful revision diff.
+                                        No content changes yet. Update the editor below to build a meaningful change summary.
                                     </div>
                                 </div>
                             </article>
@@ -1063,20 +1066,20 @@ const promoteToLibrary = async () => {
                                 :title="versionPanelTitle"
                                 :description="versionPanelSummary"
                                 :icon="Settings2"
-                                help="Edits one specific revision, including prompt text, variables, output validation, and revision notes."
+                                help="Edit one saved version, including prompt text, input fields, expected format, and team notes."
                             />
 
                             <div class="grid gap-4 md:grid-cols-2">
                                 <div>
                                     <label class="field-label">Version label</label>
                                     <input v-model="versionForm.version_label" type="text" class="field-input" placeholder="v4">
-                                    <div class="field-help">Leave empty to auto-number the next version on create.</div>
+                                    <div class="field-help">Optional. Leave empty to auto-number the next saved version.</div>
                                 </div>
 
                                 <div>
                                     <div class="label-with-icon">
                                         <Bot />
-                                        <span>Preferred model override</span>
+                                        <span>Model for this version</span>
                                     </div>
                                     <select v-model="versionForm.preferred_model" class="field-select">
                                         <option value="">Use template default</option>
@@ -1089,38 +1092,40 @@ const promoteToLibrary = async () => {
                                 <div class="md:col-span-2">
                                     <div class="label-with-icon">
                                         <MessageSquareText />
-                                        <span>Change summary</span>
+                                        <span>What changed</span>
                                     </div>
                                     <input
                                         v-model="versionForm.change_summary"
                                         type="text"
                                         class="field-input"
-                                        placeholder="Short revision message"
+                                        placeholder="Example: Stronger JSON consistency for billing summaries"
                                     >
                                 </div>
 
                                 <div class="md:col-span-2">
                                     <div class="label-with-icon">
                                         <FileText />
-                                        <span>System prompt</span>
+                                        <span>System instructions</span>
                                     </div>
                                     <textarea
                                         v-model="versionForm.system_prompt"
                                         class="field-textarea"
-                                        placeholder="Role, safety limits, domain boundaries, and output instructions"
+                                        placeholder="Optional guardrails for role, boundaries, tone, and must-follow rules."
                                     />
+                                    <div class="field-help">Use this for rules that should remain stable across all inputs for this version.</div>
                                 </div>
 
                                 <div class="md:col-span-2">
                                     <div class="label-with-icon">
                                         <FileCode2 />
-                                        <span>User prompt template</span>
+                                        <span>Prompt text</span>
                                     </div>
                                     <textarea
                                         v-model="versionForm.user_prompt_template"
                                         class="field-textarea"
-                                        placeholder="Use variables like {{customer_message}} or {{language}}"
+                                        placeholder="Write the actual prompt here. Use variables like {{customer_message}} or {{language}} when needed."
                                     />
+                                    <div class="field-help">This is the main prompt the model will receive for this version.</div>
                                     <div v-if="versionForm.errors.user_prompt_template" class="field-error">
                                         {{ versionForm.errors.user_prompt_template }}
                                     </div>
@@ -1129,11 +1134,11 @@ const promoteToLibrary = async () => {
                                 <div class="md:col-span-2">
                                     <div class="label-with-icon">
                                         <Braces />
-                                        <span>Variables schema</span>
+                                        <span>Input fields (JSON)</span>
                                     </div>
                                     <textarea v-model="versionForm.variables_schema_text" class="field-textarea"></textarea>
                                     <div class="field-help">
-                                        JSON array. Example: [{ "name": "language", "required": true, "default": "English" }]
+                                        Optional JSON array describing extra fields the prompt needs. Example: [{ "name": "language", "required": true, "default": "English" }]
                                     </div>
                                     <div v-if="jsonErrors.variables_schema" class="field-error">{{ jsonErrors.variables_schema }}</div>
                                 </div>
@@ -1147,16 +1152,17 @@ const promoteToLibrary = async () => {
                                         <option value="text">Text</option>
                                         <option value="json">JSON</option>
                                     </select>
+                                    <div class="field-help">Choose JSON only when the answer needs a fixed structure.</div>
                                 </div>
 
                                 <div class="md:col-span-2">
                                     <div class="label-with-icon">
                                         <FileJson />
-                                        <span>Output schema</span>
+                                        <span>Expected JSON format</span>
                                     </div>
                                     <textarea v-model="versionForm.output_schema_text" class="field-textarea"></textarea>
                                     <div class="field-help">
-                                        JSON object with optional required keys and primitive types for structured validation.
+                                        Optional JSON object used to check structured outputs. Leave `{}` for flexible JSON responses.
                                     </div>
                                     <div v-if="jsonErrors.output_schema_json" class="field-error">{{ jsonErrors.output_schema_json }}</div>
                                 </div>
@@ -1196,7 +1202,7 @@ const promoteToLibrary = async () => {
                                     <div class="summary-item-value">{{ currentVersion?.reviewer_count ?? 0 }}</div>
                                 </div>
                                 <div class="summary-item">
-                                    <div class="summary-item-label">Format pass rate</div>
+                                    <div class="summary-item-label">Expected format matched</div>
                                     <div class="summary-item-value">{{ currentVersion?.format_pass_rate != null ? `${currentVersion.format_pass_rate}%` : 'N/A' }}</div>
                                 </div>
                                 <div class="summary-item">
