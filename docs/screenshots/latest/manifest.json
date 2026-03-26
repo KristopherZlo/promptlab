@@ -1,49 +1,356 @@
 {
   "baseUrl": "http://localhost/PromptFactory/public/",
-  "generatedAt": "2026-03-26T08-12-38-705Z",
-  "publishedTheme": "dark",
+  "generatedAt": "2026-03-26T08-31-18-705Z",
   "archiveRoot": "docs/screenshots/archive",
-  "screenshotProfile": "showcase@evala.local",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "screenshotProfiles": {
+    "showcase": "showcase@evala.local",
+    "unverified": "unverified@evala.local",
+    "invitationToken": "evala-showcase-invite"
+  },
   "routes": [
+    {
+      "slug": "login",
+      "label": "Login",
+      "category": "Authentication",
+      "session": "guest",
+      "files": {
+        "light": "light/login.png",
+        "dark": "dark/login.png"
+      }
+    },
+    {
+      "slug": "register",
+      "label": "Register",
+      "category": "Authentication",
+      "session": "guest",
+      "files": {
+        "light": "light/register.png",
+        "dark": "dark/register.png"
+      }
+    },
+    {
+      "slug": "forgot-password",
+      "label": "Forgot password",
+      "category": "Authentication",
+      "session": "guest",
+      "files": {
+        "light": "light/forgot-password.png",
+        "dark": "dark/forgot-password.png"
+      }
+    },
+    {
+      "slug": "reset-password",
+      "label": "Reset password",
+      "category": "Authentication",
+      "session": "guest",
+      "files": {
+        "light": "light/reset-password.png",
+        "dark": "dark/reset-password.png"
+      }
+    },
+    {
+      "slug": "verify-email",
+      "label": "Verify email",
+      "category": "Authentication",
+      "session": "unverified",
+      "files": {
+        "light": "light/verify-email.png",
+        "dark": "dark/verify-email.png"
+      }
+    },
+    {
+      "slug": "confirm-password",
+      "label": "Confirm password",
+      "category": "Authentication",
+      "session": "showcase",
+      "files": {
+        "light": "light/confirm-password.png",
+        "dark": "dark/confirm-password.png"
+      }
+    },
+    {
+      "slug": "invitation",
+      "label": "Invitation landing",
+      "category": "Invitations",
+      "session": "guest",
+      "files": {
+        "light": "light/invitation.png",
+        "dark": "dark/invitation.png"
+      }
+    },
+    {
+      "slug": "invitation-login",
+      "label": "Invitation login",
+      "category": "Invitations",
+      "session": "guest",
+      "files": {
+        "light": "light/invitation-login.png",
+        "dark": "dark/invitation-login.png"
+      }
+    },
+    {
+      "slug": "invitation-register",
+      "label": "Invitation register",
+      "category": "Invitations",
+      "session": "guest",
+      "files": {
+        "light": "light/invitation-register.png",
+        "dark": "dark/invitation-register.png"
+      }
+    },
+    {
+      "slug": "getting-started",
+      "label": "Getting started",
+      "category": "Workspace",
+      "session": "showcase",
+      "files": {
+        "light": "light/getting-started.png",
+        "dark": "dark/getting-started.png"
+      }
+    },
     {
       "slug": "dashboard",
       "label": "Dashboard",
-      "file": "dashboard.png"
+      "category": "Workspace",
+      "session": "showcase",
+      "files": {
+        "light": "light/dashboard.png",
+        "dark": "dark/dashboard.png"
+      }
     },
     {
       "slug": "task-directory",
-      "label": "Task Directory",
-      "file": "task-directory.png"
+      "label": "Task directory",
+      "category": "Workspace",
+      "session": "showcase",
+      "files": {
+        "light": "light/task-directory.png",
+        "dark": "dark/task-directory.png"
+      }
     },
     {
       "slug": "task-detail",
-      "label": "Task Detail",
-      "file": "task-detail.png"
+      "label": "Task detail",
+      "category": "Workspace",
+      "session": "showcase",
+      "files": {
+        "light": "light/task-detail.png",
+        "dark": "dark/task-detail.png"
+      }
+    },
+    {
+      "slug": "prompt-catalog",
+      "label": "Prompt catalog",
+      "category": "Prompts",
+      "session": "showcase",
+      "files": {
+        "light": "light/prompt-catalog.png",
+        "dark": "dark/prompt-catalog.png"
+      }
+    },
+    {
+      "slug": "prompt-create",
+      "label": "Prompt create",
+      "category": "Prompts",
+      "session": "showcase",
+      "files": {
+        "light": "light/prompt-create.png",
+        "dark": "dark/prompt-create.png"
+      }
+    },
+    {
+      "slug": "prompt-details",
+      "label": "Prompt details",
+      "category": "Prompts",
+      "session": "showcase",
+      "files": {
+        "light": "light/prompt-details.png",
+        "dark": "dark/prompt-details.png"
+      }
     },
     {
       "slug": "prompt-revisions",
-      "label": "Prompt Revisions",
-      "file": "prompt-revisions.png"
+      "label": "Prompt revisions",
+      "category": "Prompts",
+      "session": "showcase",
+      "files": {
+        "light": "light/prompt-revisions.png",
+        "dark": "dark/prompt-revisions.png"
+      }
     },
     {
-      "slug": "experiment-compare",
-      "label": "Experiment Compare",
-      "file": "experiment-compare.png"
+      "slug": "prompt-optimize",
+      "label": "Prompt optimize",
+      "category": "Prompts",
+      "session": "showcase",
+      "files": {
+        "light": "light/prompt-optimize.png",
+        "dark": "dark/prompt-optimize.png"
+      }
     },
     {
-      "slug": "library-catalog",
-      "label": "Library Catalog",
-      "file": "library-catalog.png"
+      "slug": "prompt-library",
+      "label": "Prompt library",
+      "category": "Prompts",
+      "session": "showcase",
+      "files": {
+        "light": "light/prompt-library.png",
+        "dark": "dark/prompt-library.png"
+      }
     },
     {
-      "slug": "library-entry",
-      "label": "Library Entry",
-      "file": "library-entry.png"
+      "slug": "experiment-results",
+      "label": "Experiment results",
+      "category": "Experiments",
+      "session": "showcase",
+      "files": {
+        "light": "light/experiment-results.png",
+        "dark": "dark/experiment-results.png"
+      }
+    },
+    {
+      "slug": "experiment-summary",
+      "label": "Experiment summary",
+      "category": "Experiments",
+      "session": "showcase",
+      "files": {
+        "light": "light/experiment-summary.png",
+        "dark": "dark/experiment-summary.png"
+      }
     },
     {
       "slug": "playground",
-      "label": "Experiment Playground",
-      "file": "playground.png"
+      "label": "Experiment playground",
+      "category": "Experiments",
+      "session": "showcase",
+      "files": {
+        "light": "light/playground.png",
+        "dark": "dark/playground.png"
+      }
+    },
+    {
+      "slug": "library-catalog",
+      "label": "Library catalog",
+      "category": "Library",
+      "session": "showcase",
+      "files": {
+        "light": "light/library-catalog.png",
+        "dark": "dark/library-catalog.png"
+      }
+    },
+    {
+      "slug": "library-entry",
+      "label": "Library entry",
+      "category": "Library",
+      "session": "showcase",
+      "files": {
+        "light": "light/library-entry.png",
+        "dark": "dark/library-entry.png"
+      }
+    },
+    {
+      "slug": "admin-members",
+      "label": "Users access members",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-members.png",
+        "dark": "dark/admin-members.png"
+      }
+    },
+    {
+      "slug": "admin-invitations",
+      "label": "Users access invitations",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-invitations.png",
+        "dark": "dark/admin-invitations.png"
+      }
+    },
+    {
+      "slug": "admin-roles",
+      "label": "Users access roles",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-roles.png",
+        "dark": "dark/admin-roles.png"
+      }
+    },
+    {
+      "slug": "admin-workspaces",
+      "label": "Workspaces current",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-workspaces.png",
+        "dark": "dark/admin-workspaces.png"
+      }
+    },
+    {
+      "slug": "admin-workspaces-create",
+      "label": "Workspaces create",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-workspaces-create.png",
+        "dark": "dark/admin-workspaces-create.png"
+      }
+    },
+    {
+      "slug": "admin-ai-connections",
+      "label": "AI connections",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-ai-connections.png",
+        "dark": "dark/admin-ai-connections.png"
+      }
+    },
+    {
+      "slug": "admin-ai-connections-editor",
+      "label": "AI connections editor",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-ai-connections-editor.png",
+        "dark": "dark/admin-ai-connections-editor.png"
+      }
+    },
+    {
+      "slug": "admin-audit-log",
+      "label": "Audit log",
+      "category": "Administration",
+      "session": "showcase",
+      "files": {
+        "light": "light/admin-audit-log.png",
+        "dark": "dark/admin-audit-log.png"
+      }
+    },
+    {
+      "slug": "profile",
+      "label": "Profile",
+      "category": "Account",
+      "session": "showcase",
+      "files": {
+        "light": "light/profile.png",
+        "dark": "dark/profile.png"
+      }
+    },
+    {
+      "slug": "acknowledgements",
+      "label": "Acknowledgements",
+      "category": "Account",
+      "session": "showcase",
+      "files": {
+        "light": "light/acknowledgements.png",
+        "dark": "dark/acknowledgements.png"
+      }
     }
   ]
 }
