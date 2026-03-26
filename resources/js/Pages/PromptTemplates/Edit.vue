@@ -95,10 +95,10 @@ const notices = reactive({
     version: '',
 });
 const tabItems = computed(() => [
-    { id: 'template', label: 'Details', icon: FileStack, disabled: false },
-    { id: 'versions', label: 'Versions', icon: Workflow, disabled: !props.promptTemplate },
-    { id: 'optimize', label: 'Optimize', icon: Target, disabled: !props.promptTemplate },
-    { id: 'library', label: 'Shared Library', icon: BookCopy, disabled: !props.promptTemplate },
+    { id: 'template', label: 'Prompt', icon: FileStack, disabled: false },
+    { id: 'versions', label: 'History', icon: Workflow, disabled: !props.promptTemplate },
+    { id: 'optimize', label: 'Improve', icon: Target, disabled: !props.promptTemplate },
+    { id: 'library', label: 'Library', icon: BookCopy, disabled: !props.promptTemplate },
 ]);
 const activeTab = useUrlState({
     key: 'tab',
@@ -140,19 +140,19 @@ const templateSaveButtonLabel = computed(() => {
     return props.promptTemplate ? 'Save details' : 'Create prompt';
 });
 const versionPanelTitle = computed(() =>
-    currentVersion.value ? `${currentVersion.value.version_label} revision` : 'New revision draft',
+    currentVersion.value ? `${currentVersion.value.version_label} details` : 'New version draft',
 );
 const versionPanelSummary = computed(() =>
     currentVersion.value
-        ? 'Adjust the instructions, variables, and output validation for this revision.'
-        : 'Create the next runnable revision for this template.',
+        ? 'Adjust the instructions, input fields, and expected format for this saved version.'
+        : 'Create the next saved version when you want to keep a meaningful change.',
 );
 const libraryButtonLabel = computed(() => {
     if (libraryState.processing) {
         return 'Saving to shared library...';
     }
 
-    return currentVersion.value?.library_entry ? 'Update shared version' : 'Save to shared library';
+    return currentVersion.value?.library_entry ? 'Update library entry' : 'Add to shared library';
 });
 const experimentsHref = computed(() =>
     routeWithQuery('playground', {}, {
@@ -177,13 +177,13 @@ const versionRunHref = (version) =>
 
 const versionReference = (version) => `#${String(version.id).padStart(4, '0')}`;
 const versionContentFields = [
-    { key: 'change_summary', label: 'Change summary', emptyLabel: 'No change summary', mono: false },
-    { key: 'system_prompt', label: 'System prompt', emptyLabel: 'No system prompt', mono: true },
-    { key: 'user_prompt_template', label: 'User prompt template', emptyLabel: 'No user prompt template', mono: true },
-    { key: 'variables_schema_text', label: 'Variables schema', emptyLabel: '[]', mono: true },
+    { key: 'change_summary', label: 'What changed', emptyLabel: 'No summary', mono: false },
+    { key: 'system_prompt', label: 'System instructions', emptyLabel: 'No system instructions', mono: true },
+    { key: 'user_prompt_template', label: 'Prompt text', emptyLabel: 'No prompt text', mono: true },
+    { key: 'variables_schema_text', label: 'Input fields (JSON)', emptyLabel: '[]', mono: true },
     { key: 'output_type', label: 'Output type', emptyLabel: 'text', mono: true },
-    { key: 'output_schema_text', label: 'Output schema', emptyLabel: '{}', mono: true },
-    { key: 'preferred_model', label: 'Preferred model', emptyLabel: 'Template default', mono: true },
+    { key: 'output_schema_text', label: 'Expected JSON format', emptyLabel: '{}', mono: true },
+    { key: 'preferred_model', label: 'Model', emptyLabel: 'Prompt default', mono: true },
     { key: 'notes', label: 'Team notes', emptyLabel: 'No team notes', mono: false },
 ];
 
@@ -290,14 +290,14 @@ const currentVersionDetailCopy = computed(() => {
         const createdAt = currentVersion.value.created_at ? formatDateTime(currentVersion.value.created_at) : 'No timestamp';
         const parentLabel = versionComparisonBase.value?.version_label || 'initial state';
 
-        return `${author} saved this revision on ${createdAt}. Comparing against ${parentLabel}.`;
+        return `${author} saved this version on ${createdAt}. Comparing against ${parentLabel}.`;
     }
 
     if (versionComparisonBase.value) {
-        return `Unsaved draft compared with ${versionComparisonBase.value.version_label}. Save when the change is ready to join history.`;
+        return `Unsaved draft compared with ${versionComparisonBase.value.version_label}. Save when the change is ready to keep.`;
     }
 
-    return 'Create the first revision. The history view will start tracking prompt changes after the first save.';
+    return 'Create the first saved version. The history view will start after the first save.';
 });
 
 const selectVersion = (version) => {
@@ -390,7 +390,7 @@ const saveTemplate = async () => {
     try {
         if (props.promptTemplate) {
             await axios.put(route('api.prompts.update', props.promptTemplate.id), payload);
-            notices.template = 'Template details saved.';
+            notices.template = 'Prompt details saved.';
             router.reload({ only: ['promptTemplate', 'useCases', 'models'] });
         } else {
             const initialVersion = versionPayload();
@@ -493,11 +493,11 @@ const saveVersion = async () => {
         const response = await axios.post(route('api.prompt-versions.store', props.promptTemplate.id), payload);
         selectedVersionId.value = response.data.data.id;
         draftBaseVersionId.value = null;
-        notices.version = 'New revision created.';
+        notices.version = 'New version saved.';
         router.reload({ only: ['promptTemplate'] });
     } catch (error) {
         applyServerErrors(versionForm, error);
-        notices.version = extractServerMessage(error, 'Revision could not be saved.');
+        notices.version = extractServerMessage(error, 'Version could not be saved.');
     } finally {
         versionForm.processing = false;
     }
@@ -519,10 +519,10 @@ const promoteToLibrary = async () => {
             usage_notes: libraryState.usage_notes || null,
         });
 
-        libraryState.message = 'Version promoted to the approved library.';
+        libraryState.message = 'Version added to the shared library.';
         router.reload({ only: ['promptTemplate'] });
     } catch (error) {
-        libraryState.message = error.response?.data?.message || 'Library promotion failed.';
+        libraryState.message = error.response?.data?.message || 'Library update failed.';
     } finally {
         libraryState.processing = false;
     }
@@ -541,13 +541,13 @@ const promoteToLibrary = async () => {
                     </h1>
                     <p class="mt-1 text-sm text-[var(--muted)]">
                         {{ promptTemplate
-                            ? 'Edit the prompt, test it quickly, and create extra versions only when needed.'
-                            : 'Write the prompt and save the first version in one step.' }}
+                            ? 'Update the prompt, try it on a real example, and save a new version only when the change matters.'
+                            : 'Write the prompt and save the first working version in one step.' }}
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <Link :href="route('prompt-templates.index')" class="btn-secondary">Back to prompt list</Link>
-                    <Link v-if="promptTemplate && currentVersion" :href="experimentsHref" class="btn-ghost">Open full experiments</Link>
+                    <Link v-if="promptTemplate && currentVersion" :href="experimentsHref" class="btn-ghost">Open experiments</Link>
                 </div>
             </div>
         </template>
@@ -574,9 +574,9 @@ const promoteToLibrary = async () => {
 
             <section v-if="activeTab === 'template' && promptTemplate" class="panel p-5">
                 <PanelHeader
-                    title="Template snapshot"
-                    description="Current assignment, status, revision count, and approval state."
-                    help="Summarizes the current state of this prompt family so you can see its task alignment and approval progress at a glance."
+                    title="Prompt snapshot"
+                    description="Current task, status, saved versions, and library status."
+                    help="Summarizes the state of this prompt so you can quickly see where it belongs, how mature it is, and whether it is already in the shared library."
                 />
 
                 <div class="summary-strip mt-4">
@@ -589,15 +589,15 @@ const promoteToLibrary = async () => {
                         <div class="summary-item-value capitalize">{{ templateForm.status }}</div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-item-label">Versions</div>
+                        <div class="summary-item-label">Saved versions</div>
                         <div class="summary-item-value">{{ versions.length }}</div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-item-label">Approved</div>
+                        <div class="summary-item-label">In library</div>
                         <div class="summary-item-value">{{ currentVersion?.library_entry ? 'Yes' : 'No' }}</div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-item-label">Reviewed runs</div>
+                        <div class="summary-item-label">Human-reviewed runs</div>
                         <div class="summary-item-value">{{ promptTemplate.reviewed_runs ?? 0 }}</div>
                     </div>
                     <div class="summary-item">
@@ -616,12 +616,12 @@ const promoteToLibrary = async () => {
                     <PanelHeader
                         :title="promptTemplate ? 'Prompt details' : 'Prompt setup'"
                         :description="promptTemplate
-                            ? 'Stable metadata for this prompt family.'
-                            : 'Basic prompt metadata plus the first runnable version.'"
+                            ? 'Business context, organization, and default model for this prompt.'
+                            : 'Business context plus the first working version of the prompt.'"
                         :icon="FileStack"
                         :help="promptTemplate
-                            ? 'Edits the stable metadata shared by all revisions in this prompt family, including task mapping and default model.'
-                            : 'Creates the prompt container and the first runnable version together so you do not need a separate setup step.'"
+                            ? 'Edits the stable details shared across all saved versions, including task, category, tags, and default model.'
+                            : 'Creates the prompt and the first saved version together so the first useful draft is ready immediately.'"
                     />
                     <button type="button" class="btn-primary" :disabled="templateForm.processing || versionForm.processing" @click="saveTemplate">
                         {{ templateSaveButtonLabel }}
@@ -653,7 +653,7 @@ const promoteToLibrary = async () => {
                     </div>
 
                     <div>
-                        <label class="field-label">Template name</label>
+                        <label class="field-label">Prompt name</label>
                         <input v-model="templateForm.name" type="text" class="field-input" placeholder="Customer email summarizer">
                         <div v-if="templateForm.errors.name" class="field-error">{{ templateForm.errors.name }}</div>
                     </div>
@@ -668,7 +668,7 @@ const promoteToLibrary = async () => {
                     </div>
 
                     <div>
-                        <label class="field-label">Preferred model</label>
+                        <label class="field-label">Default model</label>
                         <select v-model="templateForm.preferred_model" class="field-select">
                             <option value="">No default model</option>
                             <option v-for="model in availableModels" :key="model.value" :value="model.value">
@@ -693,7 +693,7 @@ const promoteToLibrary = async () => {
                         <textarea
                             v-model="templateForm.description"
                             class="field-textarea"
-                            placeholder="Explain what this prompt family should achieve and how the team should use it."
+                            placeholder="Explain what this prompt should achieve and how the team should use it."
                         />
                     </div>
                 </div>
