@@ -273,7 +273,7 @@ const supportLinks = computed(() => {
 
     if (canManageConnections.value) {
         links.push({
-            title: 'AI Connections',
+            title: 'Model Connections',
             body: 'Configure providers only when you need to manage workspace setup.',
             href: routeWithQuery('admin.ai-connections', {}, { tab: 'connections' }),
             icon: Bot,

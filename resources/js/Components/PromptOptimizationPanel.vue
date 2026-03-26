@@ -230,7 +230,7 @@ const refreshRuns = () => {
                     title="Prompt improvement"
                     description="Try better prompt wording against saved scenarios and keep the best draft."
                     :icon="Target"
-                    help="This uses saved prompt versions plus active scenarios with expected output or expected JSON. GEPA proposes revisions, runs them through the existing workspace model connections, and writes the best candidate back as a new prompt draft."
+                    help="This uses saved prompt versions plus active scenarios with expected output or expected JSON. GEPA proposes better versions, runs them through the existing workspace model connections, and writes the best candidate back as a new prompt draft."
                 />
 
                 <button
@@ -329,7 +329,7 @@ const refreshRuns = () => {
                     </div>
 
                     <div class="prompt-optimize-footnote">
-                        Improvement runs use saved revisions only. Save the current draft first if you want those edits included.
+                        Improvement runs use saved versions only. Save the current draft first if you want those edits included.
                     </div>
                 </div>
             </div>
@@ -341,7 +341,7 @@ const refreshRuns = () => {
                     title="Improvement runs"
                     description="Recent improvement runs, current status, and the best draft returned by each run."
                     :icon="Clock3"
-                    help="Queued and running jobs are polled automatically. Completed runs keep their best prompt candidate and, when the candidate changed, produce a new saved draft in version history."
+                    help="Queued and running jobs are polled automatically. Completed runs keep their best prompt candidate and, when the candidate changed, produce a new saved draft in prompt history."
                 />
 
                 <button type="button" class="btn-secondary" @click="refreshRuns">

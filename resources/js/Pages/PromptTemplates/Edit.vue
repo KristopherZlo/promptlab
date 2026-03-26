@@ -437,7 +437,7 @@ const versionPayload = () => {
     const outputSchema = parseJsonInput(versionForm.output_schema_text, {});
 
     if (!variablesSchema.valid || !Array.isArray(variablesSchema.value)) {
-        jsonErrors.variables_schema = variablesSchema.error || 'Variables schema must be a JSON array.';
+        jsonErrors.variables_schema = variablesSchema.error || 'Input fields must be a JSON array.';
         return null;
     }
 
@@ -449,7 +449,7 @@ const versionPayload = () => {
             && !Array.isArray(outputSchema.value);
 
         if (!isObject) {
-            jsonErrors.output_schema_json = outputSchema.error || 'Output schema must be a JSON object.';
+            jsonErrors.output_schema_json = outputSchema.error || 'Expected JSON format must be a JSON object.';
             return null;
         }
     }

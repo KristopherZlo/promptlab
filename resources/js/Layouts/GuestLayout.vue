@@ -21,7 +21,7 @@ const evalaLogoUrl = resolvePublicAsset('images/evala-logo-colored.svg');
                         <div class="guide-card">
                             <div class="font-semibold text-[var(--ink)]">Workspace modules</div>
                             <p class="mt-2 text-sm leading-6 text-[var(--muted)]">
-                                Tasks, prompt templates, experiments, approvals, workspaces, and access control.
+                                Tasks, prompts, experiments, library reuse, workspaces, and access control.
                             </p>
                         </div>
 
