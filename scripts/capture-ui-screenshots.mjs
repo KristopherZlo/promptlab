@@ -8,12 +8,16 @@ const BASE_URL = normalizeBaseUrl(
 );
 const OUTPUT_ROOT = process.env.SCREENSHOT_OUTPUT_DIR ?? 'interface-screenshots-auto';
 const PUBLISH_ROOT = process.env.SCREENSHOT_PUBLISH_DIR ?? 'docs/screenshots/latest';
+const ARCHIVE_ROOT = process.env.SCREENSHOT_ARCHIVE_DIR ?? 'docs/screenshots/archive';
 const VIEWPORT = parseViewport(process.env.SCREENSHOT_VIEWPORT ?? '1600x1000');
 const WAIT_MS = parsePositiveInt(process.env.SCREENSHOT_WAIT_MS, 900);
 const TIMEOUT_MS = parsePositiveInt(process.env.SCREENSHOT_TIMEOUT_MS, 30000);
 const AUTH_EMAIL = process.env.SCREENSHOT_AUTH_EMAIL ?? 'showcase@evala.local';
 const AUTH_PASSWORD = process.env.SCREENSHOT_AUTH_PASSWORD ?? 'password';
 const USE_HMR = process.env.SCREENSHOT_USE_HMR === '1';
+const SHOWCASE_USE_CASE_SLUG = 'customer-email-summarization';
+const SHOWCASE_PROMPT_NAME = 'Customer email summarizer';
+const SHOWCASE_PROMPT_VERSION = 'v3';
 
 const THEMES = ['light', 'dark'];
 const SCREENSHOT_TARGETS = [
@@ -46,18 +50,55 @@ const SCREENSHOT_TARGETS = [
     publish: true,
   },
   {
-    uri: '/prompts',
-    slug: 'prompt-catalog',
-    label: 'Prompt Catalog',
+    slug: 'task-detail',
+    label: 'Task Detail',
+    mode: 'auth',
+    publish: true,
+    path: ({ showcase }) => `/use-cases/${showcase.useCase.id}`,
+  },
+  {
+    slug: 'prompt-revisions',
+    label: 'Prompt Revisions',
+    mode: 'auth',
+    publish: true,
+    path: ({ showcase }) =>
+      `/prompts/${showcase.promptTemplate.id}?tab=versions&prompt_version_id=${showcase.promptVersion.id}`,
+  },
+  {
+    slug: 'experiment-compare',
+    label: 'Experiment Compare',
+    mode: 'auth',
+    publish: true,
+    path: ({ showcase }) => `/experiments/${showcase.compareExperiment.id}?tab=results`,
+  },
+  {
+    uri: '/library',
+    slug: 'library-catalog',
+    label: 'Library Catalog',
     mode: 'auth',
     publish: true,
   },
   {
-    uri: '/playground',
-    slug: 'playground',
-    label: 'Playground',
+    slug: 'library-entry',
+    label: 'Library Entry',
     mode: 'auth',
     publish: true,
+    path: ({ showcase }) => `/library/${showcase.libraryEntry.id}`,
+  },
+  {
+    slug: 'playground',
+    label: 'Experiment Playground',
+    mode: 'auth',
+    publish: true,
+    path: ({ showcase }) => {
+      const modelName = encodeURIComponent(
+        showcase.promptVersion.preferred_model
+          || showcase.promptTemplate.preferred_model
+          || '',
+      );
+
+      return `/playground?mode=single&use_case_id=${showcase.useCase.id}&prompt_template_id=${showcase.promptTemplate.id}&prompt_version_id=${showcase.promptVersion.id}&model_name=${modelName}&step=review`;
+    },
   },
 ];
 
@@ -79,6 +120,7 @@ async function main() {
       captured: 0,
       failed: 0,
       published: 0,
+      archived: 0,
     },
     runs: [],
   };
@@ -115,8 +157,9 @@ async function main() {
       summary.counts.failed += authResult.failed.length;
 
       if (theme === 'dark') {
-        const publishedCount = await publishScreenshots(path.join(themeDir, 'auth'));
-        summary.counts.published += publishedCount;
+        const publishSummary = await publishScreenshots(path.join(themeDir, 'auth'), timestamp);
+        summary.counts.published += publishSummary.publishedCount;
+        summary.counts.archived += publishSummary.archivedCount;
       }
     }
   } finally {
@@ -136,6 +179,8 @@ async function main() {
       baseUrl: BASE_URL,
       generatedAt: timestamp,
       publishedTheme: 'dark',
+      archiveRoot: ARCHIVE_ROOT,
+      screenshotProfile: AUTH_EMAIL,
       routes: SCREENSHOT_TARGETS.filter((target) => target.publish).map((target) => ({
         slug: target.slug,
         label: target.label,
@@ -148,8 +193,9 @@ async function main() {
   console.log('');
   console.log(`[ui:screenshots] output: ${runDir}`);
   console.log(`[ui:screenshots] published: ${path.resolve(process.cwd(), PUBLISH_ROOT)}`);
+  console.log(`[ui:screenshots] archived: ${path.resolve(process.cwd(), ARCHIVE_ROOT)}`);
   console.log(
-    `[ui:screenshots] captured=${summary.counts.captured} failed=${summary.counts.failed} published=${summary.counts.published}`,
+    `[ui:screenshots] captured=${summary.counts.captured} failed=${summary.counts.failed} published=${summary.counts.published} archived=${summary.counts.archived}`,
   );
 }
 
@@ -191,26 +237,29 @@ async function captureGroup({
 
     const page = await context.newPage();
     page.setDefaultTimeout(TIMEOUT_MS);
+    const showcase = mode === 'auth' ? await loadShowcaseLookup(page) : null;
 
     for (const target of routes) {
       const outputPath = path.join(groupDir, `${target.slug}.png`);
 
       try {
-        const response = await page.goto(toNavigableRoute(target.uri), { waitUntil: 'domcontentloaded' });
+        const targetPath = await resolveTargetPath(target, { showcase });
+        const response = await page.goto(toNavigableRoute(targetPath), { waitUntil: 'domcontentloaded' });
+        await page.waitForLoadState('networkidle', { timeout: Math.min(TIMEOUT_MS, 5000) }).catch(() => {});
         await page.waitForTimeout(WAIT_MS);
 
         if (!response) {
-          throw new Error(`No HTTP response for ${target.uri}`);
+          throw new Error(`No HTTP response for ${targetPath}`);
         }
 
         const status = response.status();
         if (status >= 400) {
-          throw new Error(`HTTP ${status} for ${target.uri}`);
+          throw new Error(`HTTP ${status} for ${targetPath}`);
         }
 
         const contentType = String(response.headers()['content-type'] ?? '');
         if (!contentType.includes('text/html')) {
-          throw new Error(`Unexpected content type for ${target.uri}: ${contentType || 'unknown'}`);
+          throw new Error(`Unexpected content type for ${targetPath}: ${contentType || 'unknown'}`);
         }
 
         await page.screenshot({
@@ -221,7 +270,7 @@ async function captureGroup({
         captured.push({
           slug: target.slug,
           label: target.label,
-          uri: target.uri,
+          uri: targetPath,
           publish: target.publish,
           file: outputPath,
           finalUrl: page.url(),
@@ -229,7 +278,7 @@ async function captureGroup({
       } catch (error) {
         failed.push({
           slug: target.slug,
-          uri: target.uri,
+          uri: target.uri ?? target.slug,
           error: error instanceof Error ? error.message : String(error),
         });
       }
@@ -276,9 +325,24 @@ async function login(context, email, password) {
   await page.close();
 }
 
-async function publishScreenshots(sourceDir) {
+async function publishScreenshots(sourceDir, timestamp) {
   const publishDir = path.resolve(process.cwd(), PUBLISH_ROOT);
+  const archiveDir = path.resolve(process.cwd(), ARCHIVE_ROOT, timestamp);
   let publishedCount = 0;
+  let archivedCount = 0;
+  const existingFiles = existsSync(publishDir)
+    ? (await fs.readdir(publishDir)).filter((file) => file.toLowerCase().endsWith('.png'))
+    : [];
+
+  if (existingFiles.length > 0) {
+    await fs.mkdir(archiveDir, { recursive: true });
+
+    for (const file of existingFiles) {
+      await fs.copyFile(path.join(publishDir, file), path.join(archiveDir, file));
+      await fs.rm(path.join(publishDir, file), { force: true });
+      archivedCount += 1;
+    }
+  }
 
   for (const target of SCREENSHOT_TARGETS.filter((item) => item.publish)) {
     const source = path.join(sourceDir, `${target.slug}.png`);
@@ -290,7 +354,7 @@ async function publishScreenshots(sourceDir) {
     publishedCount += 1;
   }
 
-  return publishedCount;
+  return { publishedCount, archivedCount };
 }
 
 async function disableViteHotFileIfNeeded() {
@@ -352,6 +416,84 @@ function toNavigableRoute(uri) {
   return String(uri ?? '')
     .replace(/^\/+/, '')
     .trim();
+}
+
+async function resolveTargetPath(target, context) {
+  if (typeof target.path === 'function') {
+    return target.path(context);
+  }
+
+  return target.uri ?? target.path ?? '/';
+}
+
+async function loadShowcaseLookup(page) {
+  const useCasesPayload = await fetchJson(page, '/api/use-cases');
+  const useCases = useCasesPayload.data ?? [];
+  const useCase = useCases.find((item) => item.slug === SHOWCASE_USE_CASE_SLUG);
+
+  if (!useCase) {
+    throw new Error(`Showcase use case not found: ${SHOWCASE_USE_CASE_SLUG}`);
+  }
+
+  const promptsPayload = await fetchJson(page, '/api/prompts');
+  const templates = promptsPayload.data ?? [];
+  const promptTemplate = templates.find((item) =>
+    item.use_case_id === useCase.id && item.name === SHOWCASE_PROMPT_NAME,
+  );
+
+  if (!promptTemplate) {
+    throw new Error(`Showcase prompt template not found: ${SHOWCASE_PROMPT_NAME}`);
+  }
+
+  const promptVersion = (promptTemplate.versions ?? []).find((version) => version.version_label === SHOWCASE_PROMPT_VERSION)
+    ?? (promptTemplate.versions ?? []).at(-1)
+    ?? null;
+
+  if (!promptVersion) {
+    throw new Error(`Showcase prompt version not found: ${SHOWCASE_PROMPT_VERSION}`);
+  }
+
+  const useCaseDetail = await fetchJson(page, `/api/use-cases/${useCase.id}`);
+  const compareExperiment = (useCaseDetail.recentExperiments ?? []).find((experiment) => experiment.mode === 'compare');
+
+  if (!compareExperiment) {
+    throw new Error(`Compare experiment not found for use case: ${SHOWCASE_USE_CASE_SLUG}`);
+  }
+
+  const libraryEntriesPayload = await fetchJson(page, '/api/library-entries');
+  const libraryEntries = libraryEntriesPayload.data ?? [];
+  const libraryEntry = libraryEntries.find((entry) => entry.prompt_version?.id === promptVersion.id)
+    ?? libraryEntries.find((entry) => entry.prompt_version?.prompt_template_id === promptTemplate.id)
+    ?? null;
+
+  if (!libraryEntry) {
+    throw new Error(`Library entry not found for showcase prompt: ${SHOWCASE_PROMPT_NAME} ${promptVersion.version_label}`);
+  }
+
+  return {
+    useCase,
+    promptTemplate,
+    promptVersion,
+    compareExperiment,
+    libraryEntry,
+  };
+}
+
+async function fetchJson(page, uri) {
+  return page.evaluate(async (relativeUri) => {
+    const response = await fetch(relativeUri, {
+      headers: {
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} for ${relativeUri}`);
+    }
+
+    return response.json();
+  }, uri);
 }
 
 function parseViewport(raw) {
