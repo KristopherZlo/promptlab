@@ -43,6 +43,31 @@ const teamReviewSummary = computed(() => {
         latestEvaluation,
     };
 });
+const isReviewable = computed(() => props.run.is_reviewable ?? ['success', 'invalid_format'].includes(props.run.status));
+const reviewBlocker = computed(() => {
+    switch (props.run.status) {
+    case 'queued':
+        return {
+            title: 'Manual review unlocks after execution starts',
+            description: 'This run has not produced an output yet. Wait until the queue worker picks it up and the run finishes before saving reviewer scores.',
+        };
+    case 'running':
+        return {
+            title: 'Manual review is temporarily locked',
+            description: 'This run is still executing. Reviewer scores should be saved only after the final output appears on the page.',
+        };
+    case 'failed':
+        return {
+            title: 'Manual review is unavailable for failed runs',
+            description: 'This run stopped before it produced a reviewable output. Use the runtime error and experiment status to diagnose the failure first.',
+        };
+    default:
+        return {
+            title: 'Manual review is not available yet',
+            description: 'This run is not in a reviewable state.',
+        };
+    }
+});
 
 const defaultFormState = () => ({
     clarity_score: currentEvaluation.value?.clarity_score ?? '',
@@ -129,7 +154,7 @@ const submit = async () => {
             </div>
         </div>
         <div v-else class="mt-4 text-sm text-[var(--muted)]">
-            No team reviews saved for this run yet.
+            {{ isReviewable ? 'No team reviews saved for this run yet.' : reviewBlocker.description }}
         </div>
 
         <div v-if="sortedEvaluations.length" class="mt-4 space-y-3">
@@ -185,65 +210,73 @@ const submit = async () => {
             </div>
         </div>
 
-        <div class="mt-4 grid gap-3 sm:grid-cols-2">
-            <div>
-                <label class="field-label">Clarity</label>
-                <select v-model="form.clarity_score" class="field-select">
-                    <option value="">Not scored</option>
-                    <option v-for="score in 5" :key="`clarity-${score}`" :value="score">{{ score }}</option>
-                </select>
-            </div>
-            <div>
-                <label class="field-label">Correctness</label>
-                <select v-model="form.correctness_score" class="field-select">
-                    <option value="">Not scored</option>
-                    <option v-for="score in 5" :key="`correctness-${score}`" :value="score">{{ score }}</option>
-                </select>
-            </div>
-            <div>
-                <label class="field-label">Completeness</label>
-                <select v-model="form.completeness_score" class="field-select">
-                    <option value="">Not scored</option>
-                    <option v-for="score in 5" :key="`completeness-${score}`" :value="score">{{ score }}</option>
-                </select>
-            </div>
-            <div>
-                <label class="field-label">Tone</label>
-                <select v-model="form.tone_score" class="field-select">
-                    <option value="">Not scored</option>
-                    <option v-for="score in 5" :key="`tone-${score}`" :value="score">{{ score }}</option>
-                </select>
-            </div>
-            <div>
-                <label class="field-label">Hallucination risk</label>
-                <select v-model="form.hallucination_risk" class="field-select">
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-            </div>
-            <label class="check-row">
-                <input v-model="form.format_valid_manual" type="checkbox">
+        <div v-if="isReviewable">
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
                 <div>
-                    <div class="text-sm font-medium">Format valid</div>
-                    <div class="mt-1 text-xs text-[var(--muted)]">Reviewer confirms that the output follows the expected format.</div>
+                    <label class="field-label">Clarity</label>
+                    <select v-model="form.clarity_score" class="field-select">
+                        <option value="">Not scored</option>
+                        <option v-for="score in 5" :key="`clarity-${score}`" :value="score">{{ score }}</option>
+                    </select>
                 </div>
-            </label>
-        </div>
-
-        <div class="mt-3">
-            <label class="field-label">Notes</label>
-            <textarea v-model="form.notes" class="field-textarea"></textarea>
-            <div v-if="errors.experiment_run_id" class="field-error">{{ errors.experiment_run_id }}</div>
-        </div>
-
-        <div class="mt-4 flex items-center justify-between gap-4">
-            <div class="text-xs text-[var(--muted)]">
-                Existing evaluations: {{ evaluations.length }}
+                <div>
+                    <label class="field-label">Correctness</label>
+                    <select v-model="form.correctness_score" class="field-select">
+                        <option value="">Not scored</option>
+                        <option v-for="score in 5" :key="`correctness-${score}`" :value="score">{{ score }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label">Completeness</label>
+                    <select v-model="form.completeness_score" class="field-select">
+                        <option value="">Not scored</option>
+                        <option v-for="score in 5" :key="`completeness-${score}`" :value="score">{{ score }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label">Tone</label>
+                    <select v-model="form.tone_score" class="field-select">
+                        <option value="">Not scored</option>
+                        <option v-for="score in 5" :key="`tone-${score}`" :value="score">{{ score }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label">Hallucination risk</label>
+                    <select v-model="form.hallucination_risk" class="field-select">
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <label class="check-row">
+                    <input v-model="form.format_valid_manual" type="checkbox">
+                    <div>
+                        <div class="text-sm font-medium">Format valid</div>
+                        <div class="mt-1 text-xs text-[var(--muted)]">Reviewer confirms that the output follows the expected format.</div>
+                    </div>
+                </label>
             </div>
-            <button type="button" class="btn-secondary" :disabled="saving" @click="submit">
-                {{ saving ? 'Saving...' : 'Save evaluation' }}
-            </button>
+
+            <div class="mt-3">
+                <label class="field-label">Notes</label>
+                <textarea v-model="form.notes" class="field-textarea"></textarea>
+                <div v-if="errors.experiment_run_id" class="field-error">{{ errors.experiment_run_id }}</div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between gap-4">
+                <div class="text-xs text-[var(--muted)]">
+                    Existing evaluations: {{ evaluations.length }}
+                </div>
+                <button type="button" class="btn-secondary" :disabled="saving" @click="submit">
+                    {{ saving ? 'Saving...' : 'Save evaluation' }}
+                </button>
+            </div>
+        </div>
+        <div v-else class="guide-card mt-4">
+            <div class="font-medium">{{ reviewBlocker.title }}</div>
+            <div class="mt-2 text-sm leading-6 text-[var(--muted)]">
+                {{ reviewBlocker.description }}
+            </div>
         </div>
     </div>
 </template>
