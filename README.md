@@ -8,42 +8,6 @@ It organizes prompt work around a simple product flow:
 
 **Tasks -> Prompts -> Experiments -> Library**
 
-Instead of keeping prompts in chats, docs, or random notes, Evala gives teams one place to:
-
-- define business-facing AI tasks
-- version prompt drafts over time
-- run quick tests, compare runs, and batch experiments
-- validate structured outputs
-- review quality manually and automatically
-- promote strong prompt versions into a reusable internal library
-- manage workspace-level model connections, permissions, and audit visibility
-
-The result is a portfolio project that behaves much closer to a real internal product than a typical AI demo.
-
-## Real Usage Scenarios
-
-Evala is easiest to understand through concrete internal workflows:
-
-### 1. Support ticket triage
-
-An operations team defines a task for incoming support tickets, stores representative examples as scenarios, iterates on classification prompts, and compares prompt versions before promoting the most reliable one into the shared library.
-
-### 2. Customer email summarization
-
-A service team creates a prompt workflow that turns long customer threads into short internal summaries, tests tone and structure on real examples, and keeps an experiment trail that shows which prompt version actually improved clarity.
-
-### 3. Business-tone rewriting
-
-A communications or back-office team drafts prompts that rewrite rough internal text into a more consistent business tone, reviews outputs manually, and keeps approved versions reusable across the workspace instead of rewriting the same prompt from scratch.
-
-## Featured Case Study
-
-The strongest seeded example is a customer support email summarization workflow that starts with a weak baseline prompt and ends with a reusable handoff prompt promoted into the internal library.
-
-- full write-up: [`docs/case-study.md`](./docs/case-study.md)
-- quality lift in the seeded compare run: average score improved from `3.0` to `4.5`
-- business outcome: faster support triage, clearer urgency handling, and more consistent ownership
-
 ## Screenshots
 
 The gallery below is generated from the actual app UI with Playwright and published to [`docs/screenshots/latest`](./docs/screenshots/latest). It covers guest flows, invitations, registration, unverified email verification, the main workspace, prompt iteration, experiments, library views, admin pages, and account screens in both themes.
@@ -173,6 +137,42 @@ The gallery below is generated from the actual app UI with Playwright and publis
 ![Acknowledgements](docs/screenshots/latest/light/acknowledgements.png)
 
 </details>
+
+Instead of keeping prompts in chats, docs, or random notes, Evala gives teams one place to:
+
+- define business-facing AI tasks
+- version prompt drafts over time
+- run quick tests, compare runs, and batch experiments
+- validate structured outputs
+- review quality manually and automatically
+- promote strong prompt versions into a reusable internal library
+- manage workspace-level model connections, permissions, and audit visibility
+
+The result is a portfolio project that behaves much closer to a real internal product than a typical AI demo.
+
+## Real Usage Scenarios
+
+Evala is easiest to understand through concrete internal workflows:
+
+### 1. Support ticket triage
+
+An operations team defines a task for incoming support tickets, stores representative examples as scenarios, iterates on classification prompts, and compares prompt versions before promoting the most reliable one into the shared library.
+
+### 2. Customer email summarization
+
+A service team creates a prompt workflow that turns long customer threads into short internal summaries, tests tone and structure on real examples, and keeps an experiment trail that shows which prompt version actually improved clarity.
+
+### 3. Business-tone rewriting
+
+A communications or back-office team drafts prompts that rewrite rough internal text into a more consistent business tone, reviews outputs manually, and keeps approved versions reusable across the workspace instead of rewriting the same prompt from scratch.
+
+## Featured Case Study
+
+The strongest seeded example is a customer support email summarization workflow that starts with a weak baseline prompt and ends with a reusable handoff prompt promoted into the internal library.
+
+- full write-up: [`docs/case-study.md`](./docs/case-study.md)
+- quality lift in the seeded compare run: average score improved from `3.0` to `4.5`
+- business outcome: faster support triage, clearer urgency handling, and more consistent ownership
 
 ## Architecture At A Glance
 
