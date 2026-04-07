@@ -1,6 +1,7 @@
 # Evala
 
 ![Evala header](resources/images/github-page-header.png)
+![Evala light theme walkthrough](resources/images/readme-light-showcase.gif)
 
 Evala is an internal AI experimentation workspace for teams that need more than a chat box.
 

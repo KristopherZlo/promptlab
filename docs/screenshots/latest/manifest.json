@@ -1,6 +1,6 @@
 {
-  "baseUrl": "http://localhost/PromptFactory/public/",
-  "generatedAt": "2026-03-26T11-01-06-000Z",
+  "baseUrl": "http://127.0.0.1:8010/",
+  "generatedAt": "2026-04-07T14-19-45-393Z",
   "archiveRoot": "docs/screenshots/archive",
   "themes": [
     "light",
