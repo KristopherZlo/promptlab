@@ -5,6 +5,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
+        "ui:readme-gif": "node scripts/build-readme-gif.mjs",
         "ui:screenshots": "node scripts/capture-ui-screenshots.mjs",
         "ui:screenshots:install": "playwright install chromium"
     },
