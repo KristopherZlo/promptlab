@@ -1,7 +1,6 @@
 # Evala
 
 ![Evala header](resources/images/github-page-header.png)
-![Evala light theme walkthrough](resources/images/readme-light-showcase.gif)
 
 Evala is an internal AI experimentation workspace for teams that need more than a chat box.
 
@@ -10,6 +9,8 @@ It organizes prompt work around a simple product flow:
 **Tasks -> Prompts -> Experiments -> Library**
 
 ## Screenshots
+
+![Evala light theme walkthrough](resources/images/readme-light-showcase.gif)
 
 The gallery below is generated from the actual app UI with Playwright and published to [`docs/screenshots/latest`](./docs/screenshots/latest). It covers guest flows, invitations, registration, unverified email verification, the main workspace, prompt iteration, experiments, library views, admin pages, and account screens in both themes.
 
